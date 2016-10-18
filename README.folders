@@ -1,0 +1,87 @@
+The folder structure being used is very hierarchical and generally is in the
+following format:
+
+feature_folder:
+    interfaces and common code (words separated by underscores):
+        tests for interfaces and common code (must be "tests"):
+        specific plugin implementation (words separated by underscores):
+            tests for specific implementation (must be "tests"):
+
+Each folder in this structure containing python code must also have an empty
+__init__.py file included.
+
+This will also be true for non-feature source code like the initial CLI
+implementation.  For example:
+
+ctrl:
+        __init__.py
+        run-coverage.py
+        .coveragerc
+        plugin: (plugin manager folder)
+                __init__.py
+                <source_files>
+                tests:
+                        __init__.py
+                        <test_source_files>
+                <sourcefiles>
+        os_remote_access: (remote OS access and execution feature)
+                __init__.py
+                <common_source_files>
+                tests:
+                        __init__.py
+                        <common_test_source_files>
+                ssh:
+                        __init__.py
+                        <plugin_source_files>
+                        tests:
+                                __init__.py
+                                <plugin_test_source_files>
+        commands: (command invoker plugins)
+                __init__.py
+                <common_source_files>
+                tests:
+                        __init__.py
+                        <common_test_source_files>
+                power_on_command:
+                        __init__.py
+                        <plugin_source_files>
+                        tests:
+                                __init__.py
+                                <plugin_test_source_files>
+        utilities (generally useful classes):
+                __init__.py
+                <source_files>
+                tests:
+                        __init__.py
+                        <test_source_files>
+        bmc: (IPMI implementation of BMC control)
+                __init__.py
+                <common_source_files>
+                tests:
+                        __init__.py
+                        <common_test_source_files>
+                ipmi_util:
+                        __init__.py
+                        <plugin_source_files>
+                        tests:
+                                __init__.py
+                                <plugin_test_source_files>
+                mock:
+                        __init__.py
+                        <plugin_source_files>
+                        tests:
+                                __init__.py
+                                <plugin_test_source_files>
+        clusterctl: (Example CLI name only)
+                __init__.py
+                <source_files>
+                tests:
+                        __init__.py
+                        <test_source_files>
+
+Every production source file has tests in an immediate subfolder called "tests"
+and features are at the top level with plugin implementations having an extra
+level down to prevent issues when a plugin is more than one python file
+(or module).
+
+Paul Amonson

@@ -1,0 +1,10 @@
+[run]
+branch=True
+omit=
+    */test_plugins/*
+    */special_plugins/*
+    */.local/lib/*
+    run-coverage.py
+    all-tests.py
+    */tests/*
+    */__init__.py

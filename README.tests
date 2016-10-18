@@ -1,0 +1,60 @@
+Test Development:
+==================
+This document describes how to use these tests and any docker related
+limitations.
+
+
+Prerequisites for testing are:
+===============================
+* python 2.7.* (should be pre-installed)
+* pylint (use you favorite package manager like apt-get, yum, or zypper)
+* py.test (use you favorite package manager like apt-get, yum, or zypper)
+* coverage.py (use PIP to install this dependency; use google to figure out how
+  to install PIP for your specific platform)
+
+Running tests:
+===============
+
+NOTE: All unit tests are expected to run without hardware or system
+      dependencies.  Your tests should mock all necessary calls to function for
+      instance in docker.
+
+In the root git folder type the following command:
+
+$ py.test
+
+Example:
+-------------------------------------------------------------------------------
+import unittest
+
+
+class TestFoo(unittest.TestCase):
+    def test1(self):
+        pass
+
+    @skipIf('PYTEST_SKIP' in os.environ, "Skipping in the presence of " \
+            "PYTEST_SKIP environment variable!")
+    def test_skip_me_conditionally(self):
+        pass
+
+if __name == '__main__':
+    unittest.main()
+-------------------------------------------------------------------------------
+
+These tests can be run from a pycharm configuration for
+"Python tests->Unittests" as a "Test all in folder" configuration.
+
+
+Coverage:
+==========
+Run the run-coverage.py file in the root of the repo.
+
+$ ./run-coverage.py
+
+This can by run from a pycharm configuration for "Python" not "Python tests".
+
+A ".coverage" file will be created as well as a ".html" folder with a web
+version of the report.
+
+
+Paul Amonson
