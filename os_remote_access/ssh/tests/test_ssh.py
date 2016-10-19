@@ -57,7 +57,7 @@ class TestRemoteSshPlugin(unittest.TestCase):
 
     def test_execute_1(self):
         """Test the RemoteSshPlugin.execute() method."""
-        rv1 = self.remote.execute(['whoami'], self.access)
+        rv1, output = self.remote.execute(['whoami'], self.access)
         self.remote.utilities.returned_value = ''
         rv2, output = self.remote.execute(['whoami'], self.access, capture=True)
         self.assertEqual(0, rv1)
@@ -67,7 +67,7 @@ class TestRemoteSshPlugin(unittest.TestCase):
         """Test of execute part 2."""
         self.remote.utilities.returned_value = 0
         self.access.identifier = 'id'
-        result = self.remote.execute(['whoami'], self.access)
+        result = self.remote.execute(['whoami'], self.access)[0]
         self.assertEqual(0, result)
 
     def test_execute_3(self):

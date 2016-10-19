@@ -65,7 +65,7 @@ class RemoteSshPlugin(Interface):
         """Execute command on the remote server returning the result"""
         full_command = RemoteSshPlugin._build_command(cmdargs,
                                                       remote_access_data)
-        return self.utilities.execute_no_capture(full_command)
+        return self.utilities.execute_no_capture(full_command), None
 
     def _execute_ssh_with_capture(self, command, remote_access_data):
         """Execute command on the remote server returning the result and

@@ -13,8 +13,8 @@ class RemoteAccessData(object):
 
     def get_authority(self):
         """Return the network authority for this object."""
-        return '%s:%s' % (self.address, self.port)
+        return '{}:{}'.format(self.address, self.port)
 
     def get_credentials(self):
         """Return the username:identifier for this object."""
-        return '%s:%s' %(self.username, self.identifier)
+        return '{}:{}'.format(self.username, self.identifier)

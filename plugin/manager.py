@@ -51,7 +51,7 @@ class PluginManager(object):
             err = 'Neither the "category" or the "name" are allowed to be ' \
                   '"None"!'
             raise RuntimeWarning(err)
-        return '%s%s%s' % (category, PLUGIN_KEY_SEPARATOR, name)
+        return '{}{}{}'.format(category, PLUGIN_KEY_SEPARATOR, name)
 
     @classmethod
     def _split_key(cls, key):
@@ -70,9 +70,13 @@ class PluginManager(object):
         for filename in os.listdir(plugin_folder):
             if os.path.splitext(filename)[1] == PLUGIN_FILE_EXTENSION:
                 full = os.path.join(plugin_folder, filename)
-                if full not in self.__plugin_files:
-                    if self._load_metadata(full):
-                        self.__plugin_files.append(full)
+                self._add_plugin(full)
+
+    def _add_plugin(self, fullname):
+        """Add the plugin to the dictionary."""
+        if fullname not in self.__plugin_files:
+            if self._load_metadata(fullname):
+                self.__plugin_files.append(fullname)
 
     def _load_metadata(self, plugin_filename):
         """Load the plugin dynamically."""
