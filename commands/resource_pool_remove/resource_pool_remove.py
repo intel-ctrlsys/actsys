@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 TBD
 """
@@ -16,4 +20,5 @@ class ResourcePoolRemoveCommand(Command):
 
     def execute(self):
         """Execute the command"""
-        return CommandResult(0, "Success: Resource Pool Remove {}".format(self.node_name))
+        fmt = "Success: Resource Pool Remove {}"
+        return CommandResult(0, fmt.format(self.node_name))

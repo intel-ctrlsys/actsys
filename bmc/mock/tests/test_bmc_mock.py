@@ -1,16 +1,22 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Test the Mock plugin for BMC access/control.
 """
 import os
 import unittest
-from ctrl.bmc.mock.mock import PluginMetadata
-from ctrl.bmc.mock.mock import BmcMock
+from ctrl.bmc.mock.bmc import PluginMetadata
+from ctrl.bmc.mock.bmc import BmcMock
 from ctrl.plugin.manager import PluginManager
+from ctrl.utilities.remote_access_data import RemoteAccessData
 
 
 class TestBmcMock(unittest.TestCase):
     def setUp(self):
         self.bmc_file = os.path.sep + os.path.join('tmp', 'bmc_file')
+        self.remote = RemoteAccessData('127.0.0.2', 0, 'admin', 'root')
 
     def test_metadata_mock(self):
         manager = PluginManager()
@@ -27,12 +33,11 @@ class TestBmcMock(unittest.TestCase):
             os.unlink(self.bmc_file)
         bmc = BmcMock()
         self.assertEqual(5, bmc.state_change_delay)
-        address = '127.0.0.1'
-        self.assertEqual('off', bmc.get_chassis_state(address, '', ''))
-        bmc.set_chassis_state(address, '', '', 'on')
+        self.assertFalse(bmc.get_chassis_state(self.remote))
+        bmc.set_chassis_state(self.remote, 'on')
         with self.assertRaises(RuntimeError):
-            bmc.set_chassis_state(address, '', '', 'crazy')
-        self.assertEqual('on', bmc.get_chassis_state(address, '', ''))
+            bmc.set_chassis_state(self.remote, 'crazy')
+        self.assertTrue(bmc.get_chassis_state(self.remote))
 
         bmc = BmcMock()
-        self.assertEqual('on', bmc.get_chassis_state(address, '', ''))
+        self.assertTrue(bmc.get_chassis_state(self.remote))

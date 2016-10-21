@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """Run all py.test tests under coverage in the folder tree."""
 import coverage
 import py.test

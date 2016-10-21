@@ -84,4 +84,4 @@ and features are at the top level with plugin implementations having an extra
 level down to prevent issues when a plugin is more than one python file
 (or module).
 
-Paul Amonson
+Copyright (c) 2016 Intel Corp.

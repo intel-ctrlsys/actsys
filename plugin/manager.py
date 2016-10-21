@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 This class defines how plugins are created from a folder.
 """
@@ -141,3 +145,4 @@ class PluginManager(object):
         key = PluginManager._make_key(category, name)
         factory_obj = self.__provider_categories[key]
         return factory_obj.create_instance(options=options)
+

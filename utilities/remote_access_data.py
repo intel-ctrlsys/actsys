@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Class used to hold username, password, address, and port for remote access.
 """

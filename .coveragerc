@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Intel Corp.
+
 [run]
 branch=True
 omit=

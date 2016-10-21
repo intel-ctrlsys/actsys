@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Run the pylint tool on all production code.
 """
@@ -35,6 +39,11 @@ class FolderWalker(object):
                 file_list.append(os.path.join(directory, filename))
 
 
-if __name__ == '__main__':
+def main():
+    """Script Entry point."""
     files = FolderWalker.get_files_for_pylint('.')
-    Run(files)
+    return Run(files)
+
+
+if __name__ == '__main__':
+    exit(main())

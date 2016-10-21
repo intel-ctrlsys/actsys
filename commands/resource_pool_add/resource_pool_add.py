@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 TBD
 """
@@ -16,4 +20,5 @@ class ResourcePoolAddCommand(Command):
 
     def execute(self):
         """Execute the command"""
-        return CommandResult(0, "Success: Resource Pool Add {}".format(self.node_name))
+        fmt = "Success: Resource Pool Add {}"
+        return CommandResult(0, fmt.format(self.node_name))

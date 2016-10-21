@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Plugin to talk to the BMC using IPMI versions 1.5 and 2.0.
 """
 from time import sleep
 from ctrl.plugin.manager import PluginMetadataInterface
 from ctrl.utilities.utilities import Utilities
-from ctrl.bmc.interface import Interface
+from ctrl.bmc.bmc import Bmc
 
 
 class PluginMetadata(PluginMetadataInterface):
@@ -29,18 +33,20 @@ class PluginMetadata(PluginMetadataInterface):
         return BmcIpmiUtil(options)
 
 
-class BmcIpmiUtil(Interface):
+class BmcIpmiUtil(Bmc):
     """Implement Bmc contract using IPMI."""
     def __init__(self, options=None):
-        Interface.__init__(self, options)
+        Bmc.__init__(self, options)
         self.utilities = Utilities()
         self.tool = 'ipmiutil'
         self.name_to_find = 'chassis_power'
         self.mandatory_bmc_wait_seconds = 10
 
-    def get_chassis_state(self, address, user, password):
+    def get_chassis_state(self, remote_access):
         """Get the current power state of the node chassis as a boolean."""
-        command = self._build_power_command(address, user, password,
+        command = self._build_power_command(remote_access.address,
+                                            remote_access.username,
+                                            remote_access.identifier,
                                             'status')
         output = self.utilities.execute_with_capture(command)
         if output is None:
@@ -58,9 +64,11 @@ class BmcIpmiUtil(Interface):
         sleep(self.mandatory_bmc_wait_seconds)
         return value == 'on'
 
-    def set_chassis_state(self, address, username, password, new_state):
+    def set_chassis_state(self, remote_access, new_state):
         """Set the chassis to a new state."""
-        command = self._build_power_command(address, username, password,
+        command = self._build_power_command(remote_access.address,
+                                            remote_access.username,
+                                            remote_access.identifier,
                                             new_state)
         result = self.utilities.execute_no_capture(command)
         if result != 0:
@@ -68,6 +76,7 @@ class BmcIpmiUtil(Interface):
         # For stability with different BMC implementations...no way to check
         # stability dynamically in IPMI.
         sleep(self.mandatory_bmc_wait_seconds)
+        return True
 
     def _build_power_command(self, address, user, password, cmd):
         """Build the beginning of an ipmiutil command"""

@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Implements the remote access contract using a mock for remote access to the OS
 on a compute node.
 """
 from ctrl.utilities.utilities import Utilities
-from ctrl.os_remote_access.interface import Interface
+from ctrl.os_remote_access.os_remote_access import OsRemoteAccess
 from ctrl.plugin.manager import PluginMetadataInterface
 
 
@@ -26,13 +30,13 @@ class PluginMetadata(PluginMetadataInterface):
 
     def create_instance(self, options=None):
         """Create an instance of this named implementation."""
-        return MockPlugin(options)
+        return OsRemoteAccessMock(options)
 
 
-class MockPlugin(Interface):
+class OsRemoteAccessMock(OsRemoteAccess):
     """SSH remote OS access implementation."""
     def __init__(self, options=None):
-        Interface.__init__(self)
+        OsRemoteAccess.__init__(self)
         self.__options = options
         self.utilities = Utilities()
 
@@ -41,4 +45,4 @@ class MockPlugin(Interface):
         if capture:
             return 0, ''
         else:
-            return 0
+            return 0, None

@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Test the IPMI plugin for BMC access/control.
 """
@@ -8,6 +12,7 @@ from ctrl.bmc.ipmi_util.ipmi_util import PluginMetadata
 from ctrl.plugin.manager import PluginManager
 from ctrl.utilities.utilities import Utilities
 from ctrl.os_remote_access.ssh.ssh import RemoteSshPlugin
+from ctrl.utilities.remote_access_data import RemoteAccessData
 
 
 class MockUtilities(Utilities):
@@ -47,6 +52,8 @@ class TestBmcIpmi(unittest.TestCase):
         self.bmc = self.manager.factory_create_instance('bmc', 'ipmi_util')
         self.bmc.utilities = self.__utilities
         self.bmc.mandatory_bmc_wait_seconds = 0
+        self.bmc_credentials = RemoteAccessData('127.0.0.2', 0, 'admin',
+                                                'PASSWORD')
 
     def wait_for_os(self, address, state):
         start_time = time.time()
@@ -66,17 +73,17 @@ class TestBmcIpmi(unittest.TestCase):
 
     def test_get_chassis_state(self):
         self.bmc.utilities.returned_value = 'chassis_power = on'
-        rv = self.bmc.get_chassis_state('127.0.0.1', 'admin', 'PASSWORD')
+        rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertTrue(rv)
         self.bmc.utilities.returned_value = 'chassis_power = off'
-        rv = self.bmc.get_chassis_state('127.0.0.1', 'admin', 'PASSWORD')
+        rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertFalse(rv)
         self.bmc.utilities.returned_value = None
         with self.assertRaises(RuntimeError):
-            self.bmc.get_chassis_state('127.0.0.1', 'admin', 'PASSWORD')
+            self.bmc.get_chassis_state(self.bmc_credentials)
         self.bmc.utilities.returned_value = ''
         with self.assertRaises(RuntimeError):
-            self.bmc.get_chassis_state('127.0.0.1', 'admin', 'PASSWORD')
+            self.bmc.get_chassis_state(self.bmc_credentials)
 
     def test_set_chassis_state(self):
         self.bmc.utilities.returned_value = 0
@@ -87,19 +94,19 @@ class TestBmcIpmi(unittest.TestCase):
             ssh.execute(['shutdown', '-H', 'now'], '127.0.0.2', 22, 'root')
             self.wait_for_os('127.0.0.2', False)
         with self.assertRaises(RuntimeError):
-            self.bmc.set_chassis_state('127.0.0.1', 'admin', 'PASSWORD', 'red')
-        self.bmc.set_chassis_state('127.0.0.1', 'admin', 'PASSWORD', 'bios')
+            self.bmc.set_chassis_state(self.bmc_credentials, 'red')
+        self.bmc.set_chassis_state(self.bmc_credentials, 'bios')
         self.bmc.utilities.returned_value = 'chassis_power = on'
-        rv = self.bmc.get_chassis_state('127.0.0.1', 'admin', 'PASSWORD')
+        rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertTrue(rv)
         self.bmc.utilities.returned_value = 0
-        self.bmc.set_chassis_state('127.0.0.1', 'admin', 'PASSWORD', 'off')
-        self.bmc.set_chassis_state('127.0.0.1', 'admin', 'PASSWORD', 'on')
-        self.wait_for_os('127.0.0.2', True)
+        self.bmc.set_chassis_state(self.bmc_credentials, 'off')
+        self.bmc.set_chassis_state(self.bmc_credentials, 'on')
+        self.wait_for_os(self.bmc_credentials.address, True)
 
         self.bmc.tool = 'ls'
         with self.assertRaises(RuntimeError):
-            self.bmc.set_chassis_state('127.0.0.1', 'admin', 'PASSWORD', 'off')
+            self.bmc.set_chassis_state(self.bmc_credentials, 'off')
 
 if __name__ == '__main__':
     unittest.main()

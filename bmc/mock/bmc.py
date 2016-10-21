@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Plugin to talk to mock BMC functionality.
 """
 import os.path
 import json
 from ctrl.plugin.manager import PluginMetadataInterface
-from ctrl.bmc.interface import Interface
+from ctrl.bmc.bmc import Bmc
 
 
 class PluginMetadata(PluginMetadataInterface):
@@ -29,38 +33,41 @@ class PluginMetadata(PluginMetadataInterface):
         return BmcMock(options)
 
 
-class BmcMock(Interface):
+class BmcMock(Bmc):
     """Implement Bmc contract using IPMI."""
     def __init__(self, options=None):
-        Interface.__init__(self, options)
+        Bmc.__init__(self, options)
         self.state_change_delay = 5  # seconds
         self.__current_states = {}
         self.__persistent_file = os.path.sep + os.path.join('tmp', 'bmc_file')
         if os.path.exists(self.__persistent_file):
             self._load_bmc_file()
+        self.set_failure = False
 
-    def get_chassis_state(self, address, username, password):
+    def get_chassis_state(self, remote_access):
         """Get the current power state of the node chassis as a boolean."""
-        if address in self.__current_states:
-            return self.__current_states[address]
+        if remote_access.address in self.__current_states:
+            return self.__current_states[remote_access.address] == 'on'
         else:
-            self.__current_states[address] = 'off'
+            self.__current_states[remote_access.address] = 'off'
             self._save_bmc_file()
-            return 'off'
+            return False
 
-    def set_chassis_state(self, address, username, password, new_state):
+    def set_chassis_state(self, remote_access, new_state):
         """Set the chassis to a new state."""
-        states = {'off': 'off', 'on': 'on', 'bios': 'on', 'efi': 'on',
-                  'hdd': 'on', 'pxe': 'on', 'cdrom': 'on', 'removable': 'on'}
+        states = {'off': 'off', 'on': 'on', 'cycle': 'on', 'bios': 'on',
+                  'efi': 'on', 'hdd': 'on', 'pxe': 'on', 'cdrom': 'on',
+                  'removable': 'on'}
         if new_state not in states:
             raise RuntimeError('An illegal BMC state was attempted: %s' %
                                new_state)
-        self.__current_states[address] = states[new_state]
+        self.__current_states[remote_access.address] = states[new_state]
         self._save_bmc_file()
+        return not self.set_failure
 
     def _load_bmc_file(self):
         """Loads the bmc file from disk."""
-        file_obj = open(self.__persistent_file, 'r')
+        file_obj = open(self.__persistent_file)
         self.__current_states = json.load(file_obj)
         file_obj.close()
 

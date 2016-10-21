@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Defines the interface for remote OS access execution of processes.
 """
 
 
-class Interface(object):
+class OsRemoteAccess(object):
     """Interface for remote process execution."""
     def __init__(self, options=None):
         pass

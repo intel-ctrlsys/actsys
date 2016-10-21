@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Test the PowerOffCommand.
 """
@@ -15,7 +19,8 @@ class TestPowerOnCommand(unittest.TestCase):
     def test_execute(self):
         """Stub test, please update me"""
 
-        self.assertEqual(self.power_reboot.execute().message, "Success: Power Reboot {}".format(self.node_name))
+        self.assertEqual(self.power_reboot.execute().message,
+                         "Success: Power Reboot {}".format(self.node_name))
 
 
 if __name__ == '__main__':

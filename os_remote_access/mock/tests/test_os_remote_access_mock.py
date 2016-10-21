@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Intel Corp.
+#
 """
 Test the mock remote OS access class.
 """
 import unittest
-from ctrl.os_remote_access.mock.mock import PluginMetadata
+from ctrl.os_remote_access.mock.os_remote_access import PluginMetadata
 from ctrl.plugin.manager import PluginManager
 from ctrl.utilities.remote_access_data import RemoteAccessData
 
