@@ -4,7 +4,7 @@ import coverage
 import py.test
 
 if __name__ == '__main__':
-    cov = coverage.Coverage(branch=True, config_file=True)
+    cov = coverage.coverage(branch=True, config_file=True)
     cov.start()
 
     py.test.main()

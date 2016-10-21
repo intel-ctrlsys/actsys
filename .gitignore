@@ -1,4 +1,12 @@
-.idea
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Coverage reports
+.cache
 .coverage
 .html
-.cache
+
+.idea

@@ -8,3 +8,5 @@ omit=
     all-tests.py
     */tests/*
     */__init__.py
+    /usr/lib/python*/
+    *tests*
