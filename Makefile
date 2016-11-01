@@ -1,7 +1,7 @@
 
 PYLINT_ERR_LEVEL=8
 
-all: test pylint coverage
+all: rpm test pylint coverage
 
 test:
 	py.test --junit-xml=ctrl-results.xml
@@ -11,6 +11,9 @@ pylint:
 
 coverage:
 	python run-coverage.py
+
+rpm:
+	python setup.py bdist --format=rpm
 
 clean:
 	find . -name '*.pyc' -exec rm --force {} +
@@ -29,4 +32,4 @@ help:
 	@echo "	clean"
 	@echo "		Clean all compiled files."
 
-.PHONY: test pylint coverage clean
+.PHONY: test pylint coverage clean rpm

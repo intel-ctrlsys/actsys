@@ -8,5 +8,9 @@ __pycache__/
 .cache
 .coverage
 .html
-
 .idea
+
+# Build
+dist/
+build/
+MANIFEST
