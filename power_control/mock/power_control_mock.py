@@ -36,9 +36,10 @@ class PluginMetadata(PluginMetadataInterface):
 class PowerControlMock(PowerControl):
     """Plugin for mocking Power Control."""
     def __init__(self, options=None):
-        PowerControl.__init__(self, options)
+        super(PowerControlMock, self).__init__(options)
         self.device_name = options['device_name']
-        if options['device_type'] not in ['node', 'compute', 'service']:
+        if options['device_type'] not in ['node', 'compute', 'service',
+                                          'master', 'login']:
             raise RuntimeError('PowerControlMock invoked with a non-node type!')
         filename = self.device_name + "." + 'state'
         self.file_path = os.path.sep + os.path.join('tmp', filename)
@@ -53,19 +54,20 @@ class PowerControlMock(PowerControl):
             self.current_state = 'Off'
         elif parts[0] == 'On':
             if len(parts) == 1 and parts[0] == 'On':
-                self.current_state = 'On:on'
-            elif len(parts) == 2 and parts[1] == 'on':
-                self.current_state = 'On:on'
+                self.current_state = 'On:bmc_on'
+            elif len(parts) == 2 and parts[1] == 'bmc_on':
+                self.current_state = 'On:bmc_on'
             else:
                 PowerControlMock._check_bmc_state(parts[1])
                 self.current_state = 'On'
         else:
             raise RuntimeError(fmt.format(target_state))
         self._save_state()
+        return True
 
     def get_current_device_power_state(self):
         """Get the current device power state.  Returns one of 'On', 'Off',
-           'On:on'"""
+           'On:bmc_on'"""
         self._load_state()
         return self.current_state
 

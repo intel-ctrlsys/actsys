@@ -18,7 +18,7 @@ class TestPowerControlMock(unittest.TestCase):
                                        'device_type': 'node'})
         self.mock2 = PowerControlMock({'device_name': 'test_node_2',
                                        'device_type': 'node'})
-        self.mock2.set_device_power_state('On:on')
+        self.mock2.set_device_power_state('On:bmc_on')
 
     def tearDown(self):
         if os.path.exists(self.mock1.file_path):
@@ -41,10 +41,10 @@ class TestPowerControlMock(unittest.TestCase):
         node2 = PowerControlMock({'device_name': 'test_node_2',
                                   'device_type': 'node'})
         self.assertEqual('Off', node1.get_current_device_power_state())
-        self.assertEqual('On:on', node2.get_current_device_power_state())
+        self.assertEqual('On:bmc_on', node2.get_current_device_power_state())
 
         node1.set_device_power_state('On')
-        self.assertEqual('On:on', node1.get_current_device_power_state())
+        self.assertEqual('On:bmc_on', node1.get_current_device_power_state())
 
         node1.set_device_power_state('Off')
         self.assertEqual('Off', node1.get_current_device_power_state())

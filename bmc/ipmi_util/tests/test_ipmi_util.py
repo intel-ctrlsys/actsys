@@ -18,7 +18,7 @@ from ctrl.utilities.remote_access_data import RemoteAccessData
 class MockUtilities(Utilities):
     """Mock class fake low level system call helpers."""
     def __init__(self):
-        Utilities.__init__(self)
+        super(MockUtilities, self).__init__()
         self.returned_value = None
 
     def execute_no_capture(self, command):

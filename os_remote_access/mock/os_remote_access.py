@@ -14,7 +14,7 @@ from ctrl.plugin.manager import PluginMetadataInterface
 class PluginMetadata(PluginMetadataInterface):
     """Required metadata class for a dynamic plugin."""
     def __init__(self):
-        PluginMetadataInterface.__init__(self)
+        super(PluginMetadata, self).__init__()
 
     def category(self):
         """Get the plugin category"""
@@ -36,7 +36,7 @@ class PluginMetadata(PluginMetadataInterface):
 class OsRemoteAccessMock(OsRemoteAccess):
     """SSH remote OS access implementation."""
     def __init__(self, options=None):
-        OsRemoteAccess.__init__(self)
+        super(OsRemoteAccessMock, self).__init__(options)
         self.__options = options
         self.utilities = Utilities()
 

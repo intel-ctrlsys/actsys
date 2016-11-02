@@ -14,7 +14,7 @@ from ctrl.bmc.bmc import Bmc
 class PluginMetadata(PluginMetadataInterface):
     """Required metadata class for a dynamic plugin."""
     def __init__(self):
-        PluginMetadataInterface.__init__(self)
+        super(PluginMetadata, self).__init__()
 
     def category(self):
         """Get the plugin category"""
@@ -36,7 +36,7 @@ class PluginMetadata(PluginMetadataInterface):
 class BmcIpmiUtil(Bmc):
     """Implement Bmc contract using IPMI."""
     def __init__(self, options=None):
-        Bmc.__init__(self, options)
+        super(BmcIpmiUtil, self).__init__(options)
         self.utilities = Utilities()
         self.tool = 'ipmiutil'
         self.name_to_find = 'chassis_power'

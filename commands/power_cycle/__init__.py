@@ -2,4 +2,4 @@
 #
 # Copyright (c) 2016 Intel Corp.
 #
-from power_reboot import *
+from power_cycle import *

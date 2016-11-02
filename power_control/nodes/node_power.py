@@ -5,6 +5,7 @@
 """
 Implements a power_control plugin for controlling nodes.
 """
+from __future__ import print_function
 import time
 from ctrl.plugin.manager import PluginMetadataInterface
 from ctrl.power_control.power_control import PowerControl
@@ -14,7 +15,7 @@ from ctrl.utilities.utilities import Utilities
 class PluginMetadata(PluginMetadataInterface):
     """Required metadata class for a dynamic plugin."""
     def __init__(self):
-        PluginMetadataInterface.__init__(self)
+        super(PluginMetadata, self).__init__()
 
     def category(self):
         """Get the plugin category"""
@@ -34,24 +35,26 @@ class PluginMetadata(PluginMetadataInterface):
 
 
 class NodePower(PowerControl):
-    """This class controls node power using a PDU, BMC, and the node OS."""
-    # OPTIONS CONTRACT FOR CONSTRUCTOR
-    # ---------------------------------
-    # options = {
-    #       'device_name': name,
-    #       'device_type': type,
-    #       'os': (remote_access_data, remote_access_plugin),
-    #       'bmc': (remote_access_data, bmc_plugin),
-    #       'switches':
-    #       [ ### index number is PSU index number zero-based ###
-    #           (remote_access_data, power_switch_plugin, outlet_id),
-    #           (remote_access_data, power_switch_plugin, outlet_id),
-    #       ],
-    #       'policy': policy_dictionary_for_this_node
-    #   }
+    """This class controls node power using a PDU, BMC, and the node OS.
+
+        OPTIONS CONTRACT FOR CONSTRUCTOR
+        ---------------------------------
+        options = {
+              'device_name': name,
+              'device_type': type,
+              'os': (remote_access_data, remote_access_plugin),
+              'bmc': (remote_access_data, bmc_plugin),
+              'switches':
+              [ ### index number is PSU index number zero-based ###
+                  (remote_access_data, power_switch_plugin, outlet_id),
+                  (remote_access_data, power_switch_plugin, outlet_id),
+              ],
+              'policy': policy_dictionary_for_this_node
+          }
+    """
     def __init__(self, options):
         """Will throw is bad or missing data is passed in options."""
-        PowerControl.__init__(self, options)
+        super(NodePower, self).__init__(options)
         self.__options = options
         if self.__options is None:
             raise RuntimeError('The options parameter to this class must not '

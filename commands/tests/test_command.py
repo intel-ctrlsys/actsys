@@ -7,6 +7,7 @@ Test the Command and CommandResult.
 """
 import unittest
 from ctrl.commands import Command, CommandResult
+from ctrl.plugin.manager import PluginManager
 
 
 class TestCommandResult(unittest.TestCase):
@@ -14,44 +15,59 @@ class TestCommandResult(unittest.TestCase):
 
     def setUp(self):
         self.result = 0
-        self.message = "The strangest return message ever.!/@3<>-+="
+        self.message = 'The strangest return message ever.!/@3<>-+='
         self.command_result = CommandResult(self.result, self.message)
 
     def test_str(self):
         """Stub test, please update me"""
 
         self.assertEqual(self.command_result.__str__(),
-                         "{} - {}".format(self.result, self.message))
-
-
-def concreter(abclass):
-    """
-    From Stack overflow: http://stackoverflow.com/a/37574495/1767377 AND
-    http://stackoverflow.com/a/9759329/1767377
-
-    >>> import abc
-    >>> class Abstract(metaclass=abc.ABCMeta):
-    ...     @abc.abstractmethod
-    ...     def bar(self):
-    ...        return None
-
-    >>> c = concreter(Abstract)
-    >>> c.__name__
-    'dummy_concrete_Abstract'
-    >>> c().bar() # doctest: +ELLIPSIS
-    (<abc_utils.Abstract object at 0x...>, (), {})
-    """
-    class concreteCls(abclass):
-        pass
-
-    concreteCls.__abstractmethods__ = frozenset()
-    return type('DummyConcrete' + abclass.__name__, (concreteCls,), {})
+                         '{} - {}'.format(self.result, self.message))
 
 
 class TestCommand(unittest.TestCase):
     def test(self):
-        self.instance = concreter(Command)("node_name")
-        self.instance.execute()
+        instance = Command({'device_name': 'node_name',
+                            'configuration': [],  # Placeholder
+                            'plugin_manager': PluginManager(),
+                            'logger': None,
+                            'arguments': None})
+        instance.execute()
+        Command({'device_name': 'node_name',
+                 'configuration': [],  # Placeholder
+                 'plugin_manager': PluginManager(),
+                 'unknown_param': None})
+        with self.assertRaises(RuntimeError):
+            Command(None)
+        with self.assertRaises(RuntimeError):
+            Command({'configuration': [],  # Placeholder
+                     'plugin_manager': PluginManager()})  # Placeholder
+        with self.assertRaises(RuntimeError):
+            Command({'device_name': None,
+                     'configuration': [],  # Placeholder
+                     'plugin_manager': PluginManager()})  # Placeholder
+        with self.assertRaises(RuntimeError):
+            Command({'device_name': '',
+                     'configuration': [],  # Placeholder
+                     'plugin_manager': PluginManager()})
+        with self.assertRaises(RuntimeError):
+            Command({'device_name': 'node_name',
+                     'plugin_manager': PluginManager()})
+        with self.assertRaises(RuntimeError):
+            Command({'device_name': 'node_name',
+                     'configuration': None,
+                     'plugin_manager': PluginManager()})
+        with self.assertRaises(RuntimeError):
+            Command({'device_name': 'node_name',
+                     'configuration': [],  # Placeholder
+                     'plugin_manager': None})  # Placeholder
+        with self.assertRaises(RuntimeError):
+            Command({'device_name': 'node_name',
+                     'configuration': []})  # Placeholder
+        with self.assertRaises(RuntimeError):
+            Command({'device_name': 'node_name',
+                     'configuration': [],  # Placeholder
+                     'plugin_manager': self})
 
 
 if __name__ == '__main__':

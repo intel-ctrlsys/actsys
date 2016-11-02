@@ -19,7 +19,7 @@ from ctrl.power_control.nodes.node_power import NodePower
 class MockUtilities(Utilities):
     """Mock class fake low level system call helpers."""
     def __init__(self):
-        Utilities.__init__(self)
+        super(MockUtilities, self).__init__()
         self.stack = []
         self.ping_stack = []
 
@@ -84,7 +84,7 @@ class MockOsAccess(object):
 class MockBmcAccess(BmcMock):
     """Mock the bmc mock class."""
     def __init__(self, options=None):
-        BmcMock.__init__(self, options)
+        super(MockBmcAccess, self).__init__(options)
         self.state_stack = []
         self.set_failure = False
 
@@ -101,7 +101,7 @@ class MockBmcAccess(BmcMock):
 class MockNodePower(NodePower):
     """Mocking parts of NodePower."""
     def __init__(self, options):
-        NodePower.__init__(self, options)
+        super(MockNodePower, self).__init__(options)
         self.shutdown_succeed = None
         self.graceful_fail = False
 

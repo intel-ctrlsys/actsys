@@ -11,4 +11,5 @@ omit=
     */tests/*
     */__init__.py
     /usr/lib/python*/
+    /usr/local/lib/python*
     *tests*

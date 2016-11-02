@@ -14,7 +14,7 @@ from ctrl.bmc.bmc import Bmc
 class PluginMetadata(PluginMetadataInterface):
     """Required metadata class for a dynamic plugin."""
     def __init__(self):
-        PluginMetadataInterface.__init__(self)
+        super(PluginMetadata, self).__init__()
 
     def category(self):
         """Get the plugin category"""
@@ -36,7 +36,7 @@ class PluginMetadata(PluginMetadataInterface):
 class BmcMock(Bmc):
     """Implement Bmc contract using IPMI."""
     def __init__(self, options=None):
-        Bmc.__init__(self, options)
+        super(BmcMock, self).__init__(options)
         self.state_change_delay = 5  # seconds
         self.__current_states = {}
         self.__persistent_file = os.path.sep + os.path.join('tmp', 'bmc_file')

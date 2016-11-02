@@ -9,6 +9,8 @@ __pycache__/
 .coverage
 .html
 .idea
+.pylint.out
+ctrl-results.xml
 
 # Build
 dist/
