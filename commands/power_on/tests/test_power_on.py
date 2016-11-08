@@ -91,7 +91,7 @@ class TestPowerOnCommand(PowerCommandsCommon):
     def test_positive_on_from_on(self):
         self.write_state('On:bmc_on')
         result = self.command.execute()
-        self.assertEqual('Power already on for test_node; use power reboot',
+        self.assertEqual('Power already on for test_node; use power cycle',
                          result.message)
         self.assertEqual(-1, result.return_code)
 

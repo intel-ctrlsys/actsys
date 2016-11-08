@@ -7,6 +7,7 @@ Implements a power_control plugin for controlling nodes.
 """
 from __future__ import print_function
 import time
+import os
 from ctrl.plugin.manager import PluginMetadataInterface
 from ctrl.power_control.power_control import PowerControl
 from ctrl.utilities.utilities import Utilities
@@ -191,9 +192,10 @@ class NodePower(PowerControl):
 
     def _graceful_os_halt(self):
         """Halt the OS to chassis on not OS."""
-        result = self.os_access.execute(['shutdown', '-H', 'now'],
+        shutdown = os.path.sep + os.path.join('sbin', 'shutdown')
+        result = self.os_access.execute([shutdown, '--halt', 'now'],
                                         self.os_credentials)[0]
-        if result != 0:
+        if result != 255 and result != 0:  # 255 if ssh was disconnected
             self._report_error("Failed to shutdown node's OS")
             return False
         timeout = self.policy['OSShutdownTimeoutSeconds']
@@ -207,14 +209,16 @@ class NodePower(PowerControl):
         current = self.get_current_device_power_state()
         if current == 'On:bmc_on':
             if not self._graceful_os_halt():
-                self._report_error("Failed to shutdown node's OS")
                 if not force:
                     return False
             current = self.get_current_device_power_state()
         if current == 'Off':
             return self._do_bmc_power_on(state)
         else:
-            return self._do_simple_bmc_reboot(state)
+            new_state = state
+            if state == "on":
+                new_state = "cycle"
+            return self._do_simple_bmc_reboot(new_state)
 
     def _do_bmc_power_on(self, state):
         """Bring up new state from chassis off."""

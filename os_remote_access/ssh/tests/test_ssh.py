@@ -7,7 +7,7 @@ Test the RemoteSshPlugin.
 """
 import getpass
 import unittest
-import ctrl.os_remote_access.ssh.ssh
+from ctrl.os_remote_access.ssh.ssh import PluginMetadata
 from ctrl.plugin.manager import PluginManager
 from ctrl.utilities.remote_access_data import RemoteAccessData
 from ctrl.utilities.utilities import Utilities
@@ -44,7 +44,7 @@ class TestRemoteSshPlugin(unittest.TestCase):
     """Test case for the RemoteSshPlugin class."""
     def setUp(self):
         manager = PluginManager()
-        metadata = ctrl.os_remote_access.ssh.ssh.PluginMetadata()
+        metadata = PluginMetadata()
         manager.add_provider(metadata)
         self.remote = manager.factory_create_instance(metadata.category(),
                                                       metadata.name())
@@ -53,7 +53,7 @@ class TestRemoteSshPlugin(unittest.TestCase):
 
     def test_plugin_metadata(self):
         """Test metadata."""
-        meta = ctrl.os_remote_access.ssh.ssh.PluginMetadata()
+        meta = PluginMetadata()
         self.assertEqual('os_remote_access', meta.category())
         self.assertEqual('ssh', meta.name())
         self.assertEqual(100, meta.priority())

@@ -80,7 +80,7 @@ class PowerOnCommand(CommonPowerCommand):
             state = self.power_plugin.get_current_device_power_state()
             if state.startswith('On'):
                 raise RuntimeError('Power already on for {}; use '
-                                   'power reboot'.
+                                   'power cycle'.
                                    format(self.device_name))
 
             # STEP 6

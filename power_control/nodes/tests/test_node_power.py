@@ -78,7 +78,7 @@ class MockOsAccess(object):
             if result:
                 return 0, None
             else:
-                return 255, None
+                return 254, None
 
 
 class MockBmcAccess(BmcMock):
