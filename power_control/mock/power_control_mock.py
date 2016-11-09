@@ -42,7 +42,7 @@ class PowerControlMock(PowerControl):
                                           'master', 'login']:
             raise RuntimeError('PowerControlMock invoked with a non-node type!')
         filename = self.device_name + "." + 'state'
-        self.file_path = os.path.sep + os.path.join('tmp', filename)
+        self.file_path = os.path.join(os.path.sep, 'tmp', filename)
         self.current_state = "Off"
         self._load_state()
 

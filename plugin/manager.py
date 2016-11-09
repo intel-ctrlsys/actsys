@@ -69,12 +69,16 @@ class PluginManager(object):
         if plugin_folder is not None:
             self.add_plugin_folder(plugin_folder)
 
-    def add_plugin_folder(self, plugin_folder):
-        """Add a folder of plugins to the manager."""
-        for filename in os.listdir(plugin_folder):
+    def _walk_callback(self, arg, folder, names):
+        """Folder walker callback"""
+        for filename in names:
             if os.path.splitext(filename)[1] == PLUGIN_FILE_EXTENSION:
-                full = os.path.join(plugin_folder, filename)
+                full = os.path.join(folder, filename)
                 self._add_plugin(full)
+
+    def add_plugin_folder(self, plugin_folder):
+        """Add a folder of plugins to the manager recursively."""
+        os.path.walk(plugin_folder, self._walk_callback, None)
 
     def _add_plugin(self, fullname):
         """Add the plugin to the dictionary."""

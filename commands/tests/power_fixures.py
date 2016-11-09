@@ -57,8 +57,8 @@ class PowerCommandsCommon(unittest.TestCase):
     """Common to all power common tests"""
     def setUp(self):
         self.node_name = 'test_node'
-        self.persistent_file = os.path.sep + \
-            os.path.join('tmp', self.node_name + '.state')
+        self.persistent_file = os.path.join(os.path.sep, 'tmp',
+                                            self.node_name + '.state')
         self.manager = PluginManager()
         self.manager.add_provider(NodePowerMetadata())
         self.manager.add_provider(BmcMetadata())
@@ -88,7 +88,7 @@ class PowerCommandsCommon(unittest.TestCase):
         }
 
     def tearDown(self):
-        file_name = os.path.sep + os.path.join('tmp', 'test_node.state')
+        file_name = os.path.join(os.path.sep, 'tmp', 'test_node.state')
         if os.path.exists(file_name):
             os.unlink(file_name)
 

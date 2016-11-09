@@ -192,7 +192,7 @@ class NodePower(PowerControl):
 
     def _graceful_os_halt(self):
         """Halt the OS to chassis on not OS."""
-        shutdown = os.path.sep + os.path.join('sbin', 'shutdown')
+        shutdown = os.path.join(os.path.sep, 'sbin', 'shutdown')
         result = self.os_access.execute([shutdown, '--halt', 'now'],
                                         self.os_credentials)[0]
         if result != 255 and result != 0:  # 255 if ssh was disconnected

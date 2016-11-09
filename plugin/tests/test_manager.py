@@ -110,7 +110,7 @@ class TestPluginManager(unittest.TestCase):
 
         cwd = os.curdir
         dir_name = os.path.join(cwd, self.__dir_name)
-        special_name = os.path.sep + os.path.join('tmp', self.__special)
+        special_name = os.path.join(os.path.sep, 'tmp', self.__special)
         shutil.rmtree(dir_name, ignore_errors=True)
         os.mkdir(dir_name)
         shutil.rmtree(special_name, ignore_errors=True)
@@ -155,14 +155,14 @@ class TestPluginManager(unittest.TestCase):
         fd = open(fn, 'w')
         fd.write(code)
         fd.close()
-        fd = open(os.path.sep + os.path.join(special_name, '__init__.py'), 'w')
+        fd = open(os.path.join(os.path.sep, special_name, '__init__.py'), 'w')
         fd.close()
 
     def tearDown(self):
         """Common per test method cleanup."""
         cwd = os.curdir
         dir_name = os.path.join(cwd, self.__dir_name)
-        special_name = os.path.sep + 'tmp'
+        special_name = os.path.join(os.path.sep, 'tmp')
         shutil.rmtree(dir_name, ignore_errors=True)
         shutil.rmtree(special_name, ignore_errors=True)
 
@@ -199,7 +199,7 @@ class TestPluginManager(unittest.TestCase):
 
     def test_multiple_folders(self):
         """Test"""
-        special_name = os.path.sep + os.path.join('tmp', self.__special)
+        special_name = os.path.join(os.path.sep, 'tmp', self.__special)
         manager3 = PluginManager(special_name)
         self.assertEqual(1, len(manager3.get_categories()))
         manager3.add_plugin_folder(self.__dir_name)

@@ -39,7 +39,7 @@ class BmcMock(Bmc):
         super(BmcMock, self).__init__(options)
         self.state_change_delay = 5  # seconds
         self.__current_states = {}
-        self.__persistent_file = os.path.sep + os.path.join('tmp', 'bmc_file')
+        self.__persistent_file = os.path.join(os.path.sep, 'tmp', 'bmc_file')
         if os.path.exists(self.__persistent_file):
             self._load_bmc_file()
         self.set_failure = False

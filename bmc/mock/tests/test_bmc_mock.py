@@ -15,7 +15,7 @@ from ctrl.utilities.remote_access_data import RemoteAccessData
 
 class TestBmcMock(unittest.TestCase):
     def setUp(self):
-        self.bmc_file = os.path.sep + os.path.join('tmp', 'bmc_file')
+        self.bmc_file = os.path.join(os.path.sep, 'tmp', 'bmc_file')
         self.remote = RemoteAccessData('127.0.0.2', 0, 'admin', 'root')
 
     def test_metadata_mock(self):
