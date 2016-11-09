@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016      Intel Corporation.  All rights reserved.
-#
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
+# Copyright (c) 2016 Intel Corp.
 #
 """
 This module is called "Command Invoker" which uses APIs from "commands" folder
@@ -15,16 +9,16 @@ to perform user requested operations.
 from __future__ import print_function
 import re
 import sys
-from plugin.manager import PluginManager
-from commands.power_on.power_on import PluginMetadata as POn
-from commands.power_off.power_off import PluginMetadata as POff
-from commands.power_cycle.power_cycle import PluginMetadata as PCycle
-from commands.resource_pool_add.resource_pool_add import PluginMetadata as PRAdd
-from commands.resource_pool_remove.resource_pool_remove import \
+from ctrl.plugin.manager import PluginManager
+from ctrl.commands.power_on.power_on import PluginMetadata as POn
+from ctrl.commands.power_off.power_off import PluginMetadata as POff
+from ctrl.commands.power_cycle.power_cycle import PluginMetadata as PCycle
+from ctrl.commands.resource_pool_add.resource_pool_add import PluginMetadata as PRAdd
+from ctrl.commands.resource_pool_remove.resource_pool_remove import \
     PluginMetadata as PRRemove
-from power_control.mock.power_control_mock import PluginMetadata as PNPower
-from bmc.ipmi_util.ipmi_util import PluginMetadata as PBmc
-from os_remote_access.ssh.ssh import PluginMetadata as PSsh
+from ctrl.power_control.mock.power_control_mock import PluginMetadata as PNPower
+from ctrl.bmc.ipmi_util.ipmi_util import PluginMetadata as PBmc
+from ctrl.os_remote_access.ssh.ssh import PluginMetadata as PSsh
 
 
 class CommandExeFactory(object):
@@ -88,7 +82,7 @@ class CommandExeFactory(object):
         for device in device_list:
             cmd_dictionary = self.create_dictionary(device, sub_command)
             p_off_obj = self.manager.factory_create_instance('command',
-                                                             'power_off',
+                                                             'node_power_off',
                                                              cmd_dictionary)
             return_msg = p_off_obj.execute()
             print('{} - RETURN CODE: {}'.format(return_msg.message,

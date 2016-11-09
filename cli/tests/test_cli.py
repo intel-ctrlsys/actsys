@@ -1,25 +1,20 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016      Intel Corporation.  All rights reserved.
-#
-# $COPYRIGHT$
-#
-# Additional copyrights may follow
-#
-# $HEADER$
+# Copyright (c) 2016 Intel Corp.
 #
 
 from unittest import TestCase
 import sys
-from cli.control_cli import CtrlCliParser, CtrlCliExecutor
-from cli.cli_cmd_invoker import CommandExeFactory
-from commands.power_on import PowerOnCommand
-from commands.power_off import PowerOffCommand
-from commands.power_cycle import PowerCycleCommand
-from commands.resource_pool_add import ResourcePoolAddCommand
-from commands.resource_pool_remove import ResourcePoolRemoveCommand
+from ctrl.cli.control_cli import CtrlCliParser, CtrlCliExecutor
+from ctrl.cli.cli_cmd_invoker import CommandExeFactory
+from ctrl.commands.power_on import PowerOnCommand
+from ctrl.commands.power_off import PowerOffCommand
+from ctrl.commands.power_cycle import PowerCycleCommand
+from ctrl.commands.resource_pool_add import ResourcePoolAddCommand
+from ctrl.commands.resource_pool_remove import ResourcePoolRemoveCommand
 from mock import MagicMock, patch, mock
 from argparse import Namespace
+
 
 class ControlCliParserTest(TestCase):
 
