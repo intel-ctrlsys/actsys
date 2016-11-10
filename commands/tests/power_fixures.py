@@ -97,6 +97,7 @@ class PowerCommandsCommon(unittest.TestCase):
         setter('test_node', param, value)
 
     def setUpConfiguration(self):
+        """Setup a configuration object for mocking"""
         setter = self.configuration.set_device_data
 
         # OS

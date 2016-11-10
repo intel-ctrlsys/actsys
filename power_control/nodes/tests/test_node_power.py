@@ -152,11 +152,11 @@ class TestNodePower(unittest.TestCase):
                 (self.switch_access2, self.switch_plugin2, '1')
             ],
             'policy': {
-                'OSShutdownTimeoutSeconds': 2,
-                'OSBootTimeoutSeconds': 2,
-                'OSNetworkToHaltTime': 2,
-                'BMCBootTimeoutSeconds': 2,
-                'BMCChassisOffWait': 2
+                'OSShutdownTimeoutSeconds': 1.1,
+                'OSBootTimeoutSeconds': 1.1,
+                'OSNetworkToHaltTime': 1.1,
+                'BMCBootTimeoutSeconds': 1.1,
+                'BMCChassisOffWait': 1.1
             }
         }
 
