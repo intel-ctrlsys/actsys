@@ -32,7 +32,7 @@ class TestPowerOffCommand(PowerCommandsCommon):
     def test_metadata(self):
         metadata = PluginMetadata()
         self.assertEqual('command', metadata.category())
-        self.assertEqual('node_power_off', metadata.name())
+        self.assertEqual('power_off', metadata.name())
         self.assertEqual(100, metadata.priority())
         self.assertIsNotNone(metadata.create_instance(self.command_options))
 

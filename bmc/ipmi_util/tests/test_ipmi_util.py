@@ -61,7 +61,7 @@ class TestBmcIpmi(unittest.TestCase):
         self.bmc.utilities.returned_value = False
         while self.__utilities.ping_check(address) != state and \
                 (now - start_time) < 300:
-            time.sleep(1)
+            time.sleep(0.01)
             now = time.time()
             self.bmc.utilities.returned_value = True
 

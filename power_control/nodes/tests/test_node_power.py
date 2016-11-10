@@ -6,6 +6,7 @@
 Test the node_power plugin implementation.
 """
 import unittest
+import time
 from ctrl.power_control.nodes.node_power import PluginMetadata as NodePowerMD
 from ctrl.bmc.mock.bmc import PluginMetadata as BmcMD
 from ctrl.os_remote_access.mock.os_remote_access import PluginMetadata as OsMD
@@ -124,6 +125,8 @@ class MockNodePower(NodePower):
 class TestNodePower(unittest.TestCase):
     """Test the NodePower class."""
     def setUp(self):
+        self._real_sleep = time.sleep
+        time.sleep = self._my_sleep
         self.__utilities = MockUtilities()
         self.manager = PluginManager()
         self.metadata = NodePowerMD()
@@ -161,6 +164,12 @@ class TestNodePower(unittest.TestCase):
                                                                'node_power',
                                                                self.__options)
         self.controller.utilities = self.__utilities
+
+    def tearDown(self):
+        time.sleep = self._real_sleep
+
+    def _my_sleep(self, seconds):
+        self._real_sleep(float(seconds) / 100.0)
 
     def test_ctor(self):
         self.assertIsNotNone(self.controller)

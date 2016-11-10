@@ -16,7 +16,7 @@ from ctrl.commands.power_cycle.power_cycle import PluginMetadata as PCycle
 from ctrl.commands.resource_pool_add.resource_pool_add import PluginMetadata as PRAdd
 from ctrl.commands.resource_pool_remove.resource_pool_remove import \
     PluginMetadata as PRRemove
-from ctrl.power_control.mock.power_control_mock import PluginMetadata as PNPower
+from ctrl.power_control.nodes.node_power import PluginMetadata as PNPower
 from ctrl.bmc.ipmi_util.ipmi_util import PluginMetadata as PBmc
 from ctrl.os_remote_access.ssh.ssh import PluginMetadata as PSsh
 
@@ -82,7 +82,7 @@ class CommandExeFactory(object):
         for device in device_list:
             cmd_dictionary = self.create_dictionary(device, sub_command)
             p_off_obj = self.manager.factory_create_instance('command',
-                                                             'node_power_off',
+                                                             'power_off',
                                                              cmd_dictionary)
             return_msg = p_off_obj.execute()
             print('{} - RETURN CODE: {}'.format(return_msg.message,

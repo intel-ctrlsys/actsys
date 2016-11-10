@@ -20,7 +20,7 @@ class PluginMetadata(PluginMetadataInterface):
 
     def name(self):
         """Get the plugin instance name."""
-        return 'node_power_off'
+        return 'power_off'
 
     def priority(self):
         """Get the priority of this name in this category."""

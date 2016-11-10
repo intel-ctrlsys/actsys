@@ -12,8 +12,8 @@ from ctrl.commands.power_off import PowerOffCommand
 from ctrl.commands.power_cycle import PowerCycleCommand
 from ctrl.commands.resource_pool_add import ResourcePoolAddCommand
 from ctrl.commands.resource_pool_remove import ResourcePoolRemoveCommand
-from mock import MagicMock, patch, mock
-from argparse import Namespace
+from mock import patch
+from ctrl.commands.command import CommandResult
 
 
 class ControlCliParserTest(TestCase):
@@ -181,104 +181,106 @@ class ControlCliParserTest(TestCase):
         sys.argv[1:] = ['set', 'freq', 'n01', '452']
         CtrlCliExecutor().execute_cli_cmd()
 
-    def test_poweron_invoker(self):
-        args = Namespace(message='pass', return_code=0)
+    @patch.object(PowerOnCommand, 'execute')
+    def test_poweron_invoker(self, MockPowerOnCommand_execute):
+        args = CommandResult(message='pass', return_code=0)
         device_name = "n01"
         sub_command = "on"
-        PowerOnCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockPowerOnCommand_execute.return_value = 0
         retval = CommandExeFactory().power_on_invoker(device_name, sub_command)
         self.assertEqual(retval, 0)
 
-    def test_powercycle_invoker(self):
-        args = Namespace(message='pass', return_code=0)
+    @patch.object(PowerCycleCommand, 'execute')
+    def test_powercycle_invoker(self, MockPowerCycleCommand_execute):
+        args = CommandResult(message='pass', return_code=0)
         device_name = "n03"
         sub_command = "power_cycle"
-        PowerCycleCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockPowerCycleCommand_execute.return_value = args
         retval = CommandExeFactory().power_cycle_invoker(device_name, sub_command)
         self.assertEqual(retval, 0)
 
-    def test_poweroff_invoker(self):
-        args = Namespace(message='pass', return_code=0)
+    @patch.object(PowerOffCommand, 'execute')
+    def test_poweroff_invoker(self, MockPowerOffCommand_execute):
+        args = CommandResult(message='pass', return_code=0)
         device_name = "n01,n02"
         sub_command = "node_power_off"
-        PowerOffCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockPowerOffCommand_execute.execute.return_value = args
         retval = CommandExeFactory().power_off_invoker(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
-    def test_resourceadd_invoker(self):
-        args = Namespace(message='pass', return_code=0)
+    @patch.object(ResourcePoolAddCommand, 'execute')
+    def test_resourceadd_invoker(self, MockResourcePoolAddCommand_execute):
+        args = CommandResult(message='pass', return_code=0)
         device_name = "n01,n02"
         sub_command = "add"
-        ResourcePoolAddCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockResourcePoolAddCommand_execute.return_value = args
         retval = CommandExeFactory().resource_add_invoker(device_name,
                                                           sub_command)
         print"RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
-    def test_resourceremove_invoker(self):
-        args = Namespace(message='pass', return_code=0)
+    @patch.object(ResourcePoolRemoveCommand, 'execute')
+    def test_resourceremove_invoker(self, MockResourcePoolRemoveCommand_execute):
+        args = CommandResult(message='pass', return_code=0)
         device_name = "n01,n02"
         sub_command = "remove"
-        ResourcePoolRemoveCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockResourcePoolRemoveCommand_execute.return_value = args
         retval = CommandExeFactory().resource_remove_invoker(device_name,
                                                              sub_command)
         print "RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
-    def test_z_poff_neg(self):
-        args = Namespace(message='fail', return_code=1)
+    @patch('ctrl.commands.power_off.power_off.PowerOffCommand')
+    def test_z_poff_neg(self, MockPowerOffCommand):
+        args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "off"
-        PowerOffCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockPowerOffCommand.execute.return_value = 1
         retval = CommandExeFactory().power_off_invoker(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    def test_z_pon_neg(self):
-        args = Namespace(message='fail', return_code=1)
+    @patch('ctrl.commands.power_on.power_on.PowerOnCommand')
+    def test_z_pon_neg(self, MockPowerOnCommand):
+        args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "on"
-        PowerOnCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockPowerOnCommand.execute.return_value = 1
         retval = CommandExeFactory().power_on_invoker(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    def test_z_pre_neg(self):
-        args = Namespace(message='fail', return_code=1)
+    @patch('ctrl.commands.power_cycle.power_cycle.PowerCycleCommand')
+    def test_z_pre_neg(self, MockPowerCycleCommand):
+        args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "cycle"
-        PowerCycleCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockPowerCycleCommand.execute.return_value = 1
         retval = CommandExeFactory().power_cycle_invoker(device_name,
                                                          sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    def test_z_readd_neg(self):
-        args = Namespace(message='fail', return_code=1)
+    @patch('ctrl.commands.resource_pool_add.resource_pool_add.'
+           'ResourcePoolAddCommand')
+    def test_z_readd_neg(self, MockResourcePoolAddCommand):
+        args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "add"
-        ResourcePoolAddCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockResourcePoolAddCommand.execute.return_value = 1
         retval = CommandExeFactory().resource_add_invoker(device_name,
                                                           sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    def test_z_rerm_neg(self):
-        args = Namespace(message='fail', return_code=1)
+    @patch('ctrl.commands.resource_pool_remove.resource_pool_remove.'
+           'ResourcePoolRemoveCommand')
+    def test_z_rerm_neg(self, MockResourcePoolRemoveCommand):
+        args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "remove"
-        ResourcePoolRemoveCommand.execute = MagicMock()
-        MagicMock.return_value = args
+        MockResourcePoolRemoveCommand.execute.return_value = 1
         retval = CommandExeFactory().resource_remove_invoker(device_name,
                                                              sub_command)
         print"RETURN: {}" .format(retval)
