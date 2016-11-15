@@ -18,4 +18,4 @@ if __name__ == '__main__':
 
     from cli.control_cli import CtrlCliExecutor
 
-    CtrlCliExecutor.execute_cli_cmd()
+    CtrlCliExecutor().execute_cli_cmd()

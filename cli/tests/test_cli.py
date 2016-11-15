@@ -18,8 +18,13 @@ from ctrl.commands.command import CommandResult
 
 class ControlCliParserTest(TestCase):
 
-    def setUp(self):
+    @patch("plugin.manager.PluginManager")
+    def setUp(self, mock_plugin_manager):
         self.TestParser = CtrlCliParser()
+        self.cmd_exe_factory_obj = CommandExeFactory()
+        mock_plugin_manager.factory_create_instance.return_value.execute.\
+            return_value.return_code = 0
+        self.cmd_exe_factory_obj.manager = mock_plugin_manager
 
     def test_version(self):
         sys.argv[1:] = ['--version']
@@ -81,24 +86,36 @@ class ControlCliParserTest(TestCase):
         test_args = self.TestParser.get_all_args()
         self.assertEqual(test_args.subcommand, "powercap")
 
-    def test_power_on_cmd_execute(self):
+    @patch("cli.cli_cmd_invoker.CommandExeFactory")
+    def test_power_on_cmd_execute(self, mock_cmd_exe_factory):
         sys.argv[1:] = ['power', 'on', 'n01']
         test_args = self.TestParser.get_all_args()
-        ret = CtrlCliExecutor().power_cmd_execute(test_args)
+        ctrl_cli_exe_obj = CtrlCliExecutor()
+        mock_cmd_exe_factory.power_on_invoker.return_value = 0
+        ctrl_cli_exe_obj.cmd_exe_factory_obj = mock_cmd_exe_factory
+        ret = ctrl_cli_exe_obj.power_cmd_execute(test_args)
         print"RETURN: {}" .format(ret)
         self.assertEqual(ret, 0)
 
-    def test_power_off_cmd_execute(self):
+    @patch("cli.cli_cmd_invoker.CommandExeFactory")
+    def test_power_off_cmd_execute(self, mock_cmd_exe_factory):
         sys.argv[1:] = ['power', 'off', 'n01']
         test_args = self.TestParser.get_all_args()
-        ret = CtrlCliExecutor().power_cmd_execute(test_args)
+        ctrl_cli_exe_object = CtrlCliExecutor()
+        mock_cmd_exe_factory.power_off_invoker.return_value = 0
+        ctrl_cli_exe_object.cmd_exe_factory_obj = mock_cmd_exe_factory
+        ret = ctrl_cli_exe_object.power_cmd_execute(test_args)
         print"RETURN: {}" .format(ret)
         self.assertEqual(ret, 0)
 
-    def test_power_reboot_cmd_execute(self):
+    @patch("cli.cli_cmd_invoker.CommandExeFactory")
+    def test_power_cycle_cmd_execute(self, mock_cmd_exe_factory):
         sys.argv[1:] = ['power', 'cycle', 'n01']
         test_args = self.TestParser.get_all_args()
-        ret = CtrlCliExecutor().power_cmd_execute(test_args)
+        ctrl_cli_exe_obj = CtrlCliExecutor()
+        mock_cmd_exe_factory.power_cycle_invoker.return_value = 0
+        ctrl_cli_exe_obj.cmd_exe_factory_obj = mock_cmd_exe_factory
+        ret = ctrl_cli_exe_obj.power_cmd_execute(test_args)
         print"RETURN: {}" .format(ret)
         self.assertEqual(ret, 0)
 
@@ -152,60 +169,66 @@ class ControlCliParserTest(TestCase):
 
     def test_wrong_device_name(self):
         device_name = 'n01#'
-        with self.assertRaises(SystemExit):
-            CommandExeFactory().device_name_check(device_name)
+        ret_val = CommandExeFactory()._device_name_check(device_name)
+        self.assertEqual(ret_val, 1)
 
     def test_correct_device_name(self):
         device_name = "n01"
-        dev_list = CommandExeFactory().device_name_check(device_name)
-        print dev_list
+        dev_list = CommandExeFactory()._device_name_check(device_name)
         self.assertEqual(device_name, dev_list[0])
 
-    def test_exe_cli_cmd_with_power(self):
+    @patch.object(CtrlCliExecutor, "power_cmd_execute")
+    def test_exe_cli_cmd_with_power(self, mock_pwr_cmd_exe):
         sys.argv[1:] = ['power', 'on', 'n01']
-        CtrlCliExecutor().execute_cli_cmd()
+        ctrl_cli_exe_obj = CtrlCliExecutor()
+        mock_pwr_cmd_exe.return_value = 0
+        retval = ctrl_cli_exe_obj.execute_cli_cmd()
+        self.assertEqual(retval, 0)
 
     def test_exe_cli_cmd_with_process(self):
         sys.argv[1:] = ['process', 'list', 'n01', '178']
-        CtrlCliExecutor().execute_cli_cmd()
+        retval = CtrlCliExecutor().execute_cli_cmd()
+        self.assertEqual(retval, 0)
 
     def test_exe_cli_cmd_with_resource(self):
         sys.argv[1:] = ['resource', 'add', 'n01']
-        CtrlCliExecutor().execute_cli_cmd()
+        retval = CtrlCliExecutor().execute_cli_cmd()
+        self.assertEqual(retval, 0)
 
     def test_exe_cli_cmd_with_get(self):
         sys.argv[1:] = ['get', 'freq', 'n01']
-        CtrlCliExecutor().execute_cli_cmd()
+        retval = CtrlCliExecutor().execute_cli_cmd()
+        self.assertEqual(retval, 0)
 
     def test_exe_cli_cmd_with_set(self):
         sys.argv[1:] = ['set', 'freq', 'n01', '452']
-        CtrlCliExecutor().execute_cli_cmd()
+        retval = CtrlCliExecutor().execute_cli_cmd()
+        self.assertEqual(retval, 0)
 
-    @patch.object(PowerOnCommand, 'execute')
-    def test_poweron_invoker(self, MockPowerOnCommand_execute):
-        args = CommandResult(message='pass', return_code=0)
+    def test_poweron_invoker(self):
         device_name = "n01"
         sub_command = "on"
-        MockPowerOnCommand_execute.return_value = 0
-        retval = CommandExeFactory().power_on_invoker(device_name, sub_command)
+        retval = self.cmd_exe_factory_obj.power_on_invoker(device_name, sub_command)
         self.assertEqual(retval, 0)
 
-    @patch.object(PowerCycleCommand, 'execute')
-    def test_powercycle_invoker(self, MockPowerCycleCommand_execute):
-        args = CommandResult(message='pass', return_code=0)
+    def test_poweron_force_invoker(self):
+        device_name = "n01"
+        sub_command = "on"
+        sys.argv[1:] = ['power', 'on', '-f', 'n01']
+        cmd_args = self.TestParser.get_all_args()
+        retval = self.cmd_exe_factory_obj.power_on_invoker(device_name, sub_command, cmd_args)
+        self.assertEqual(retval, 0)
+
+    def test_powercycle_invoker(self):
         device_name = "n03"
-        sub_command = "power_cycle"
-        MockPowerCycleCommand_execute.return_value = args
-        retval = CommandExeFactory().power_cycle_invoker(device_name, sub_command)
+        sub_command = "cycle"
+        retval = self.cmd_exe_factory_obj.power_cycle_invoker(device_name, sub_command)
         self.assertEqual(retval, 0)
 
-    @patch.object(PowerOffCommand, 'execute')
-    def test_poweroff_invoker(self, MockPowerOffCommand_execute):
-        args = CommandResult(message='pass', return_code=0)
+    def test_poweroff_invoker(self):
         device_name = "n01,n02"
-        sub_command = "node_power_off"
-        MockPowerOffCommand_execute.execute.return_value = args
-        retval = CommandExeFactory().power_off_invoker(device_name, sub_command)
+        sub_command = "off"
+        retval = self.cmd_exe_factory_obj.power_off_invoker(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
@@ -231,6 +254,19 @@ class ControlCliParserTest(TestCase):
         print "RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
+    @patch('ctrl.commands.power_on.power_on.PowerOnCommand')
+    def test_z_pon_neg(self, MockPowerOnCommand):
+        sys.argv[1:] = ['power', 'on', '-f', 'n01']
+        test_args = self.TestParser.get_all_args()
+        args = CommandResult(message='pass', return_code=1)
+        device_name = "n01,n02"
+        sub_command = "on"
+        MockPowerOnCommand.execute.return_value = args
+        retval = CommandExeFactory().power_on_invoker(device_name, sub_command,
+                                                      test_args)
+        print"RETURN: {}" .format(retval)
+        self.assertNotEqual(retval, 0)
+
     @patch('ctrl.commands.power_off.power_off.PowerOffCommand')
     def test_z_poff_neg(self, MockPowerOffCommand):
         args = CommandResult(message='pass', return_code=1)
@@ -238,16 +274,6 @@ class ControlCliParserTest(TestCase):
         sub_command = "off"
         MockPowerOffCommand.execute.return_value = 1
         retval = CommandExeFactory().power_off_invoker(device_name, sub_command)
-        print"RETURN: {}" .format(retval)
-        self.assertNotEqual(retval, 0)
-
-    @patch('ctrl.commands.power_on.power_on.PowerOnCommand')
-    def test_z_pon_neg(self, MockPowerOnCommand):
-        args = CommandResult(message='pass', return_code=1)
-        device_name = "n01,n02"
-        sub_command = "on"
-        MockPowerOnCommand.execute.return_value = 1
-        retval = CommandExeFactory().power_on_invoker(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
@@ -285,5 +311,3 @@ class ControlCliParserTest(TestCase):
                                                              sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
-
-
