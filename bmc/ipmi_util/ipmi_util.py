@@ -93,10 +93,10 @@ class BmcIpmiUtil(Bmc):
         if cmd not in cmd_map:
             raise RuntimeError('Illegal command passed "%s"!' % cmd)
         if cmd == 'status':
-            command = [self.tool, 'health', '-N', address, '-U', user, '-V',
-                       '4', '-P', password]
+            command = [self.tool, 'health', '-N', str(address), '-U', str(user), '-V',
+                       '4', '-P', str(password)]
             return command
         else:
-            command = [self.tool, 'power', '-N', address, '-U', user, '-V', '4',
-                       '-w', '-P', password, cmd_map[cmd]]
+            command = [self.tool, 'power', '-N', str(address), '-U', str(user), '-V', '4',
+                       '-w', '-P', str(password), cmd_map[cmd]]
             return command
