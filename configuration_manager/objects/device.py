@@ -17,8 +17,8 @@ class Device(ConfigurationManagerItem):
         if not attributes:
             attributes = dict({})
 
-        if 'device_name' not in attributes:
-            attributes['device_name'] = None
+        if 'device_id' not in attributes:
+            attributes['device_id'] = None
 
         if 'device_type' not in attributes:
             attributes['device_type'] = None

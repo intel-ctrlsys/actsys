@@ -49,8 +49,8 @@ class ClusterConfigurationExtractorInterface(object):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_rack(self, rack_id):
-        """Returns a device object matching with the given id.
-            This method will search only for rack objects
+    def get_config_vars(self):
+        """Returns a device object with the global configuration
+           variables.
         """
         raise NotImplementedError()

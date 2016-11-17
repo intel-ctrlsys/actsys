@@ -16,11 +16,11 @@ from ctrl.configuration_manager.json_parser.json_parser import JsonParser
 
 class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
     """Implements ClusterConfigurationExtractorInterface interface"""
-    NODE_TAG = 'NODE'
-    BMC_TAG = 'BMC'
-    PSU_TAG = 'PSU'
-    PDU_TAG = 'PDU'
-    RACK_TAG = 'RACK'
+    NODE_TAG = 'node'
+    BMC_TAG = 'bmc'
+    PSU_TAG = 'psu'
+    PDU_TAG = 'pdu'
+    CONFIG_VARS_TAG = 'configuration_variables'
 
     def __init__(self, data_container):
         """init method
@@ -74,12 +74,12 @@ class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
         :return: A Device Object"""
         return self.data_container.search_device(device_id, self.PDU_TAG)
 
-    def get_rack(self, device_id):
-        """Implements get_rack
+    def get_config_vars(self):
+        """Implements get_config_vars
         :rtype: Device
-        :param device_id: Unique id of a rack
-        :return: A Device Object"""
-        return self.data_container.search_device(device_id, self.RACK_TAG)
+        :return: A Device Object with the Global Configuration Variables"""
+        return self.data_container.search_device(self.CONFIG_VARS_TAG,
+                                                 self.CONFIG_VARS_TAG,)
 
 
 class ClusterConfiguration(ConfigurationTypeInterface):

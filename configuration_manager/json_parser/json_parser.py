@@ -23,9 +23,9 @@ class JsonParser(object):
             with open(file_path) as data_file:
                 file_content = json.load(data_file)
         except IOError:
-            print('File not found')
+            print 'File not found'
         except ValueError:
-            print ('Non parsable file')
+            print 'Non parsable file'
         return file_content
 
     @staticmethod

@@ -1,96 +1,99 @@
 {
-  "service": [
+  "profile": [],
+  "node": [
     {
-      "exec_command": "gmond",
-      "param": [
-        {
-          "value": "",
-          "name": "--help"
-        }
+      "ip_address": "192.168.1.32",
+      "hostname": "master4",
+      "role": [
+        "aggregator"
       ],
-      "name": "ganglia"
-    },
-    {
-      "exec_command": "orcmd",
-      "param": [
-        {
-          "value": "mca_sensors heartbeat,snmp",
-          "name": "--omca"
-        }
+      "password": "pass@123",
+      "port": 20,
+      "image": "/etc/images/UBUNTU",
+      "user": "username",
+      "service_list": [
+        "gmond",
+        "orcmd",
+        "orcmsched"
       ],
-      "name": "sensys"
+      "bmc": "192.168.2.32",
+      "os_shutdown_timeout_seconds": 150,
+      "os_boot_timeout_seconds": 300,
+      "os_network_to_halt_time": 5,
+      "bmc_boot_timeout_seconds": 10,
+      "bmc_chassis_off_wait": 3
     }
   ],
-  "profile": [],
-  "rack": [
+  "bmc": [
     {
-      "name": "rack_1",
-      "node": [
+      "user": "username",
+      "channel": 11,
+      "priv_level": "USER",
+      "auth_method": "PASSWORD",
+      "password": "pass@123",
+      "port": 20,
+      "ip_address": "192.168.2.32"
+    }
+  ],
+  "pdu": [
+    {
+      "outlets_count": 12,
+      "ip_address": "192.168.3.32",
+      "port": 20,
+      "user": "username",
+      "password": "pass@123",
+      "connected_device": [
         {
-          "ip_address": "192.168.1.32",
-          "hostname": "master4",
-          "role": "aggregator",
-          "password": "pass@123",
-          "port": "20",
-          "image": "/etc/images/UBUNTU",
-          "user": "username",
-          "service_list": [
-            "ganglia",
-            "sensys"
-          ],
-          "bmc": {
-            "user": "username",
-            "channel": "11",
-            "priv_level": "USER",
-            "auth_method": "PASSWORD",
-            "password": "pass@123",
-            "port": "20",
-            "ip_address": "192.168.2.32"
-          }
-        }
-      ],
-      "pdu": [
+          "outlet": "3",
+          "device": ["master4"]
+        },
         {
-          "pdu_id": "pdu1",
-          "outlets_count": "12",
-          "ip_address": "192.168.2.33",
-          "port": "20",
-          "user": "username",
-          "password": "pass@123",
-          "connected_device": [
-            {
-              "outlet": "3",
-              "device": "psu2"
-            },
-            {
-              "outlet": "0",
-              "device": "psu1"
-            }
-          ]
-        }
-      ],
-      "psu": [
-        {
-          "outlets_count": "2",
-          "psu_id": "psu1",
-          "connected_device": [
-            {
-              "outlet": "1",
-              "device": "master4"
-            },
-            {
-              "outlet": "0",
-              "device": "master4"
-            }
-          ]
+          "outlet": "0",
+          "device": ["192.168.4.32"]
         }
       ]
     }
   ],
-  "configuration_variables": [
+
+  "psu": [
     {
-      "provisioning_agent_software": "Warewulf"
+      "outlets_count": 2,
+      "ip_address": "192.168.4.32",
+      "port": 20,
+      "user": "username",
+      "password": "pass@123",
+      "connected_device": [
+        {
+          "outlet": "1",
+          "device": ["master4"]
+        },
+        {
+          "outlet": "0",
+          "device": ["master3"]
+        }
+      ]
     }
-  ]
+  ],
+
+  "configuration_variables": {
+    "provisioning_agent_software": "Warewulf",
+    "log_file": {
+      "path": "/var/log/ctrl.log",
+      "max_bytes": 10485760,
+      "retention_period": 30,
+      "level": "DEBUG"
+    },
+    "console_output": {
+      "file": [
+        "/opt/ctrl/console'"
+      ],
+      "error_level_regex": [
+        "regex"
+      ],
+      "warning_level_regex": [
+        "regex"
+      ]
+    }
+  }
 }
 

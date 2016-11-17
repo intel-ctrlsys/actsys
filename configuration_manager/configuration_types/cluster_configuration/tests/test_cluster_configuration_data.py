@@ -13,15 +13,18 @@ from ctrl.configuration_manager.objects.device import Device
 class TestClusterConfigurationData(TestCase):
     """ Tests for ClusterConfigurationData Module """
     def setUp(self):
-        self.dc = ClusterConfigurationData(True)
-        if self.dc is not None:
-            self.data = self.dc.copy()
+        """ Setup function"""
+        self.container = ClusterConfigurationData(True)
+        if self.container is not None:
+            self.data = self.container.copy()
 
     def test___init__test_enabled(self):
-        self.assertIsNotNone(self.dc)
-        self.assertNotEqual(self.dc, {})
+        """ Test init function """
+        self.assertIsNotNone(self.container)
+        self.assertNotEqual(self.container, {})
 
     def test___init__test_disabled(self):
+        """ Test init function """
         data_container = ClusterConfigurationData()
         data_container2 = ClusterConfigurationData(False)
         self.assertIsNotNone(data_container)
@@ -30,74 +33,92 @@ class TestClusterConfigurationData(TestCase):
         self.assertEqual(data_container2, {})
 
     def test__setitem__raises_TypeError(self):
-        self.assertRaises(TypeError, self.dc.__setitem__, 'key', 'value')
-        self.assertEqual(self.dc, self.data)
+        """ Test setitem function """
+        self.assertRaises(TypeError, self.container.__setitem__, 'key', 'value')
+        self.assertEqual(self.container, self.data)
 
     def test__setitem__raises_TypeError_invalid_Device(self):
-        self.assertRaises(TypeError, self.dc.__setitem__, 'key',
+        """ Test setitem function """
+        self.assertRaises(TypeError, self.container.__setitem__, 'key',
                           Device({'device_types':'new_type',\
                                   'device_id':'myid', 'key':'value'}))
-        self.assertEqual(self.dc, self.data)
+        self.assertEqual(self.container, self.data)
 
     def test__setitem__(self):
+        """ Test setitem function """
         new_device = Device({'device_type':'new_type', 'device_id':'myid',\
                              'key':'value'})
-        self.dc[new_device.device_type] = new_device
-        self.assertEqual(self.dc['new_type']['myid'], new_device)
+        self.container[new_device.device_type] = new_device
+        self.assertEqual(self.container['new_type']['myid'], new_device)
 
     def test_add_device_None(self):
-        self.assertFalse(self.dc.add_device(None))
-        self.assertEqual(self.dc, self.data)
+        """ Test add_device function """
+        self.assertFalse(self.container.add_device(None))
+        self.assertEqual(self.container, self.data)
 
     def test_add_device_not_a_Device(self):
-        self.assertFalse(self.dc.add_device(1))
-        self.assertEqual(self.dc, self.data)
+        """ Test add_device function """
+        self.assertFalse(self.container.add_device(1))
+        self.assertEqual(self.container, self.data)
 
     def test_add_device_empty_Device(self):
-        self.assertFalse(self.dc.add_device(Device()))
-        self.assertEqual(self.dc, self.data)
+        """ Test add_device function """
+        self.assertFalse(self.container.add_device(Device()))
+        self.assertEqual(self.container, self.data)
 
     def test_add_device_no_device_type(self):
-        self.assertFalse(self.dc.add_device(Device({'key':'value'})))
-        self.assertEqual(self.dc, self.data)
+        """ Test add_device function """
+        self.assertFalse(self.container.add_device(Device({'key':'value'})))
+        self.assertEqual(self.container, self.data)
 
     def test_add_device_no_device_id(self):
+        """ Test add_device function """
         new_device = Device({'device_type':'new_type', 'key':'value'})
-        self.assertFalse(self.dc.add_device(new_device))
-        self.assertEqual(self.dc, self.data)
+        self.assertFalse(self.container.add_device(new_device))
+        self.assertEqual(self.container, self.data)
 
     def test_add_device_new_device_type(self):
+        """ Test add_device function """
         new_device = Device({'device_type':'new_type', 'device_id':'myid',\
                              'key':'value'})
-        self.assertTrue(self.dc.add_device(new_device))
-        self.assertEqual(self.dc['new_type']['myid'], new_device)
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['new_type']['myid'], new_device)
 
     def test_add_device_existing_device_type_new_device_id(self):
-        new_device = Device({'device_type':'NODE', 'device_id':'myid',\
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':'myid',\
                              'key':'value'})
-        self.assertTrue(self.dc.add_device(new_device))
-        self.assertEqual(self.dc['NODE']['myid'], new_device)
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node']['myid'], new_device)
 
     def test_add_device_existing_device_type_existing_device_id(self):
-        new_device = Device({'device_type':'NODE', 'device_id':'host1',\
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':'master4',\
                              'key':'value'})
-        self.assertTrue(self.dc.add_device(new_device))
-        self.assertEqual(self.dc['NODE']['host1'], new_device)
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node']['master4'], new_device)
 
     def test_search_device_no_type(self):
-        self.assertEqual(self.dc.search_device('host1'), \
-                                               self.dc['NODE']['host1'])
+        """ Test serarch_device function """
+        self.assertEqual(self.container.search_device('master4'), \
+                         self.container['node']['master4'])
 
     def test_search_device_given_type(self):
-        self.assertEqual(self.dc.search_device('host1', 'NODE'),\
-                                               self.dc['NODE']['host1'])
+        """ Test serarch_device function """
+        self.assertEqual(self.container.search_device('master4', 'node'),\
+                         self.container['node']['master4'])
 
     def test_search_device_invalid_id(self):
-        self.assertEqual(self.dc.search_device('INVALID'), None)
+        """ Test serarch_device function """
+        self.assertEqual(self.container.search_device('INVALID'), None)
 
     def test_search_device_invalid_type(self):
-        self.assertEqual(self.dc.search_device('host1', 'INVALID'), None)
+        """ Test serarch_device function """
+        self.assertEqual(self.container.search_device('master4', 'INVALID'),\
+                                                      None)
 
     def test_search_device_invalid_params(self):
-        self.assertEqual(self.dc.search_device('INVALID', 'INVALID'), None)
+        """ Test serarch_device function """
+        self.assertEqual(self.container.search_device('INVALID', 'INVALID'),\
+                                                      None)
 
