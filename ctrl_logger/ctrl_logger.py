@@ -8,40 +8,80 @@
 import logging
 import logging.handlers
 
+FORMAT = "%(asctime)s %(levelname)-8s %(name)-6s: %(message)s"
+LOG_FILE = "/var/log/actsys.log"
 
 class CtrlLogger(logging.getLoggerClass()):
     """Extended class of python logging module."""
-    def __init__(self, file_location="/var/log/", log_file_max_bytes=0,
-                 retention_period_in_days=0):
-        pass
+    def __init__(self, name=None, level=logging.NOTSET):
+        super(CtrlLogger, self).__init__(name, level)
 
-    def info(self, message):
+    def info(self, log_msg, *args, **kwargs):
         """Confirmation that things are working as expected."""
-        self.root.info(message)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(CtrlLogger, self).info(msg)
+        else:
+            super(CtrlLogger, self).info(log_msg, *args, **kwargs)
 
-    def debug(self, message):
+    def debug(self, log_msg, *args, **kwargs):
         """Detailed information, typically of interest only when diagnosing
            problems."""
-        self.root.debug(message)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(CtrlLogger, self).debug(msg)
+        else:
+            super(CtrlLogger, self).debug(log_msg, *args, **kwargs)
 
-    def warning(self, message):
+    def warning(self, log_msg, *args, **kwargs):
         """An indication that something unexpected happened, or indicative of
-           some problem in the near future. The softwware is still working as
+           some problem in the near future. The software is still working as
            expected."""
-        self.root.warning(message)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(CtrlLogger, self).warning(msg)
+        else:
+            super(CtrlLogger, self).warning(log_msg, *args, **kwargs)
 
-    def error(self, message):
-        """Due to a more serious problem, the software has not been able to
-           perform some function."""
-        self.root.error(message)
-
-    def critical(self, message):
+    def critical(self, log_msg, *args, **kwargs):
         """A serious problem, indication that the program itself may be unable
            to continue."""
-        self.root.critical(message)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(CtrlLogger, self).critical(msg)
+        else:
+            super(CtrlLogger, self).critical(log_msg, *args, **kwargs)
+
+    def error(self, log_msg, *args, **kwargs):
+        """Due to a more serious problem, the software has not been able to
+           perform some function."""
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(CtrlLogger, self).error(msg)
+        else:
+            super(CtrlLogger, self).error(log_msg, *args, **kwargs)
 
     def journal(self, command, command_result):
         """ Logs the user's transactions, where transaction is the command
             isued by the user"""
         pass
 
+def add_file_handler(logger):
+    """Send the logs to a log file with the format specified"""
+    handler = logging.handlers.RotatingFileHandler(LOG_FILE)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter(FORMAT)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+def get_ctrl_logger():
+    """Returns a ctrl logger, all calls to this function will return the same
+       instance"""
+    logging.setLoggerClass(CtrlLogger)
+    logger = logging.getLogger("actsys")
+
+    if not logger.handlers:
+        add_file_handler(logger)
+        logger.setLevel(logging.INFO)
+
+    return logger
