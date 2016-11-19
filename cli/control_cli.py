@@ -67,7 +67,7 @@ class CtrlCliParser(object):
                                                               ' node. For help'
                                                               ' on GET, use:'
                                                               ' python ctrlcli.'
-                                                              ' py get -h')
+                                                              'py get -h')
 
         self.set_parser = self.ctrl_subparser.add_parser('set',
                                                          help='Set Powercap/'
@@ -243,6 +243,8 @@ class CtrlCliExecutor(object):
         elif cmd_args.subparser_name == 'get':
             retval = self.get_cmd_execute(cmd_args)
             return retval
-        else:
+        elif cmd_args.subparser_name == 'set':
             retval = self.set_cmd_execute(cmd_args)
             return retval
+        else:
+            return 0
