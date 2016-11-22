@@ -13,7 +13,7 @@ from mock import patch
 
 
 class TestRemoteTelnetPlugin(unittest.TestCase):
-    """Test case for the RemoteSshPlugin class."""
+    """Test case for the RemoteTelnetPlugin class."""
 
     def setUp(self):
         self.access1 = RemoteAccessData('', 0, '', '')
