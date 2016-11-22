@@ -18,6 +18,7 @@ TEST_LOG = ".test.log"
 
 class TestCtrlLogger(unittest.TestCase):
     """Tests for logging functionality"""
+
     def setUp(self):
         """Change log file location and create a logger"""
         CtrlLogger.LOG_FILE = TEST_LOG
@@ -68,7 +69,7 @@ class TestCtrlLogger(unittest.TestCase):
                             "{0} log message not found ".format(level))
 
     def test_ctrl_logger_multiple_msgs(self):
-        """"Tests with a list of messages"""
+        """Tests with a list of messages"""
         messages = ["Dummy 1", "Dummy 2", "Dummy 3"]
         for level, fnt in self.log_functions.iteritems():
             fnt(messages)
@@ -78,8 +79,26 @@ class TestCtrlLogger(unittest.TestCase):
 
     @patch('control.commands.power.power_on.power_on.PowerOnCommand')
     def test_ctrl_logger_journal(self, MockPowerOnCommand):
-        test_result = CommandResult(message='Test journal msg', return_code=1)
+        """Test for journal logs """
+        log_format = '%(cmd)s %(device)s %(cmdargs)s %(message)s'
+        test_result = CommandResult(message='Switches are off', return_code=1)
+        MockPowerOnCommand.device_name = "node01"
+        MockPowerOnCommand.command_args = ['5242']
+        dict_fmt = {
+            'cmd': '',
+            'device':  MockPowerOnCommand.device_name,
+            'cmdargs': ''.join(MockPowerOnCommand.command_args),
+            'message': 'Job Started'
+        }
+
+        expected_msg = log_format % dict_fmt
+        self.log.journal(MockPowerOnCommand)
+        self.assertTrue(self.msg_in_log_file(("JOURNAL", expected_msg)))
+
+        dict_fmt['message'] = test_result.message
+        expected_msg = log_format % dict_fmt
         self.log.journal(MockPowerOnCommand, test_result)
+        self.assertTrue(self.msg_in_log_file(("JOURNAL", expected_msg)))
 
     def test_ctrl_logger_singleton(self):
         """Test that get_ctrl_logger always returns the same instance"""

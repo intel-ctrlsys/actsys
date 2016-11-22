@@ -8,6 +8,25 @@
 import logging
 import logging.handlers
 
+LOG_FILE = "/var/log/actsys.log"
+JOURNAL = 35
+
+class CtrlFormatter(logging.Formatter):
+    """Special formatter to change depending of the log level, for now just
+       Journal is different"""
+    _format = '%(asctime)s %(levelname)-8s %(name)-6s: %(message)s'
+    _journal_format = '%(asctime)s %(levelname)-8s %(name)-6s: %(cmd)s '\
+                      '%(device)s %(cmdargs)s %(message)s'
+
+    def format(self, record):
+        """Helps to use a different format depending on log level"""
+        if record.levelno == JOURNAL:
+            self._fmt = self._journal_format
+        else:
+            self._fmt = self._format
+
+        return  super(CtrlFormatter, self).format(record)
+
 
 class CtrlLogger(logging.getLoggerClass()):
     """Extended class of python logging module."""
@@ -17,6 +36,7 @@ class CtrlLogger(logging.getLoggerClass()):
 
     def __init__(self, name=None, level=logging.NOTSET):
         super(CtrlLogger, self).__init__(name, level)
+        logging.addLevelName(JOURNAL, "JOURNAL")
 
     def info(self, log_msg, *args, **kwargs):
         """Confirmation that things are working as expected."""
@@ -63,17 +83,25 @@ class CtrlLogger(logging.getLoggerClass()):
         else:
             super(CtrlLogger, self).error(log_msg, *args, **kwargs)
 
-    def journal(self, command, command_result):
+    def journal(self, command, command_result=None):
         """ Logs the user's transactions, where transaction is the command
             isued by the user"""
-        pass
+        start_msg = "Job Started"
+        journal_args = {
+            #command name not implemented
+            'cmd' : '',
+            'device' : command.device_name,
+            'cmdargs' : ''.join(command.command_args)
+        }
+
+        msg = start_msg if command_result is None else command_result.message
+        super(CtrlLogger, self).log(JOURNAL, msg, extra=journal_args)
 
 def add_file_handler(logger):
     """Send the logs to a log file with the format specified"""
     handler = logging.handlers.RotatingFileHandler(CtrlLogger.LOG_FILE)
     handler.setLevel(logging.INFO)
-    formatter = logging.Formatter(CtrlLogger.FORMAT)
-    handler.setFormatter(formatter)
+    handler.setFormatter(CtrlFormatter())
     logger.addHandler(handler)
 
 def get_ctrl_logger():
