@@ -122,10 +122,10 @@
       "hostname": "pdu-1",
       "ip_address": "192.168.3.1",
       "mac_address": "00:00:00:00:00:00",
-      "connected_devices": [
+      "connected_device": [
         {
           "outlet": "5",
-          "devices": [
+          "device": [
             "compute-29",
             "compute-30"
           ]
@@ -137,16 +137,16 @@
       "hostname": "pdu-2",
       "ip_address": "192.168.3.2",
       "mac_address": "00:00:00:00:00:00",
-      "connected_devices": [
+      "connected_device": [
         {
           "outlet": "1",
-          "devices": [
+          "device": [
             "compute-31"
           ]
         },
         {
           "outlet": "2",
-          "devices": [
+          "device": [
             "compute-32"
           ]
         }

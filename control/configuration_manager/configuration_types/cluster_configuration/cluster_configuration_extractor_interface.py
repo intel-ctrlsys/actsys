@@ -17,7 +17,12 @@ class ClusterConfigurationExtractorInterface(object):
 
     @abstractmethod
     def get_devices_by_type(self, device_type):
-        """Returns a device object matching with the given id"""
+        """Returns a device object list matching with the given type"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_device_types(self):
+        """Returns a list of available device types"""
         raise NotImplementedError()
 
     @abstractmethod

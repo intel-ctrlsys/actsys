@@ -1,11 +1,9 @@
 {
-  "profile": [],
-  "node": [
+  "profile": [
     {
-      "ip_address": "192.168.1.32",
-      "hostname": "master4",
+      "profile_name": "compute_node",
       "role": [
-        "aggregator"
+        "compute"
       ],
       "password": "pass@123",
       "port": 20,
@@ -13,18 +11,14 @@
       "user": "username",
       "service_list": [
         "gmond",
-        "orcmd",
-        "orcmsched"
+        "orcmd"
       ],
-      "bmc": "192.168.2.32",
       "os_shutdown_timeout_seconds": 150,
       "os_boot_timeout_seconds": 300,
       "os_network_to_halt_time": 5,
       "bmc_boot_timeout_seconds": 10,
       "bmc_chassis_off_wait": 3
-    }
-  ],
-  "bmc": [
+    },
     {
       "user": "username",
       "channel": 11,
@@ -32,16 +26,54 @@
       "auth_method": "PASSWORD",
       "password": "pass@123",
       "port": 20,
+      "profile_name": "bmc_prof"
+    },
+    {
+      "profile_name": "power_units",
+      "outlets_count": 12,
+      "port": 20,
+      "user": "username",
+      "password": "pass@123"
+    }
+  ],
+  "node": [
+    {
+      "profile": "compute_node",
+      "ip_address": "192.168.1.33",
+      "hostname": "master5",
+      "role": [
+        "aggregator"
+      ],
+      "service_list": [
+        "gmond",
+        "gmetad",
+        "orcmd",
+        "orcmsched"
+      ],
+      "bmc": "bmc2"
+    },
+    {
+      "profile": "compute_node",
+      "ip_address": "192.168.1.32",
+      "hostname": "master4",
+      "bmc": "192.168.2.32"
+    }
+   ],
+  "bmc": [
+    {
+      "profile": "bmc_prof",
+      "ip_address": "192.168.2.33",
+      "device_id": "bmc2"
+    },
+    {
+      "profile": "bmc_prof",
       "ip_address": "192.168.2.32"
     }
   ],
   "pdu": [
     {
-      "outlets_count": 12,
+      "profile": "power_units",
       "ip_address": "192.168.3.32",
-      "port": 20,
-      "user": "username",
-      "password": "pass@123",
       "connected_device": [
         {
           "outlet": "3",
@@ -52,16 +84,29 @@
           "device": ["192.168.4.32"]
         }
       ]
+    },
+    {
+      "profile": "power_units",
+      "ip_address": "192.168.3.33",
+      "hostname": "pdu2",
+      "connected_device": [
+        {
+          "outlet": "3",
+          "device": ["master5"]
+        },
+        {
+          "outlet": "0",
+          "device": ["bmc2"]
+        }
+      ]
     }
   ],
 
   "psu": [
     {
+      "profile": "power_units",
       "outlets_count": 2,
       "ip_address": "192.168.4.32",
-      "port": 20,
-      "user": "username",
-      "password": "pass@123",
       "connected_device": [
         {
           "outlet": "1",
@@ -69,7 +114,7 @@
         },
         {
           "outlet": "0",
-          "device": ["master3"]
+          "device": ["master5"]
         }
       ]
     }
