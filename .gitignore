@@ -16,4 +16,5 @@ ctrl-results.xml
 # Build
 dist/
 build/
+*.egg-info
 MANIFEST

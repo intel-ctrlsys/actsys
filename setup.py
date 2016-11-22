@@ -5,7 +5,7 @@
 """
 Setup Module
 """
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 description = "A control component for exascale clusters"
 author = "Intel Corporation"
@@ -16,5 +16,6 @@ setup(name='ctrl',
       description=description,
       author=author,
       license=license,
-      packages=['bmc', 'commands', 'os_remote_access', 'plugin', 'utilities'])
+      packages=find_packages(),
+      scripts=['ctrl'])
 
