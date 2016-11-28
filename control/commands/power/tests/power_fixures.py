@@ -21,18 +21,31 @@ from ....utilities.remote_access_data import RemoteAccessData
 class MockConfiguration(object):
     """Mock the configuration object"""
 
+    class Object(object):
+        pass
+
     def __init__(self):
         self.data = dict()
 
+    def get_node(self, device_name):
+        """Dummy getter"""
+        return self.data[device_name]
+
+    def get_device(self, device_name):
+        """Dummy getter"""
+        return self.data[device_name]
+
     def get_device_data(self, device_name, param):
         """Dummy getter"""
-        key = '{}.{}'.format(device_name, param)
-        return self.data[key]
+        if not self.data.has_key(device_name):
+            return None
+        return getattr(self.data[device_name], param)
 
     def set_device_data(self, device_name, param, value):
         """Dummy setter"""
-        key = '{}.{}'.format(device_name, param)
-        self.data[key] = value
+        if not self.data.has_key(device_name):
+            self.data[device_name] = self.Object()
+        setattr(self.data[device_name], param, value)
 
 
 class MockPowerPlugin(PowerControlMock):
@@ -66,7 +79,7 @@ class PowerCommandsCommon(unittest.TestCase):
         self.configuration = MockConfiguration()
         self.setUpConfiguration()
         self.command_options = {
-            'device_name': 'test_node',
+            'device_name': self.node_name,
             'configuration': self.configuration,
             'plugin_manager': self.manager,
             'logger': None,
@@ -104,7 +117,7 @@ class PowerCommandsCommon(unittest.TestCase):
         os_info = RemoteAccessData('192.168.128.50', 22, 'admin', None)
         self._setter('access_type', 'mock')
         self._setter('remote_access', os_info)
-        self._setter('device_type', 'compute')
+        self._setter('device_type', 'node')
         self._setter('device_power_control', 'mock')
         self._setter('bmc_device_name', 'bmc_test_node')
         self._setter('switches', [])
@@ -114,6 +127,18 @@ class PowerCommandsCommon(unittest.TestCase):
         setter('bmc_test_node', 'remote_access', bmc_info)
         setter('bmc_test_node', 'device_type', 'bmc')
         setter('bmc_test_node', 'access_type', 'mock')
+
+        setter(self.node_name, 'device_id', self.node_name)
+        setter(self.node_name, 'access_type', 'mock')
+        setter(self.node_name, 'ip_address', '192.168.128.50')
+        setter(self.node_name, 'port', 22)
+        setter(self.node_name, 'user', 'admin')
+        setter(self.node_name, 'password', None)
+        setter(self.node_name, 'os_shutdown_timeout_seconds', 150)
+        setter(self.node_name, 'os_boot_timeout_seconds', 300)
+        setter(self.node_name, 'os_network_to_halt_time', 5)
+        setter(self.node_name, 'bmc_boot_timeout_seconds', 10)
+        setter(self.node_name, 'bmc_chassis_off_wait', 3)
 
     def write_state(self, state):
         """Write out a node power state to the mocked storage location"""

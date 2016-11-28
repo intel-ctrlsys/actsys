@@ -77,6 +77,11 @@ class CtrlCliParser(object):
                                                               ' python ctrlcli.'
                                                               'py set -h')
 
+        self.service_parser = self.ctrl_subparser.add_parser('service',
+                                                             help='check, start or stop services specified in'
+                                                                  'the configuration file')
+        self.add_all_args()
+
     def add_mandatory_args(self):
         """Add the mandatory command line arguments here"""
         self.ctrl_parser.add_argument('device_name',
@@ -133,7 +138,11 @@ class CtrlCliParser(object):
         self.set_parser.add_argument('value',
                                      help='Please provide the value to be set')
 
-    def get_all_args(self):
+    def add_service_args(self):
+        """Add service args"""
+        self.service_parser.add_argument('subcommand', choices=['status', 'start', 'stop'])
+
+    def add_all_args(self):
         """Retrieve all the arguments from parser"""
         self.add_mandatory_args()
         self.add_simple_args()
@@ -142,8 +151,10 @@ class CtrlCliParser(object):
         self.add_process_args()
         self.add_get_cmd_args()
         self.add_set_cmd_args()
-        ctrl_args = self.ctrl_parser.parse_args()
-        return ctrl_args
+        self.add_service_args()
+
+    def get_all_args(self):
+        return self.ctrl_parser.parse_args()
 
 
 class CtrlCliExecutor(object):
@@ -157,33 +168,33 @@ class CtrlCliExecutor(object):
         if cmd_args.subcommand == 'off':
             retval = \
                 self.cmd_exe_factory_obj.power_off_invoker(cmd_args.device_name,
-                                                      cmd_args.subcommand,
-                                                      cmd_args)
+                                                           cmd_args.subcommand,
+                                                           cmd_args)
             return retval
         elif cmd_args.subcommand == 'cycle':
             retval = \
                 self.cmd_exe_factory_obj.power_cycle_invoker(cmd_args.device_name,
-                                                        cmd_args.subcommand,
-                                                        cmd_args)
+                                                             cmd_args.subcommand,
+                                                             cmd_args)
             return retval
         else:
             retval = \
                 self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name,
-                                                     cmd_args.subcommand,
-                                                     cmd_args)
+                                                          cmd_args.subcommand,
+                                                          cmd_args)
             return retval
 
     def process_cmd_execute(self, cmd_args):
         """Function to call appropriate process sub-command"""
         if cmd_args.subcommand == 'list':
-            print"\tProcess List Command called\n" \
-                 "\tHowever for this command work is in progress.\n" \
-                 "\tSo hold your breath till we develop this module\n"
+            print("\tProcess List Command called\n"
+                  "\tHowever for this command work is in progress.\n"
+                  "\tSo hold your breath till we develop this module\n")
             return 0
         else:
-            print"\tProcess Kill Command Called\n" \
-                 "\tHowever for this command work is in progress.\n" \
-                 "\tSo hold your breath till we develop this module\n"
+            print("\tProcess Kill Command Called\n"
+                  "\tHowever for this command work is in progress.\n"
+                  "\tSo hold your breath till we develop this module\n")
             return 0
 
     def resource_cmd_execute(self, cmd_args):
@@ -191,45 +202,61 @@ class CtrlCliExecutor(object):
         if cmd_args.subcommand == 'add':
             retval = \
                 self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name,
-                                                     cmd_args.subcommand,
-                                                     cmd_args)
+                                                          cmd_args.subcommand,
+                                                          cmd_args)
             return retval
         else:
             retval = \
                 self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name,
-                                                     cmd_args.subcommand,
-                                                     cmd_args)
+                                                          cmd_args.subcommand,
+                                                          cmd_args)
             return retval
 
     def get_cmd_execute(self, cmd_args):
         """Function to call appropriate get sub-command"""
         if cmd_args.subcommand == 'powercap':
-            print"\tGet Powercap Command Called\n" \
-                 "\tHowever for this command work is in progress.\n" \
-                 "\tSo hold your breath till we develop this module\n"
+            print("\tGet Powercap Command Called\n"
+                  "\tHowever for this command work is in progress.\n"
+                  "\tSo hold your breath till we develop this module\n")
             return 0
         else:
-            print"\tGet Freq Command Called\n" \
-                 "\tHowever for this command work is in progress.\n" \
-                 "\tSo hold your breath till we develop this module\n"
+            print("\tGet Freq Command Called\n"
+                  "\tHowever for this command work is in progress.\n"
+                  "\tSo hold your breath till we develop this module\n")
             return 0
 
     def set_cmd_execute(self, cmd_args):
         """Function to call appropriate set sub-command"""
         if cmd_args.subcommand == 'powercap':
-            print"\tSet Powercap Command Called\n" \
-                 "\tHowever for this command work is in progress.\n" \
-                 "\tSo hold your breath till we develop this module\n"
+            print("\tSet Powercap Command Called\n"
+                  "\tHowever for this command work is in progress.\n"
+                  "\tSo hold your breath till we develop this module\n")
             return 0
         else:
-            print"\tSet Freq Command Called\n" \
-                 "\tHowever for this command work is in progress.\n" \
-                 "\tSo hold your breath till we develop this module\n"
+            print("\tSet Freq Command Called\n"
+                  "\tHowever for this command work is in progress.\n"
+                  "\tSo hold your breath till we develop this module\n")
             return 0
+
+    def service_cmd_execute(self, cmd_args):
+        """Function to call appropriate resource sub-command"""
+        if cmd_args.subcommand == 'status':
+            return self.cmd_exe_factory_obj.service_status(cmd_args.device_name, cmd_args)
+        elif cmd_args.subcommand == 'start':
+            return self.cmd_exe_factory_obj.service_on(cmd_args.device_name, cmd_args)
+        elif cmd_args.subcommand == 'stop':
+            return self.cmd_exe_factory_obj.service_off(cmd_args.device_name, cmd_args)
+        else:
+            print ("Invalid service command entered.")
+        return 0
 
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
-        masterparser = CtrlCliParser()
+        try:
+            masterparser = CtrlCliParser()
+        except Exception as f:
+            print (f.value)
+            return 1
         cmd_args = masterparser.get_all_args()
         if cmd_args.subparser_name == 'power':
             retval = self.power_cmd_execute(cmd_args)
@@ -245,6 +272,9 @@ class CtrlCliExecutor(object):
             return retval
         elif cmd_args.subparser_name == 'set':
             retval = self.set_cmd_execute(cmd_args)
+            return retval
+        elif cmd_args.subparser_name == 'service':
+            retval = self.service_cmd_execute(cmd_args)
             return retval
         else:
             return 0

@@ -7,13 +7,11 @@ Test the ServicesCheckCommand Plugin.
 """
 import unittest
 from mock import patch, MagicMock
-
-from .. import ServicesCheckCommand
-from .. import ServicesCheckPluginMetadata as PluginMetadata
+from ..services import ServicesCommand
 from ....plugin.manager import PluginManager
 
 
-class TestServicesCheckCommand(unittest.TestCase):
+class TestServicesCommand(unittest.TestCase):
     """Test case for the ServicesCheckCommand class."""
 
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
@@ -23,7 +21,7 @@ class TestServicesCheckCommand(unittest.TestCase):
         self.node_name = "knl-123"
         self.mock_plugin_manager = mock_plugin_manager
         self.ssh_mock = self.mock_plugin_manager.factory_create_instance.return_value
-        self.ssh_mock.execute.return_value.code = 0
+        self.ssh_mock.execute.return_value = [0, None]
 
         self.configuration = {
             'device_name': self.node_name,
@@ -32,7 +30,8 @@ class TestServicesCheckCommand(unittest.TestCase):
             'logger': None,
             'arguments': None
         }
-        self.services_check = ServicesCheckCommand(self.configuration)
+        self.services = ServicesCommand(self.configuration)
+        self.services.command = ["systemctl", "status"]
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()
@@ -44,53 +43,48 @@ class TestServicesCheckCommand(unittest.TestCase):
         setattr(obj, "device_type", "compute")
         setattr(obj, "service_list", [])
 
-    def test_metadata(self):
-        metadata = PluginMetadata()
-        self.assertEqual('command', metadata.category())
-        self.assertEqual('service_check', metadata.name())
-        self.assertEqual(100, metadata.priority())
-        self.assertIsNotNone(metadata.create_instance(self.configuration))
-
     def test_incorrect_node_type(self):
-        self.configuration_manager.get_device.\
+        self.configuration_manager.get_device. \
             return_value.device_type = 'Not Compute'
 
-        result = self.services_check.execute()
+        result = self.services.execute()
 
         self.assertEqual(result.return_code, 1, "Expected error code")
-        self.assertEqual(result.message, 'Failure: cannot check services this '
-                                         'device type {}'.format('Not Compute'))
+        self.assertEqual(result.message,
+                         'Failure: cannot perform service actions this device type ({})'.format('Not Compute'))
 
     def test_empty_services(self):
         """Stub test, please update me"""
-        fmt = "Success: All services running for {}"
-        self.assertEqual(self.services_check.execute().message,
-                         fmt.format(self.node_name))
+        self.assertEqual(self.services.execute().message, 'Success: no services checked')
 
     def test_services_success(self):
         """Stub test, please update me"""
-        self.configuration_manager.get_device.return_value.service_list = [
-            'orcmd']
-        fmt = "Success: All services running for {}"
-        self.assertEqual(self.services_check.execute().message,
-                         fmt.format(self.node_name))
+        self.services.device.service_list = ['orcmd']
+        self.assertEqual(self.services.execute().message, "0 - Success: status - orcmd")
 
         self.assertTrue(self.mock_plugin_manager.factory_create_instance.called)
         self.ssh_mock.execute.assert_called_with(
-            'systemctrl status {}'.format("orcmd"),
-            self.services_check.remoteAccessData
+            ['systemctl', 'status', 'orcmd'],
+            self.services.remote_access_data,
+            True
         )
 
     def test_services_failure(self):
         """Failing, failing all the day"""
-        self.configuration_manager.get_device.return_value.service_list = [
-            'orcmd']
-        self.ssh_mock.execute.return_value.code = 1
+        self.services.device.service_list = ['orcmd']
+        self.ssh_mock.execute.return_value = [1, None]
 
-        self.assertEqual(
-            self.services_check.execute().message,
-            "1 - Failed: orcmd service was not active.")
+        self.assertEqual(self.services.execute().message, "1 - Failed: status - orcmd")
 
+        self.ssh_mock.execute.return_value = [1, "Such a service does not exist"]
+        self.assertEqual(self.services.execute().message, "1 - Failed: status - orcmd\n Such a service does not exist")
+
+    def test_services_unable_to_connect(self):
+        self.ssh_mock.execute.return_value = [255, None]
+        self.services.device.service_list = ['orcmd']
+
+        self.assertEqual(self.services.execute().message,
+                         "255 - Failed: status - orcmd")
 
 if __name__ == '__main__':
     unittest.main()
