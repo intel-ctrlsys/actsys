@@ -40,10 +40,8 @@ class TestResourcePoolRemoveCommand(unittest.TestCase):
             }))
 
     def test_execute(self):
-        """Stub test, please update me"""
-        fmt = "Success: Resource Pool Remove {}"
-        self.assertEqual(self.resource_remove.execute().message,
-                         fmt.format(self.node_name))
+        self.assertEqual(self.resource_remove.execute().return_code,
+                         0)
 
 
 if __name__ == '__main__':

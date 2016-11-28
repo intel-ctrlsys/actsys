@@ -7,6 +7,7 @@ Resource Pool Add Plugin
 """
 from ..command import Command, CommandResult
 from ...plugin.manager import PluginMetadataInterface
+from ...resource.slurm.slurm_resource_control import SlurmResource
 
 
 class PluginMetadata(PluginMetadataInterface):
@@ -40,5 +41,12 @@ class ResourcePoolAddCommand(Command):
 
     def execute(self):
         """Execute the command"""
-        return CommandResult(0, "Success: Resource Pool Add {}".
-                             format(self.device_name))
+        device = self.configuration.get_device(self.device_name)
+        if 'compute' != device.device_type and 'node' != device.device_type:
+            return CommandResult(-1, "The device is not a compute node!")
+        sr = SlurmResource()
+        if not sr.check_resource_manager_installed():
+            return CommandResult(-2, "Slurm resource manager is not installed!")
+
+        rc, message = sr.add_node_to_resource_pool(self.device_name)
+        return CommandResult(rc, message)

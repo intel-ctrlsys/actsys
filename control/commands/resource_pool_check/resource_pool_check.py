@@ -3,7 +3,7 @@
 # Copyright (c) 2016 Intel Corp.
 #
 """
-Resource Pool Remove Plugin
+Resource Pool Check Plugin
 """
 from ..command import Command, CommandResult
 from ...plugin.manager import PluginMetadataInterface
@@ -21,7 +21,7 @@ class PluginMetadata(PluginMetadataInterface):
 
     def name(self):
         """Get the plugin instance name."""
-        return 'resource_pool_remove'
+        return 'resource_pool_check'
 
     def priority(self):
         """Get the priority of this name in this category."""
@@ -29,15 +29,15 @@ class PluginMetadata(PluginMetadataInterface):
 
     def create_instance(self, options=None):
         """Create an instance of this named implementation."""
-        return ResourcePoolRemoveCommand(options)
+        return ResourcePoolCheckCommand(options)
 
 
-class ResourcePoolRemoveCommand(Command):
-    """ResourcePoolRemoveCommand"""
+class ResourcePoolCheckCommand(Command):
+    """ResourcePoolCheckCommand"""
 
     def __init__(self, args=None):
         """Retrieve dependencies and prepare for power on"""
-        super(ResourcePoolRemoveCommand, self).__init__(args)
+        super(ResourcePoolCheckCommand, self).__init__(args)
 
     def execute(self):
         """Execute the command"""
@@ -48,5 +48,5 @@ class ResourcePoolRemoveCommand(Command):
         if not sr.check_resource_manager_installed():
             return CommandResult(-2, "Slurm resource manager is not installed!")
 
-        rc, message = sr.remove_node_from_resource_pool(self.device_name)
+        rc, message = sr.check_node_state(self.device_name)
         return CommandResult(rc, message)
