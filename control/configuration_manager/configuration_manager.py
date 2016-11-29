@@ -28,7 +28,7 @@ class ConfigurationManager(object):
         if file_type not in self.__configuration_objects.keys():
             configuration_object = \
                 self.__get_configuration_object(file_path, file_type)
-            if configuration_object is not None:
+            if configuration_object:
                 self.__configuration_objects[file_type] = configuration_object
 
     def __get_configuration_object(self, file_path,
