@@ -17,6 +17,7 @@ from ..commands.resource_pool_add.resource_pool_add import \
     PluginMetadata as PRAdd
 from ..commands.resource_pool_remove.resource_pool_remove import \
     PluginMetadata as PRRemove
+from ..commands.resource_pool_check.resource_pool_check import PluginMetadata as RCpluginMeta
 from ..commands.services import ServicesStatusPluginMetadata
 from ..commands.services import ServicesStartPluginMetadata
 from ..commands.services import ServicesStopPluginMetadata
@@ -106,6 +107,7 @@ class CommandExeFactory(object):
         self.manager.add_provider(ServicesStatusPluginMetadata())
         self.manager.add_provider(ServicesStartPluginMetadata())
         self.manager.add_provider(ServicesStopPluginMetadata())
+        self.manager.add_provider(RCpluginMeta())
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
@@ -124,8 +126,9 @@ class CommandExeFactory(object):
                        'pxe': 'power_cycle',
                        'cdrom': 'power_cycle',
                        'removable': 'power_cycle',
-                       'add': 'resource_pool_add',
-                       'remove': 'resource_pool_remove',
+                       'resource_add': 'resource_pool_add',
+                       'resource_remove': 'resource_pool_remove',
+                       'resource_check': 'resource_pool_check',
                        'service_status': 'service_status',
                        'service_start': 'service_start',
                        'service_stop': 'service_stop'
@@ -174,13 +177,17 @@ class CommandExeFactory(object):
         """Execute Power Reboot Command"""
         return self.common_cmd_invoker(device_name, sub_command, cmd_args)
 
-    def resource_add_invoker(self, device_name, sub_command, cmd_args=None):
+    def resource_add(self, device_name, cmd_args=None):
         """Execute Resource Add Command"""
-        return self.common_cmd_invoker(device_name, sub_command, cmd_args)
+        return self.common_cmd_invoker(device_name, "resource_add", cmd_args)
 
-    def resource_remove_invoker(self, device_name, sub_command, cmd_args=None):
+    def resource_remove(self, device_name, cmd_args=None):
         """Execute Resource Add Command"""
-        return self.common_cmd_invoker(device_name, sub_command, cmd_args)
+        return self.common_cmd_invoker(device_name, "resource_remove", cmd_args)
+
+    def resource_check(self, device_name, cmd_args=None):
+        """Execute Resource Add Command"""
+        return self.common_cmd_invoker(device_name, "resource_check", cmd_args)
 
     def service_status(self, device_name, cmd_args=None):
         """Execute a service check command"""

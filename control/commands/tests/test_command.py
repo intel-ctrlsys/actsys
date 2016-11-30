@@ -69,6 +69,14 @@ class TestCommand(unittest.TestCase):
                      'configuration': [],  # Placeholder
                      'plugin_manager': self})
 
+    def test_get_name(self):
+        command = Command({'device_name': 'node_name',
+                            'configuration': [],  # Placeholder
+                            'plugin_manager': PluginManager(),
+                            'logger': None,
+                            'arguments': None})
+        self.assertEqual(command.get_name(), "Command")
+
 
 if __name__ == '__main__':
     unittest.main()

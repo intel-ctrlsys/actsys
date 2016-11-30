@@ -111,9 +111,9 @@ class CtrlCliParser(object):
     def add_resource_args(self):
         """Add the arguments for the Resource Sub-Parser"""
         self.resource_parser.add_argument('subcommand',
-                                          choices=['add', 'remove'],
-                                          help='Select one of two options.'
-                                               ' Add/Remove.'
+                                          choices=['add', 'remove', 'check'],
+                                          help='Select one of the following options.'
+                                               ' add/remove/check'
                                                ' Ex: python ctrlcli.py resource'
                                                ' add node001')
 
@@ -200,17 +200,14 @@ class CtrlCliExecutor(object):
     def resource_cmd_execute(self, cmd_args):
         """Function to call appropriate resource sub-command"""
         if cmd_args.subcommand == 'add':
-            retval = \
-                self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name,
-                                                          cmd_args.subcommand,
-                                                          cmd_args)
-            return retval
+            return self.cmd_exe_factory_obj.resource_add(cmd_args.device_name, cmd_args)
+        elif cmd_args.subcommand == 'remove':
+            return self.cmd_exe_factory_obj.resource_remove(cmd_args.device_name, cmd_args)
+        elif cmd_args.subcommand == 'check':
+            return self.cmd_exe_factory_obj.resource_check(cmd_args.device_name, cmd_args)
         else:
-            retval = \
-                self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name,
-                                                          cmd_args.subcommand,
-                                                          cmd_args)
-            return retval
+            print ("Invalid service command entered.")
+        return 1
 
     def get_cmd_execute(self, cmd_args):
         """Function to call appropriate get sub-command"""
@@ -248,7 +245,7 @@ class CtrlCliExecutor(object):
             return self.cmd_exe_factory_obj.service_off(cmd_args.device_name, cmd_args)
         else:
             print ("Invalid service command entered.")
-        return 0
+        return 1
 
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""

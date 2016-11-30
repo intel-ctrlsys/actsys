@@ -55,7 +55,6 @@ class ServicesCommand(Command):
             else:
                 result_msg = "Success: {} - {}".format(self.command[1], service)
 
-            print ssh_result
             cr = CommandResult(ssh_result[0], result_msg)
             result_string += str(cr) + '\n'
 
