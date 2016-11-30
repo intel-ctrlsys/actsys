@@ -3,6 +3,7 @@
 # Copyright (c) 2016 Intel Corp.
 #
 """Implementation of a configuration object and his extractor"""
+import copy
 from . cluster_configuration_extractor_interface \
     import ClusterConfigurationExtractorInterface
 from .cluster_configuration_parser \
@@ -30,7 +31,7 @@ class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
         :param device_id: Unique id of a device
         :return: A Device Object
         """
-        return self.data.search_device(device_id)
+        return copy.deepcopy(self.data.search_device(device_id))
 
     def get_device_types(self):
         return self.data.keys()
@@ -42,7 +43,7 @@ class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
         :return: A Device Object dictionary
                  None, in case device_type doesn't exist
         """
-        return self.data.get(device_type, {})
+        return copy.deepcopy(self.data.get(device_type, {}))
 
 
     def get_node(self, device_id):
@@ -50,35 +51,35 @@ class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
         :rtype: Device
         :param device_id: Unique id of a node
         :return: A Device Object"""
-        return self.data.search_device(device_id, self.NODE_TAG)
+        return copy.deepcopy(self.data.search_device(device_id, self.NODE_TAG))
 
     def get_bmc(self, device_id):
         """Implements get_bmc
         :rtype: Device
         :param device_id: Unique id of a bmc
         :return: A Device Object"""
-        return self.data.search_device(device_id, self.BMC_TAG)
+        return copy.deepcopy(self.data.search_device(device_id, self.BMC_TAG))
 
     def get_psu(self, device_id):
         """Implements get_psu
         :rtype: Device
         :param device_id: Unique id of a psu
         :return: A Device Object"""
-        return self.data.search_device(device_id, self.PSU_TAG)
+        return copy.deepcopy(self.data.search_device(device_id, self.PSU_TAG))
 
     def get_pdu(self, device_id):
         """Implements get_pdu
         :rtype: Device
         :param device_id: Unique id of a pdu
         :return: A Device Object"""
-        return self.data.search_device(device_id, self.PDU_TAG)
+        return copy.deepcopy(self.data.search_device(device_id, self.PDU_TAG))
 
     def get_config_vars(self):
         """Implements get_config_vars
         :rtype: Device
         :return: A Device Object with the Global Configuration Variables"""
-        return self.data.search_device(self.CONFIG_VARS_TAG,
-                                       self.CONFIG_VARS_TAG,)
+        return copy.deepcopy(self.data.search_device(self.CONFIG_VARS_TAG,
+                                                     self.CONFIG_VARS_TAG))
 
 
 class ClusterConfiguration(ConfigurationTypeInterface):

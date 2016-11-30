@@ -45,3 +45,16 @@ class ConfigurationManagerItem(object):
     def __setattr__(self, key, value):
         """ Overrides setattr function so attributes can be read-only """
         pass
+
+    def __reduce_ex__(self, _):
+        return (self.__class__, (self.__dict__, ))
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ <> other.__dict__
+        return False
