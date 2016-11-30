@@ -5,12 +5,15 @@
 from unittest import TestCase
 
 from ..json_parser import JsonParser, FileNotFound, NonParsableFile
+from ...tests.test_json_files import TestJsonFiles
 
 
 class TestJsonParser(TestCase):
     def test_read_file(self):
         parser = JsonParser()
-        data_content = parser.read_file('control/configuration_manager/json_parser/tests/file.json')
+        TestJsonFiles.write_file('file.json')
+        data_content = parser.read_file('file.json')
+        TestJsonFiles.remove_file('file.json')
         self.assertIsNotNone(data_content)
         self.assertIsNotNone(parser.get_file_content_string(data_content))
 
@@ -20,4 +23,6 @@ class TestJsonParser(TestCase):
 
     def test_read_file_non_parsable(self):
         parser = JsonParser()
-        self.assertRaises(NonParsableFile, parser.read_file, 'control/configuration_manager/json_parser/tests/test_jsonParser.py')
+        TestJsonFiles.write_file('non_parsable.json')
+        self.assertRaises(NonParsableFile, parser.read_file, 'non_parsable.json')
+        TestJsonFiles.remove_file('non_parsable.json')

@@ -8,6 +8,7 @@
 from unittest import TestCase
 from ..cluster_configuration_parser \
     import ClusterConfigurationParser, expand_group
+from ....tests.test_json_files import TestJsonFiles
 
 
 class TestClusterConfigurationParser(TestCase):
@@ -15,10 +16,11 @@ class TestClusterConfigurationParser(TestCase):
 
     def setUp(self):
         """ Setup function"""
-        self.conf_file = \
-            "control/configuration_manager/json_parser/tests/file.json"
+        self.conf_file = 'file.json'
+        TestJsonFiles.write_file(self.conf_file)
         self.parser = ClusterConfigurationParser(self.conf_file)
         self.parser.parse()
+        TestJsonFiles.remove_file(self.conf_file)
 
     def test_expand_goup_different_len(self):
         group = {'device_id':'compute-[1:29-32]', 'device_type':'node',

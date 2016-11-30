@@ -20,7 +20,7 @@ class ListExpander(object):
     regex_list_pattern = re.compile(list_pattern)
 
     @classmethod
-    def build_item_list(cls, head, length, start, end, tail):
+    def build_item_list(cls, head, (length, start, end), tail):
         """Build a list with a defined range, and a head and tail strings"""
         result_list = []
         for digit in range(start, end+1):
@@ -38,9 +38,9 @@ class ListExpander(object):
         else:
             head, _, length, start, end, tail = token_substrings
             result_list.extend(cls.build_item_list(head,
-                                                   int(length),
-                                                   int(start),
-                                                   int(end),
+                                                   (int(length),
+                                                    int(start),
+                                                    int(end)),
                                                    tail))
         return result_list
 
