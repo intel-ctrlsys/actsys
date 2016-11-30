@@ -14,78 +14,42 @@ from cli_cmd_invoker import CommandExeFactory
 class CtrlCliParser(object):
     """Control Parser Class"""
 
+    CLI_COMMAND = "ctrl"
+
     def __init__(self):
         """Init Function for Control Cli Parser"""
 
-        self.ctrl_parser = argparse.ArgumentParser(prog='ctrlcli',
-                                                   description='Control '
-                                                               'Component '
-                                                               'Parser')
+        self.ctrl_parser = argparse.ArgumentParser(prog='ctrl',
+                                                   description='Control Component Parser')
 
         self.ctrl_subparser = self.ctrl_parser.add_subparsers(
             title='Sub Commands',
             description='List of Valid Sub Commands', dest='subparser_name')
 
         """Sub Parser for all Cli Commands"""
-        self.power_parser = self.ctrl_subparser.add_parser('power',
-                                                           help='Power on/off/'
-                                                                'reset a '
-                                                                'device. For '
-                                                                'help on POWER,'
-                                                                ' use: '
-                                                                'python ctrlcli'
-                                                                '.py power -h')
+        self.power_parser = self.ctrl_subparser.add_parser('power', help='Power on/off/reset a device.')
 
         self.resource_parser = self.ctrl_subparser.add_parser('resource',
-                                                              help='Resource '
-                                                                   'Add'
-                                                                   '/Remove'
-                                                                   ' from a '
-                                                                   'resource '
-                                                                   'pool. For '
-                                                                   'help on'
-                                                                   ' RESOURCE, '
-                                                                   ' use: '
-                                                                   'python '
-                                                                   'ctrlcli.py '
-                                                                   'resource -h')
+                                                              help='Resource add/remove from a resource pool.')
 
         self.process_parser = self.ctrl_subparser.add_parser('process',
-                                                             help='Process '
-                                                                  'list/kill on'
-                                                                  ' a node in a'
-                                                                  ' cluster. '
-                                                                  'For help on '
-                                                                  'PROCESS use:'
-                                                                  ' python '
-                                                                  'ctrlcli.py '
-                                                                  'process -h')
+                                                             help='Process list/kill on a node in a cluster. ')
 
         self.get_parser = self.ctrl_subparser.add_parser('get',
-                                                         help='Get Powercap/'
-                                                              'Freq value of a'
-                                                              ' node. For help'
-                                                              ' on GET, use:'
-                                                              ' python ctrlcli.'
-                                                              'py get -h')
+                                                         help='Get powercap/freq value of a node.')
 
         self.set_parser = self.ctrl_subparser.add_parser('set',
-                                                         help='Set Powercap/'
-                                                              'Freq value of a'
-                                                              ' node. For help'
-                                                              ' on SET, use:'
-                                                              ' python ctrlcli.'
-                                                              'py set -h')
+                                                         help='Set powercap/freq value of a node.')
 
         self.service_parser = self.ctrl_subparser.add_parser('service',
                                                              help='check, start or stop services specified in'
                                                                   'the configuration file')
         self.add_all_args()
 
+
     def add_mandatory_args(self):
         """Add the mandatory command line arguments here"""
-        self.ctrl_parser.add_argument('device_name',
-                                      help='Please provide device name')
+        self.ctrl_parser.add_argument('device_name', help='Please provide device name')
 
     def add_simple_args(self):
         """Add the simple arguments here"""
@@ -98,12 +62,9 @@ class CtrlCliParser(object):
         self.power_parser.add_argument('subcommand',
                                        choices=['on', 'off', 'cycle', 'bios',
                                                 'efi', 'hdd', 'pxe', 'cdrom',
-                                                'removalble'],
-                                       help='Select one from three option.s'
-                                            ' On/Off/Cycle/Bios/Efi/Hdd/Pxe'
-                                            '/Cdrom/Removable.'
-                                            ' Ex: python ctrlcli.py power on '
-                                            'node001')
+                                                'removable'],
+                                       help='Select an option: on/off/cycle/bios/efi/hdd/pxe/cdrom/removable.'
+                                            ' Ex: {} power on node001'.format(self.CLI_COMMAND))
         self.power_parser.add_argument("-f", "--force", action='store_true',
                                        help='This option will allow user to'
                                             ' force the Power On/Off/Reboot')
@@ -112,21 +73,16 @@ class CtrlCliParser(object):
         """Add the arguments for the Resource Sub-Parser"""
         self.resource_parser.add_argument('subcommand',
                                           choices=['add', 'remove', 'check'],
-                                          help='Select one of the following options.'
-                                               ' add/remove/check'
-                                               ' Ex: python ctrlcli.py resource'
-                                               ' add node001')
+                                          help='Select one of the following options: add/remove/check'
+                                               ' Ex: {} resource add node001'.format(self.CLI_COMMAND))
 
     def add_process_args(self):
         """Add the arguments for the Process Sub-Parser"""
         self.process_parser.add_argument('subcommand', choices=['list', 'kill'],
-                                         help='Select one of two options.'
-                                              ' List/Kill. '
-                                              ' Ex: python ctrlcli.py resource '
-                                              'kill 1232')
+                                         help='Select one of two options: list/kill. '
+                                              ' Ex: {} resource kill 1232'.format(self.CLI_COMMAND))
         self.process_parser.add_argument('process_id',
-                                         help='Please provide process id '
-                                              'to list or kill a process')
+                                         help='Please provide process id to list or kill a process')
 
     def add_get_cmd_args(self):
         """Add the arguments for the Get Sub-Parser"""
@@ -161,28 +117,26 @@ class CtrlCliExecutor(object):
     """This class executes the commands based on user's request"""
 
     def __init__(self):
-        self.cmd_exe_factory_obj = CommandExeFactory()
+        try:
+            self.cmd_exe_factory_obj = CommandExeFactory()
+        except Exception as f:
+            if hasattr(f, 'value'):
+                print (f.value)
+            else:
+                print (f)
+            raise RuntimeError("A runtime error occurred, exiting abnormally.")
 
     def power_cmd_execute(self, cmd_args):
         """Function to call appropriate power sub-command"""
         if cmd_args.subcommand == 'off':
-            retval = \
-                self.cmd_exe_factory_obj.power_off_invoker(cmd_args.device_name,
-                                                           cmd_args.subcommand,
-                                                           cmd_args)
-            return retval
+            return self.cmd_exe_factory_obj.power_off_invoker(cmd_args.device_name, cmd_args.subcommand,
+                                                              cmd_args)
         elif cmd_args.subcommand == 'cycle':
-            retval = \
-                self.cmd_exe_factory_obj.power_cycle_invoker(cmd_args.device_name,
-                                                             cmd_args.subcommand,
-                                                             cmd_args)
-            return retval
+            return self.cmd_exe_factory_obj.power_cycle_invoker(cmd_args.device_name, cmd_args.subcommand,
+                                                                cmd_args)
         else:
-            retval = \
-                self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name,
-                                                          cmd_args.subcommand,
-                                                          cmd_args)
-            return retval
+            return self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name, cmd_args.subcommand,
+                                                             cmd_args)
 
     def process_cmd_execute(self, cmd_args):
         """Function to call appropriate process sub-command"""
@@ -249,11 +203,7 @@ class CtrlCliExecutor(object):
 
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
-        try:
-            masterparser = CtrlCliParser()
-        except Exception as f:
-            print (f.value)
-            return 1
+        masterparser = CtrlCliParser()
         cmd_args = masterparser.get_all_args()
         if cmd_args.subparser_name == 'power':
             retval = self.power_cmd_execute(cmd_args)

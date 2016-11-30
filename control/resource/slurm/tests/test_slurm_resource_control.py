@@ -31,18 +31,18 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_with_capture")
     def test_check_slurm_installed_none(self, mock_execute_with_capture):
-        mock_execute_with_capture.return_value = None
+        mock_execute_with_capture.return_value = None, None
         self.check_slurm_installed_stub(False)
 
     @patch.object(Utilities, "execute_with_capture")
     def test_check_slurm_installed_mock_succeed(self,
                                                 mock_execute_with_capture):
-        mock_execute_with_capture.return_value = "PARTITION"
+        mock_execute_with_capture.return_value = "PARTITION", ''
         self.check_slurm_installed_stub(True)
 
     @patch.object(Utilities, "execute_with_capture")
     def test_check_slurm_installed_mock_fail(self, mock_execute_with_capture):
-        mock_execute_with_capture.return_value = "MOCKED_RETURN"
+        mock_execute_with_capture.return_value = "MOCKED_RETURN", ''
         self.check_slurm_installed_stub(False)
 
     def _assert_return_message(self, rc, message,
@@ -61,7 +61,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "TIMELIMIT  NODES  STATE " \
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
-                                                 "infinite      0    n/a"
+                                                 "infinite      0    n/a", ''
         self._remove_from_resource_pool_stub(1, "Node localhost not found!")
 
     @patch.object(Utilities, "execute_with_capture")
@@ -71,7 +71,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    idle " \
-                                                 "localhost\nSuccess"
+                                                 "localhost\nSuccess", 'Success'
         self._remove_from_resource_pool_stub(0, "Succeeded in removing node "
                                                 "localhost from the cluster "
                                                 "resource pool!")
@@ -83,7 +83,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    idle " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._remove_from_resource_pool_stub(2, "Failed in removing node "
                                                 "localhost from the cluster "
                                                 "resource pool!")
@@ -95,7 +95,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    alloc " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._remove_from_resource_pool_stub(3, "Currently, the node localhost "
                                                 "is busy running job, it cannot"
                                                 " be removed from the cluster "
@@ -108,7 +108,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    drain " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._remove_from_resource_pool_stub(4, "The node localhost has "
                                                 "already been removed from the "
                                                 "cluster resource pool!")
@@ -120,7 +120,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    unknown " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._remove_from_resource_pool_stub(5, "The node localhost is in "
                                                 "unknown state, not be able to "
                                                 "remove it from the cluster "
@@ -137,7 +137,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "TIMELIMIT  NODES  STATE " \
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
-                                                 "infinite      0    n/a"
+                                                 "infinite      0    n/a", ''
         self._add_to_resource_pool_stub(1, "Node localhost not found!")
 
     @patch.object(Utilities, "execute_with_capture")
@@ -147,7 +147,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    drain " \
-                                                 "localhost\nSuccess"
+                                                 "localhost\nSuccess", 'Success'
         self._add_to_resource_pool_stub(0, "Succeeded in adding node localhost "
                                            "back to the cluster resource pool!")
 
@@ -158,7 +158,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    drain " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._add_to_resource_pool_stub(6, "Failed in adding node localhost "
                                            "back to the cluster resource pool!")
 
@@ -169,7 +169,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    alloc " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._add_to_resource_pool_stub(7, "Currently, the node localhost is "
                                            "busy running job, it is already in "
                                            "the cluster resource pool!")
@@ -181,7 +181,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    idle " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._add_to_resource_pool_stub(8, "The node localhost is already in "
                                            "the cluster resource pool!")
 
@@ -192,7 +192,7 @@ class TestSlurmResourceControl(unittest.TestCase):
                                                  "NODELIST\n" \
                                                  "debug*       up   " \
                                                  "infinite      1    unknown " \
-                                                 "localhost"
+                                                 "localhost", ''
         self._add_to_resource_pool_stub(9, "The node localhost is in unknown "
                                            "state, not be able to add it back "
                                            "to the cluster resource pool!")

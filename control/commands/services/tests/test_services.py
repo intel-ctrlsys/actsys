@@ -9,13 +9,15 @@ import unittest
 from mock import patch, MagicMock
 from ..services import ServicesCommand
 from ....plugin.manager import PluginManager
+from ....ctrl_logger.ctrl_logger import CtrlLogger
 
 
 class TestServicesCommand(unittest.TestCase):
     """Test case for the ServicesCheckCommand class."""
 
+    @patch("control.ctrl_logger.ctrl_logger.CtrlLogger", spec=CtrlLogger)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
-    def setUp(self, mock_plugin_manager):
+    def setUp(self, mock_plugin_manager, mock_logger):
         self.setup_mock_config()
 
         self.node_name = "knl-123"
@@ -27,7 +29,7 @@ class TestServicesCommand(unittest.TestCase):
             'device_name': self.node_name,
             'configuration': self.configuration_manager,
             'plugin_manager': self.mock_plugin_manager,
-            'logger': None,
+            'logger': mock_logger,
             'arguments': None
         }
         self.services = ServicesCommand(self.configuration)

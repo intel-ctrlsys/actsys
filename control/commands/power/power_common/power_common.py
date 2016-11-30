@@ -57,7 +57,7 @@ class CommonPowerCommand(Command):
             os_access = RemoteAccessData(node.ip_address, node.port,
                                          node.user, node.password)
             options['os'] = (os_access, os_plugin)
-            # TODO: Chek if all of these exist, is there a default?!?!?
+            # TODO: Check if all of these exist, is there a default?!?!?
             options['policy'] = {
                 'OSShutdownTimeoutSeconds': node.os_shutdown_timeout_seconds,
                 'OSBootTimeoutSeconds': node.os_boot_timeout_seconds,

@@ -13,11 +13,13 @@ from ....plugin.manager import PluginManager
 from ....utilities.utilities import Utilities
 from ....os_remote_access.ssh.ssh import RemoteSshPlugin
 from ....utilities.remote_access_data import RemoteAccessData
+from ....ctrl_logger.ctrl_logger import CtrlLogger
 
 
 class MockUtilities(Utilities):
     """Mock class fake low level system call helpers."""
     def __init__(self):
+        CtrlLogger.LOG_FILE = ".test.log"
         super(MockUtilities, self).__init__()
         self.returned_value = None
 
@@ -32,7 +34,7 @@ class MockUtilities(Utilities):
     def execute_with_capture(self, command):
         """Execute a command list capturing output and returning the return
            code, stdout, stderr"""
-        return self.returned_value
+        return self.returned_value, self.returned_value
 
     def ping_check(self, address):
         """Check if a network address has a OS responding to pings."""

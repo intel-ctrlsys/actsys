@@ -53,8 +53,8 @@ class SlurmResource(ResourceControl):
         """
         Check the status of the specified node using Slurm command
         """
-        output = self.utilities.execute_with_capture(['sinfo', '-n', node_name])
-        state = self._parse_node_state(output)
+        stdout, stderr = self.utilities.execute_with_capture(['sinfo', '-n', node_name])
+        state = self._parse_node_state(stdout)
         if None == state:
             return 1, 'Node ' + node_name + ' not found!'
         return 0, state
@@ -65,12 +65,12 @@ class SlurmResource(ResourceControl):
         node from cluster resource pool
         """
         reason = "For service"
-        output = self.utilities.execute_with_capture(['scontrol', 'update',
+        stdout, stderr = self.utilities.execute_with_capture(['scontrol', 'update',
                                                       'nodename=' + node_name,
                                                       'state=drain',
                                                       'reason=' + reason,
                                                       '-vvvv'])
-        if 'Success' in output:
+        if 'Success' in stderr:
             message = 'Succeeded in removing node ' + node_name + \
                       ' from the cluster resource pool!'
             return 0, message
@@ -133,12 +133,12 @@ class SlurmResource(ResourceControl):
         node back to cluster resource pool
         """
         reason = "Done with service"
-        output = self.utilities.execute_with_capture(['scontrol', 'update',
+        stdout, stderr = self.utilities.execute_with_capture(['scontrol', 'update',
                                                       'nodename=' + node_name,
                                                       'state=undrain',
                                                       'reason=' + reason,
                                                       '-vvvv'])
-        if 'Success' in output:
+        if 'Success' in stderr:
             message = 'Succeeded in adding node ' + node_name + \
                       ' back to the cluster resource pool!'
             return 0, message
@@ -198,9 +198,9 @@ class SlurmResource(ResourceControl):
         Check whether the Slurm resource manager is installed using the 'sinfo'
         Slurm command:
         """
-        output = self.utilities.execute_with_capture(['sinfo'])
-        if None == output:
+        stdout, stderr = self.utilities.execute_with_capture(['sinfo'])
+        if None == stdout:
             return False
-        if 'PARTITION' in output:
+        if 'PARTITION' in stdout:
             return True
         return False

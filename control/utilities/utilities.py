@@ -7,12 +7,13 @@
 """
 import subprocess
 import os
+from ..ctrl_logger.ctrl_logger import get_ctrl_logger
 
 
 class Utilities(object):
     """Class to hold low level system call helpers and mock-able objects."""
     def __init__(self):
-        pass
+        self.logger = get_ctrl_logger()
 
     def execute_no_capture(self, command):
         """Execute a command list suppressing output and returning the return
@@ -25,12 +26,13 @@ class Utilities(object):
     def execute_with_capture(self, command):
         """Execute a command list capturing output and returning the return
            code, stdout, stderr"""
-        pipe = subprocess.Popen(command, stdout=subprocess.PIPE)
-        out = pipe.communicate()
+        self.logger.debug("Attempting command {}".format(command))
+        pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
         if pipe.returncode == 0:
-            return out[0]
+            return stdout, stderr
         else:
-            return None
+            return None, None
 
     def ping_check(self, address):
         """Check if a network address has a OS responding to pings."""

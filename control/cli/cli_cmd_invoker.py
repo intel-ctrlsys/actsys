@@ -9,6 +9,7 @@ to perform user requested operations.
 from __future__ import print_function
 import re
 import os
+import logging
 from ..plugin.manager import PluginManager
 from ..commands.power.power_on.power_on import PluginMetadata as POn
 from ..commands.power.power_off.power_off import PluginMetadata as POff
@@ -43,6 +44,8 @@ class CommandExeFactory(object):
         self.sub_command_list = list()
         self.failed_device_name = list()
         self.logger = get_ctrl_logger()
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.handlers[0].setLevel(logging.DEBUG)
         self.configuration = ConfigurationManager(file_path=self._get_correct_configuration_file())
         self.extractor = self.configuration.get_extractor()
         self.manager = None
@@ -65,6 +68,7 @@ class CommandExeFactory(object):
             return etc
 
         # Failed to resolve, so return the base name... hopefully someone else can resolve it.
+        self.logger.warning("The config file was not found in the current working directory, ~/ or /etc/.")
         return self.BASE_CLUSTER_CONFIG_NAME
 
     @classmethod
@@ -75,7 +79,7 @@ class CommandExeFactory(object):
             return dev_list
         else:
             device_err_msg = "ERROR: Wrong Device Name/List. " \
-                             "CtrlCli supports only comma separated list" \
+                             "ctrl supports only comma separated list" \
                              "if device(s)"
             print(device_err_msg.format(device_err_msg))
             return 1
@@ -111,7 +115,8 @@ class CommandExeFactory(object):
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
-
+        # TODO: Move print statements out of this function, and into the CLI! (Nothing should ever
+        #   print, it should only use the logger, or return its messages)
         if self.manager is None:
             self.init_manager()
 
@@ -139,6 +144,7 @@ class CommandExeFactory(object):
                 self.sub_command_list.append('force')
         device_list = CommandExeFactory._device_name_check(device_name)
         if device_list == 1:
+            self.logger.warning("Failed to parse a valid device name for {}".format(device_name))
             return 1
         for device in device_list:
             cmd_dictionary = self.create_dictionary(device,

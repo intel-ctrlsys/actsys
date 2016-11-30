@@ -33,7 +33,7 @@ class TestCtrlLogger(unittest.TestCase):
             'CRITICAL' : self.log.critical
         }
 
-        self.reg = re.compile("\s+(\w+)\s+actsys:\s([^\n]+)")
+        self.reg = re.compile("\s+(\w+)\s+ctrl  :\s([^\n]+)")
 
     def msg_in_log_file(self, expected_msg):
         test_log = open(TEST_LOG, "r").read()

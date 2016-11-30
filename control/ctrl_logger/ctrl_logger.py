@@ -7,10 +7,11 @@
 """
 import logging
 import logging.handlers
+import os
 import re
 
-LOG_FILE = "/var/log/actsys.log"
 JOURNAL = 35
+
 
 class CtrlFormatter(logging.Formatter):
     """Special formatter to change depending of the log level, for now just
@@ -26,14 +27,14 @@ class CtrlFormatter(logging.Formatter):
         else:
             self._fmt = self._format
 
-        return  super(CtrlFormatter, self).format(record)
+        return super(CtrlFormatter, self).format(record)
 
 
 class CtrlLogger(logging.getLoggerClass()):
     """Extended class of python logging module."""
 
     FORMAT = "%(asctime)s %(levelname)-8s %(name)-6s: %(message)s"
-    LOG_FILE = "/var/log/actsys.log"
+    LOG_FILE = os.path.expanduser('~/ctrl.log')
 
     def __init__(self, name=None, level=logging.NOTSET):
         super(CtrlLogger, self).__init__(name, level)
@@ -112,11 +113,12 @@ def add_file_handler(logger):
     handler.setFormatter(CtrlFormatter())
     logger.addHandler(handler)
 
+
 def get_ctrl_logger():
     """Returns a ctrl logger, all calls to this function will return the same
        instance"""
     logging.setLoggerClass(CtrlLogger)
-    logger = logging.getLogger("actsys")
+    logger = logging.getLogger("ctrl")
 
     if not logger.handlers:
         add_file_handler(logger)

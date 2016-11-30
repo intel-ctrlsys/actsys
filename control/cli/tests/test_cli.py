@@ -7,14 +7,12 @@ from unittest import TestCase
 import sys
 from ..control_cli import CtrlCliParser, CtrlCliExecutor
 from ..cli_cmd_invoker import CommandExeFactory
-from ...commands.power.power_on import PowerOnCommand
-from ...commands.power.power_off import PowerOffCommand
-from ...commands.power.power_cycle import PowerCycleCommand
 from ...commands.resource_pool_add import ResourcePoolAddCommand
 from ...commands.resource_pool_remove import ResourcePoolRemoveCommand
 from ...commands.resource_pool_check.resource_pool_check import ResourcePoolCheckCommand
-from mock import patch
+from mock import patch, MagicMock
 from ...commands import CommandResult
+from ...ctrl_logger.ctrl_logger import CtrlLogger
 
 
 class ControlCliParserTest(TestCase):
@@ -22,7 +20,9 @@ class ControlCliParserTest(TestCase):
     @patch("control.plugin.manager.PluginManager")
     def setUp(self, mock_plugin_manager):
         self.TestParser = CtrlCliParser()
+        CommandExeFactory.BASE_CLUSTER_CONFIG_NAME = "ctrl-config-example.json"
         self.cmd_exe_factory_obj = CommandExeFactory()
+        self.cmd_exe_factory_obj.logger = MagicMock()
         mock_plugin_manager.factory_create_instance.return_value.execute.\
             return_value.return_code = 0
         self.cmd_exe_factory_obj.manager = mock_plugin_manager
@@ -276,58 +276,51 @@ class ControlCliParserTest(TestCase):
         print "RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
-    @patch('control.commands.power.power_on.power_on.PowerOnCommand')
-    def test_z_pon_neg(self, MockPowerOnCommand):
+    def test_z_pon_neg(self):
         sys.argv[1:] = ['power', 'on', '-f', 'n01']
         test_args = self.TestParser.get_all_args()
         args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "on"
-        MockPowerOnCommand.execute.return_value = args
-        retval = CommandExeFactory().power_on_invoker(device_name, sub_command,
+        self.cmd_exe_factory_obj.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        retval = self.cmd_exe_factory_obj.power_on_invoker(device_name, sub_command,
                                                       test_args)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    @patch('control.commands.power.power_off.power_off.PowerOffCommand')
-    def test_z_poff_neg(self, MockPowerOffCommand):
+    def test_z_poff_neg(self):
         args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "off"
-        MockPowerOffCommand.execute.return_value = 1
-        retval = CommandExeFactory().power_off_invoker(device_name, sub_command)
+        self.cmd_exe_factory_obj.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        retval = self.cmd_exe_factory_obj.power_off_invoker(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    @patch('control.commands.power.power_cycle.power_cycle.PowerCycleCommand')
-    def test_z_pre_neg(self, MockPowerCycleCommand):
+    def test_z_pre_neg(self):
         args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "cycle"
-        MockPowerCycleCommand.execute.return_value = 1
-        retval = CommandExeFactory().power_cycle_invoker(device_name,
+        self.cmd_exe_factory_obj.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        retval = self.cmd_exe_factory_obj.power_cycle_invoker(device_name,
                                                          sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    @patch('control.commands.resource_pool_add.resource_pool_add.'
-           'ResourcePoolAddCommand')
-    def test_z_readd_neg(self, MockResourcePoolAddCommand):
+    def test_z_readd_neg(self):
         args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "add"
-        MockResourcePoolAddCommand.execute.return_value = 1
-        retval = CommandExeFactory().resource_add(device_name, sub_command)
+        self.cmd_exe_factory_obj.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        retval = self.cmd_exe_factory_obj.resource_add(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
-    @patch('control.commands.resource_pool_remove.resource_pool_remove.'
-           'ResourcePoolRemoveCommand')
-    def test_z_rerm_neg(self, MockResourcePoolRemoveCommand):
+    def test_z_rerm_neg(self):
         args = CommandResult(message='pass', return_code=1)
         device_name = "n01,n02"
         sub_command = "remove"
-        MockResourcePoolRemoveCommand.execute.return_value = 1
-        retval = CommandExeFactory().resource_remove(device_name, sub_command)
+        self.cmd_exe_factory_obj.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        retval = self.cmd_exe_factory_obj.resource_remove(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)

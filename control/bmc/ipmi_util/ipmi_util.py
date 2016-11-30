@@ -48,10 +48,10 @@ class BmcIpmiUtil(Bmc):
                                             remote_access.username,
                                             remote_access.identifier,
                                             'status')
-        output = self.utilities.execute_with_capture(command)
-        if output is None:
+        stdout, stderr = self.utilities.execute_with_capture(command)
+        if stdout is None:
             raise RuntimeError('Failed to execute "%s"!' % self.tool)
-        lines = output.split('\n')
+        lines = stdout.split('\n')
         value = None
         for line in lines:
             if line.strip().startswith(self.name_to_find):

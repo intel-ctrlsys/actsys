@@ -50,7 +50,7 @@ class RemoteSshPlugin(OsRemoteAccess):
     @classmethod
     def _build_command(cls, command, remote_access_data):
         """Make the ssh command"""
-        platform = ['ssh', '-I', '-p', '-q']
+        platform = ['ssh', '-i', '-p', '-q']
         target = '%s@%s' % (remote_access_data.username,
                             remote_access_data.address)
         id_file = []
@@ -76,8 +76,8 @@ class RemoteSshPlugin(OsRemoteAccess):
            output"""
         full_command = RemoteSshPlugin._build_command(command,
                                                       remote_access_data)
-        result = self.utilities.execute_with_capture(full_command)
-        if result is None:
+        stdout, stderr = self.utilities.execute_with_capture(full_command)
+        if stdout is None:
             return 255, None
         else:
-            return 0, result
+            return 0, stdout
