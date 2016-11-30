@@ -17,5 +17,9 @@ setup(name='ctrl',
       author=author,
       license=license,
       packages=find_packages(),
-      scripts=['ctrl'])
-
+      scripts=['ctrl'],
+      test_suite='tests',
+      tests_require=['coverage',
+                     'pytest',
+                     'pylint',
+                     'mock'])

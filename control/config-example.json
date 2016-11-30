@@ -4,7 +4,7 @@
       "profile_name": "compute_node",
       "user": "user",
       "password": "password",
-      "port": 20,
+      "port": 22,
       "access_type": "ssh",
       "image": "centos7.2",
       "service_list": [
@@ -24,7 +24,7 @@
       "profile_name": "service_node",
       "user": "user",
       "password": "password",
-      "port": 20,
+      "port": 22,
       "access_type": "ssh",
       "image": "centos7.2",
       "service_list": [
@@ -49,15 +49,17 @@
       "channel": 2,
       "priv_level": "ADMINISTRATOR",
       "auth_method": "PASSWORD",
-      "port": 20,
+      "port": 22,
       "access_type": "ipmi_util"
     },
     {
       "profile_name": "pdu_default",
+      "device_type": "pdu",
       "outlets_count": 8,
-      "port": 20,
+      "port": 22,
       "user": "user",
-      "password": "password"
+      "password": "password",
+      "access_type": "ipmi_util"
     }
   ],
   "node": [
