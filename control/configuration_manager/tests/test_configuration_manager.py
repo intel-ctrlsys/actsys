@@ -79,4 +79,25 @@ class TestConfigurationManager(TestCase):
         self.assertEqual(extractor.get_node('compute-29').pdu_list,
                          [('pdu-1', '5')])
 
+    def test_deepcopy(self):
+        extractor = read_file(self.conf_file)
+        self.assertIsNotNone(extractor)
 
+        dev = extractor.get_node('master4')
+        dev.hostname = 'fake'
+        self.assertNotEqual('fake', dev.hostname)
+        self.assertNotEqual('fake', extractor.get_device('master4').hostname)
+
+        dev.pdu_list.append('fake')
+        self.assertNotEqual(dev.pdu_list,
+                            extractor.get_node('master4').pdu_list)
+
+        dev.rad.username = 'fake'
+        self.assertEqual('fake', dev.rad.username)
+        self.assertNotEqual(dev.rad, extractor.get_node('master4').rad)
+
+        dev = extractor.get_config_vars()
+        dev.log_file = {}
+        self.assertNotEqual({}, dev.log_file)
+        dev.log_file['fake'] = 'fake'
+        self.assertIsNone(extractor.get_config_vars().log_file.get('fake'))

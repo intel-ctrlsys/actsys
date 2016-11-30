@@ -8,6 +8,7 @@ import re
 from ...json_parser.json_parser import JsonParser
 from .cluster_configuration_data import ClusterConfigurationData
 from ...objects.device import Device
+from ....utilities.remote_access_data import RemoteAccessData
 
 
 class ListExpander(object):
@@ -87,7 +88,7 @@ class ClusterConfigurationParser(object):
         """ Parse function fills the parsed_data object """
         ignored_types = ['profile']
 
-        if self.data.get('version','') not in self.supported_file_versions:
+        if self.data.get('version', '') not in self.supported_file_versions:
             return False
 
         types = [device_type for device_type in self.data
@@ -229,6 +230,7 @@ class ClusterConfigurationParser(object):
         if item.get('ip_address') and \
             not self.__is_valid_ip_addr__(item.get('ip_address')):
             return
+        append_remote_access_data(item)
         self.parsed_data.add_device(Device(item))
 
     def __is_valid_hostname__(self, hostname):
@@ -326,3 +328,16 @@ def expand_group(group):
         ['device_id', 'bmc', 'hostname', 'ip_address'])
     fix_lists_length(expanded_attributes)
     return create_group_items(group, expanded_attributes)
+
+def append_remote_access_data(item):
+    """ Creates a RemoteAccessData object based on item attributes """
+    if item.get('ip_address'):
+        item['rad'] = RemoteAccessData(item.get('ip_address', ''),
+                                       item.get('port', ''),
+                                       item.get('user', ''),
+                                       item.get('password', ''))
+    elif item.get('hostname'):
+        item['rad'] = RemoteAccessData(item.get('hostname', ''),
+                                       item.get('port', ''),
+                                       item.get('user', ''),
+                                       item.get('password', ''))
