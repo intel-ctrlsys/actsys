@@ -47,6 +47,9 @@ class Command(object):
         else:
             self.command_args = None
 
+    def get_name(self):
+        return self.__class__.__name__
+
     def execute(self):
         """How the command is performed; default returns unknown error."""
         return CommandResult()

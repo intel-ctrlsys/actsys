@@ -40,7 +40,7 @@ class TestServicesCommand(unittest.TestCase):
         setattr(obj, "port", "22")
         setattr(obj, "user", "user")
         setattr(obj, "password", "pass")
-        setattr(obj, "device_type", "compute")
+        setattr(obj, "device_type", "node")
         setattr(obj, "service_list", [])
 
     def test_incorrect_node_type(self):

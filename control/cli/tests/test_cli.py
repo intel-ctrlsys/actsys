@@ -12,6 +12,7 @@ from ...commands.power.power_off import PowerOffCommand
 from ...commands.power.power_cycle import PowerCycleCommand
 from ...commands.resource_pool_add import ResourcePoolAddCommand
 from ...commands.resource_pool_remove import ResourcePoolRemoveCommand
+from ...commands.resource_pool_check.resource_pool_check import ResourcePoolCheckCommand
 from mock import patch
 from ...commands import CommandResult
 
@@ -119,14 +120,26 @@ class ControlCliParserTest(TestCase):
         print"RETURN: {}" .format(ret)
         self.assertEqual(ret, 0)
 
-    def test_resource_add_cmd_execute(self):
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory")
+    def test_resource_add_cmd_execute(self, mock_cmd_exe_factory):
         sys.argv[1:] = ['resource', 'add', 'n01']
+        mock_cmd_exe_factory.resource_add.return_value = 0
         test_args = self.TestParser.get_all_args()
         ret = CtrlCliExecutor().resource_cmd_execute(test_args)
         self.assertEqual(ret, 0)
 
-    def test_resource_remove_cmd_execute(self):
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory")
+    def test_resource_check_cmd_execute(self, mock_cmd_exe_factory):
+        sys.argv[1:] = ['resource', 'check', 'n01']
+        mock_cmd_exe_factory.resource_check.return_value = 0
+        test_args = self.TestParser.get_all_args()
+        ret = CtrlCliExecutor().resource_cmd_execute(test_args)
+        self.assertEqual(ret, 0)
+
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory")
+    def test_resource_remove_cmd_execute(self, mock_cmd_exe_factory):
         sys.argv[1:] = ['resource', 'remove', 'n01']
+        mock_cmd_exe_factory.resource_remove.return_value = 0
         test_args = self.TestParser.get_all_args()
         ret = CtrlCliExecutor().resource_cmd_execute(test_args)
         self.assertEqual(ret, 0)
@@ -190,10 +203,11 @@ class ControlCliParserTest(TestCase):
         retval = CtrlCliExecutor().execute_cli_cmd()
         self.assertEqual(retval, 0)
 
-    def test_exe_cli_cmd_with_resource(self):
+    @patch.object(CtrlCliExecutor, "resource_cmd_execute")
+    def test_exe_cli_cmd_with_resource(self, mock_rce):
         sys.argv[1:] = ['resource', 'add', 'n01']
-        retval = CtrlCliExecutor().execute_cli_cmd()
-        self.assertEqual(retval, 0)
+        mock_rce.return_value = 0
+        self.assertEqual(CtrlCliExecutor().execute_cli_cmd(), 0)
 
     def test_exe_cli_cmd_with_get(self):
         sys.argv[1:] = ['get', 'freq', 'n01']
@@ -233,24 +247,32 @@ class ControlCliParserTest(TestCase):
         self.assertEqual(retval, 0)
 
     @patch.object(ResourcePoolAddCommand, 'execute')
-    def test_resourceadd_invoker(self, MockResourcePoolAddCommand_execute):
+    def test_resource_add_invoker(self, MockResourcePoolAddCommand_execute):
         args = CommandResult(message='pass', return_code=0)
         device_name = "n01,n02"
         sub_command = "add"
         MockResourcePoolAddCommand_execute.return_value = args
-        retval = CommandExeFactory().resource_add_invoker(device_name,
-                                                          sub_command)
+        retval = CommandExeFactory().resource_add(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
     @patch.object(ResourcePoolRemoveCommand, 'execute')
-    def test_resourceremove_invoker(self, MockResourcePoolRemoveCommand_execute):
+    def test_resource_remove_invoker(self, MockResourcePoolRemoveCommand_execute):
         args = CommandResult(message='pass', return_code=0)
         device_name = "n01,n02"
         sub_command = "remove"
         MockResourcePoolRemoveCommand_execute.return_value = args
-        retval = CommandExeFactory().resource_remove_invoker(device_name,
-                                                             sub_command)
+        retval = CommandExeFactory().resource_remove(device_name, sub_command)
+        print "RETURN: {}" .format(retval)
+        self.assertEqual(retval, 0)
+
+    @patch.object(ResourcePoolCheckCommand, 'execute')
+    def test_resource_check_invoker(self, MockResourcePoolCheckCommand_execute):
+        args = CommandResult(message='pass', return_code=0)
+        device_name = "n01,n02"
+        sub_command = "check"
+        MockResourcePoolCheckCommand_execute.return_value = args
+        retval = CommandExeFactory().resource_check(device_name, sub_command)
         print "RETURN: {}" .format(retval)
         self.assertEqual(retval, 0)
 
@@ -295,8 +317,7 @@ class ControlCliParserTest(TestCase):
         device_name = "n01,n02"
         sub_command = "add"
         MockResourcePoolAddCommand.execute.return_value = 1
-        retval = CommandExeFactory().resource_add_invoker(device_name,
-                                                          sub_command)
+        retval = CommandExeFactory().resource_add(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
 
@@ -307,7 +328,6 @@ class ControlCliParserTest(TestCase):
         device_name = "n01,n02"
         sub_command = "remove"
         MockResourcePoolRemoveCommand.execute.return_value = 1
-        retval = CommandExeFactory().resource_remove_invoker(device_name,
-                                                             sub_command)
+        retval = CommandExeFactory().resource_remove(device_name, sub_command)
         print"RETURN: {}" .format(retval)
         self.assertNotEqual(retval, 0)
