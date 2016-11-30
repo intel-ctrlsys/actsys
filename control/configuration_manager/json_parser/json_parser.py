@@ -11,6 +11,7 @@ import json
 
 class JsonParser(object):
     """Class to parse a Json file"""
+
     @staticmethod
     def read_file(file_path):
         """Read a Json file
@@ -23,9 +24,9 @@ class JsonParser(object):
             with open(file_path) as data_file:
                 file_content = json.load(data_file)
         except IOError:
-            print 'File not found'
+            raise FileNotFound(file_path)
         except ValueError:
-            print 'Non parsable file'
+            raise NonParsableFile(file_path)
         return file_content
 
     @staticmethod
@@ -36,3 +37,25 @@ class JsonParser(object):
         :return: string with a readable representation of the data
         """
         return json.dumps(file_content, indent=4, sort_keys=True)
+
+
+class FileNotFound(Exception):
+    """ File not found exception """
+
+    def __init__(self, file_path):
+        super(FileNotFound, self).__init__()
+        self.value = "File {0} not found.".format(file_path)
+
+    def __str__(self):
+        return repr(self.value)
+
+
+class NonParsableFile(Exception):
+    """ Non parsable file exception"""
+
+    def __init__(self, file_path):
+        super(NonParsableFile, self).__init__()
+        self.value = "File {0} cannot be parsed.".format(file_path)
+
+    def __str__(self):
+        return repr(self.value)

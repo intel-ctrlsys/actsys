@@ -103,7 +103,8 @@ class ClusterConfiguration(ConfigurationTypeInterface):
         :return: True if this object can parse or False if not
         """
         self.parser = CCParser(self.file_path)
-        self.parser.parse()
-        self.data = self.parser.parsed_data
-        self.extractor = ClusterConfigurationExtractor(self.data)
-        return True
+        if self.parser.parse():
+            self.data = self.parser.parsed_data
+            self.extractor = ClusterConfigurationExtractor(self.data)
+            return True
+        return False

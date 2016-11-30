@@ -61,7 +61,7 @@ class ListExpander(object):
 
 class ClusterConfigurationParser(object):
     """ Cluster Configuration Parser """
-
+    supported_file_versions = ['1', '']
     known_ids = ['device_id', 'hostname', 'ip_address']
     known_types = {
         'NODE_TAG': 'node',
@@ -86,8 +86,10 @@ class ClusterConfigurationParser(object):
     def parse(self):
         """ Parse function fills the parsed_data object """
         ignored_types = ['profile']
-        if not self.data:
-            return
+
+        if self.data.get('version','') not in self.supported_file_versions:
+            return False
+
         types = [device_type for device_type in self.data
                  if device_type not in ignored_types]
 
@@ -98,6 +100,7 @@ class ClusterConfigurationParser(object):
                 self.__parse_type__(device_type, self.data[device_type])
 
         self.__set_relationships__()
+        return True
 
 
     def __set_relationships__(self):
