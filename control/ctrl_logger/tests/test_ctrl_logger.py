@@ -9,10 +9,10 @@ Tests for the CrtlLogger class
 import re
 import unittest
 import logging
-from mock import patch
-from ...commands import CommandResult
-from ...commands.power.power_on.power_on import PowerOnCommand
+from mock import MagicMock
+from ...commands import Command, CommandResult
 from ..ctrl_logger import CtrlLogger, get_ctrl_logger
+from ...plugin.manager import PluginManager
 
 TEST_LOG = ".test.log"
 
@@ -77,27 +77,31 @@ class TestCtrlLogger(unittest.TestCase):
                 self.assertTrue(self.msg_in_log_file((level, single_msg)),
                                 "{0} log message not found ".format(level))
 
-    @patch('control.commands.power.power_on.power_on.PowerOnCommand')
-    def test_ctrl_logger_journal(self, MockPowerOnCommand):
+    def test_ctrl_logger_journal(self):
         """Test for journal logs """
-        log_format = '%(cmd)s %(device)s %(cmdargs)s %(message)s'
+        test_command = Command({'device_name': 'fake_node01',
+                                'configuration': [],
+                                'plugin_manager': PluginManager(),
+                                'logger': None,
+                                'arguments': ['5214']})
+
+        test_command.get_name = MagicMock(return_value="PowerOnCommand")
         test_result = CommandResult(message='Switches are off', return_code=1)
-        MockPowerOnCommand.device_name = "node01"
-        MockPowerOnCommand.command_args = ['5242']
+
+        log_format = '%(cmd)s %(device)s, %(message)s'
         dict_fmt = {
-            'cmd': '',
-            'device':  MockPowerOnCommand.device_name,
-            'cmdargs': ''.join(MockPowerOnCommand.command_args),
+            'cmd': 'power on',
+            'device': test_command.device_name,
             'message': 'Job Started'
         }
 
         expected_msg = log_format % dict_fmt
-        self.log.journal(MockPowerOnCommand)
+        self.log.journal(test_command)
         self.assertTrue(self.msg_in_log_file(("JOURNAL", expected_msg)))
 
         dict_fmt['message'] = test_result.message
         expected_msg = log_format % dict_fmt
-        self.log.journal(MockPowerOnCommand, test_result)
+        self.log.journal(test_command, test_result)
         self.assertTrue(self.msg_in_log_file(("JOURNAL", expected_msg)))
 
     def test_ctrl_logger_singleton(self):
