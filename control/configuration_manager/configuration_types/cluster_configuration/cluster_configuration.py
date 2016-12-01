@@ -9,7 +9,8 @@ from . cluster_configuration_extractor_interface \
 from .cluster_configuration_parser \
     import ClusterConfigurationParser as CCParser
 from ..configuration_type_interface import ConfigurationTypeInterface
-
+from .cluster_configuration_data \
+    import ClusterConfigurationData
 
 class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
     """Implements ClusterConfigurationExtractorInterface interface"""
@@ -23,6 +24,8 @@ class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
         """init method
         :param data: Object storing the data
         """
+        if not isinstance(data, ClusterConfigurationData):
+            raise TypeError
         self.data = data
 
     def get_device(self, device_id):

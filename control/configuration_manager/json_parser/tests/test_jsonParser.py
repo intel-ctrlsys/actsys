@@ -20,9 +20,17 @@ class TestJsonParser(TestCase):
     def test_read_file_non_existent_file(self):
         parser = JsonParser()
         self.assertRaises(FileNotFound, parser.read_file, 'unexistent_file.json')
+        try:
+            parser.read_file('unexistent_file.json')
+        except FileNotFound as e:
+            print e
 
     def test_read_file_non_parsable(self):
         parser = JsonParser()
         TestJsonFiles.write_file('non_parsable.json')
         self.assertRaises(NonParsableFile, parser.read_file, 'non_parsable.json')
+        try:
+            parser.read_file('non_parsable.json')
+        except NonParsableFile as e:
+            print e
         TestJsonFiles.remove_file('non_parsable.json')

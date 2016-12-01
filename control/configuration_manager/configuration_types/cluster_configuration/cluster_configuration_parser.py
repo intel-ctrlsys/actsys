@@ -97,8 +97,7 @@ class ClusterConfigurationParser(object):
         self.__parse_profile__(self.data.get('profile', {}))
 
         for device_type in types:
-            if device_type in self.data:
-                self.__parse_type__(device_type, self.data[device_type])
+            self.__parse_type__(device_type, self.data[device_type])
 
         self.__set_relationships__()
         return True
