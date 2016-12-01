@@ -7,6 +7,7 @@
 """
 import logging
 import logging.handlers
+import re
 
 LOG_FILE = "/var/log/actsys.log"
 JOURNAL = 35
@@ -16,7 +17,7 @@ class CtrlFormatter(logging.Formatter):
        Journal is different"""
     _format = '%(asctime)s %(levelname)-8s %(name)-6s: %(message)s'
     _journal_format = '%(asctime)s %(levelname)-8s %(name)-6s: %(cmd)s '\
-                      '%(device)s %(cmdargs)s %(message)s'
+                      '%(device)s, %(message)s'
 
     def format(self, record):
         """Helps to use a different format depending on log level"""
@@ -87,15 +88,22 @@ class CtrlLogger(logging.getLoggerClass()):
         """ Logs the user's transactions, where transaction is the command
             isued by the user"""
         start_msg = "Job Started"
+        cmd_name = format_cmd_name(command.get_name())
         journal_args = {
-            #command name not implemented
-            'cmd' : '',
+            'cmd' : cmd_name,
             'device' : command.device_name,
             'cmdargs' : ''.join(command.command_args)
         }
 
         msg = start_msg if command_result is None else command_result.message
         super(CtrlLogger, self).log(JOURNAL, msg, extra=journal_args)
+
+def format_cmd_name(cmd_name):
+    """Format the command name"""
+    cmd_name = re.sub("Command", "", cmd_name)
+    cmd_name = re.sub(r"(\w)([A-Z])", r"\1 \2", cmd_name)
+    cmd_name = cmd_name.lower()
+    return cmd_name
 
 def add_file_handler(logger):
     """Send the logs to a log file with the format specified"""

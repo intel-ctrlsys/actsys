@@ -29,7 +29,7 @@ from ..os_remote_access.mock.os_remote_access \
 from ..power_control.mock.power_control_mock \
     import PluginMetadata as PMockNPower
 from ..bmc.mock.bmc import PluginMetadata as PMockBmc
-from ..ctrl_logger.ctrl_logger import CtrlLogger
+from ..ctrl_logger.ctrl_logger import get_ctrl_logger
 from ..configuration_manager.configuration_manager import ConfigurationManager
 
 
@@ -42,7 +42,7 @@ class CommandExeFactory(object):
         self.invoker_ret_val = 0
         self.sub_command_list = list()
         self.failed_device_name = list()
-        self.logger = CtrlLogger()
+        self.logger = get_ctrl_logger()
         self.configuration = ConfigurationManager(file_path=self._get_correct_configuration_file())
         self.extractor = self.configuration.get_extractor()
         self.manager = None
@@ -143,11 +143,14 @@ class CommandExeFactory(object):
         for device in device_list:
             cmd_dictionary = self.create_dictionary(device,
                                                     self.sub_command_list)
-            p_on_obj = self.manager.factory_create_instance('command',
+            cmd_obj = self.manager.factory_create_instance('command',
                                                             command_map[
                                                                 sub_command],
                                                             cmd_dictionary)
-            return_msg = p_on_obj.execute()
+            self.logger.journal(cmd_obj)
+            return_msg = cmd_obj.execute()
+            self.logger.journal(cmd_obj, return_msg)
+
             print('{} - RETURN CODE: {}'.format(return_msg.message,
                                                 return_msg.return_code))
             if return_msg.return_code != 0:
