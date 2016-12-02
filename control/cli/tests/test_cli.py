@@ -3,16 +3,17 @@
 # Copyright (c) 2016 Intel Corp.
 #
 
-from unittest import TestCase
 import sys
-from ..control_cli import CtrlCliParser, CtrlCliExecutor
-from ..cli_cmd_invoker import CommandExeFactory
-from ...commands.resource_pool_add import ResourcePoolAddCommand
-from ...commands.resource_pool_remove import ResourcePoolRemoveCommand
-from ...commands.resource_pool_check.resource_pool_check import ResourcePoolCheckCommand
+from unittest import TestCase
+
 from mock import patch, MagicMock
+
+from control.commands.resource_pool.resource_pool_check import ResourcePoolCheckCommand
+from ..cli_cmd_invoker import CommandExeFactory
+from ..control_cli import CtrlCliParser, CtrlCliExecutor
 from ...commands import CommandResult
-from ...ctrl_logger.ctrl_logger import CtrlLogger
+from ...commands.resource_pool import ResourcePoolAddCommand
+from ...commands.resource_pool import ResourcePoolRemoveCommand
 
 
 class ControlCliParserTest(TestCase):

@@ -21,7 +21,7 @@ class ServicesCommand(Command):
         super(ServicesCommand, self).__init__(args)
 
         self.device = self.configuration.get_device(self.device_name)
-        self.ssh = self.plugin_manager.factory_create_instance('os_remote_access', 'ssh')
+        self.ssh = self.plugin_manager.factory_create_instance('os_remote_access', self.device.access_type)
         self.remote_access_data = RemoteAccessData(self.device.ip_address, self.device.port,
                                                    self.device.user, self.device.password)
         self.command = []

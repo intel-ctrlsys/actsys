@@ -5,9 +5,9 @@
 """
 Resource Pool Remove Plugin
 """
-from ..command import Command, CommandResult
-from ...plugin.manager import PluginMetadataInterface
-from ...resource.slurm.slurm_resource_control import SlurmResource
+from control.commands.command import CommandResult
+from control.plugin.manager import PluginMetadataInterface
+from .resource_pool import ResourcePoolCommand
 
 
 class PluginMetadata(PluginMetadataInterface):
@@ -32,7 +32,7 @@ class PluginMetadata(PluginMetadataInterface):
         return ResourcePoolRemoveCommand(options)
 
 
-class ResourcePoolRemoveCommand(Command):
+class ResourcePoolRemoveCommand(ResourcePoolCommand):
     """ResourcePoolRemoveCommand"""
 
     def __init__(self, args=None):
@@ -41,12 +41,9 @@ class ResourcePoolRemoveCommand(Command):
 
     def execute(self):
         """Execute the command"""
-        device = self.configuration.get_device(self.device_name)
-        if 'compute' != device.device_type and 'node' != device.device_type:
-            return CommandResult(-1, "The device is not a compute node!")
-        sr = SlurmResource()
-        if not sr.check_resource_manager_installed():
-            return CommandResult(-2, "Slurm resource manager is not installed!")
+        setup_results = self.setup()
+        if setup_results is not None:
+            return setup_results
 
-        rc, message = sr.remove_node_from_resource_pool(self.device_name)
+        rc, message = self.resource_manager.remove_node_from_resource_pool(self.device_name)
         return CommandResult(rc, message)

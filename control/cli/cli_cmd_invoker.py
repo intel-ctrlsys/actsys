@@ -7,31 +7,34 @@ This module is called "Command Invoker" which uses APIs from "commands" folder
 to perform user requested operations.
 """
 from __future__ import print_function
-import re
-import os
+
 import logging
-from ..plugin.manager import PluginManager
-from ..commands.power.power_on.power_on import PluginMetadata as POn
-from ..commands.power.power_off.power_off import PluginMetadata as POff
-from ..commands.power.power_cycle.power_cycle import PluginMetadata as PCycle
-from ..commands.resource_pool_add.resource_pool_add import \
+import os
+import re
+
+from control.commands.resource_pool.resource_pool_add import \
     PluginMetadata as PRAdd
-from ..commands.resource_pool_remove.resource_pool_remove import \
+from control.commands.resource_pool.resource_pool_check import PluginMetadata as RCpluginMeta
+from control.commands.resource_pool.resource_pool_remove import \
     PluginMetadata as PRRemove
-from ..commands.resource_pool_check.resource_pool_check import PluginMetadata as RCpluginMeta
-from ..commands.services import ServicesStatusPluginMetadata
-from ..commands.services import ServicesStartPluginMetadata
-from ..commands.services import ServicesStopPluginMetadata
-from ..power_control.nodes.node_power import PluginMetadata as PNPower
 from ..bmc.ipmi_util.ipmi_util import PluginMetadata as PBmc
-from ..os_remote_access.ssh.ssh import PluginMetadata as PSsh
+from ..bmc.mock.bmc import PluginMetadata as PMockBmc
+from ..commands.power.power_cycle.power_cycle import PluginMetadata as PCycle
+from ..commands.power.power_off.power_off import PluginMetadata as POff
+from ..commands.power.power_on.power_on import PluginMetadata as POn
+from ..commands.services import ServicesStartPluginMetadata
+from ..commands.services import ServicesStatusPluginMetadata
+from ..commands.services import ServicesStopPluginMetadata
+from ..configuration_manager.configuration_manager import ConfigurationManager
+from ..ctrl_logger.ctrl_logger import get_ctrl_logger
 from ..os_remote_access.mock.os_remote_access \
     import PluginMetadata as PMockSsh
+from ..os_remote_access.ssh.ssh import PluginMetadata as PSsh
+from ..plugin.manager import PluginManager
 from ..power_control.mock.power_control_mock \
     import PluginMetadata as PMockNPower
-from ..bmc.mock.bmc import PluginMetadata as PMockBmc
-from ..ctrl_logger.ctrl_logger import get_ctrl_logger
-from ..configuration_manager.configuration_manager import ConfigurationManager
+from ..power_control.nodes.node_power import PluginMetadata as PNPower
+from ..resource.slurm.slurm_resource_control import PluginMetadata as SlurmPluginMetadata
 
 
 class CommandExeFactory(object):
@@ -112,6 +115,7 @@ class CommandExeFactory(object):
         self.manager.add_provider(ServicesStartPluginMetadata())
         self.manager.add_provider(ServicesStopPluginMetadata())
         self.manager.add_provider(RCpluginMeta())
+        self.manager.add_provider(SlurmPluginMetadata())
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
