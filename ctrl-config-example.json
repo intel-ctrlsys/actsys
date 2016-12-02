@@ -6,6 +6,7 @@
       "password": "password",
       "port": 22,
       "access_type": "ssh",
+      "resource_controller": "slurm",
       "image": "centos7.2",
       "service_list": [
         "orcmd",

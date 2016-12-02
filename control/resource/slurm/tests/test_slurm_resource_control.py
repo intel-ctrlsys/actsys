@@ -17,7 +17,7 @@ class TestSlurmPluginMetadata(unittest.TestCase):
     def test_slurm_plugin(self):
         slurmPlugin = PluginMetadata()
         self.assertEqual("resource_control", slurmPlugin.category())
-        self.assertEqual("slurm_resource_control", slurmPlugin.name())
+        self.assertEqual("slurm", slurmPlugin.name())
         self.assertEqual(100, slurmPlugin.priority())
         self.assertIsNotNone(slurmPlugin.create_instance())
 

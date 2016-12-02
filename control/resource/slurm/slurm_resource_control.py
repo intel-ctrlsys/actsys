@@ -23,7 +23,7 @@ class PluginMetadata(PluginMetadataInterface):
 
     def name(self):
         """Get the plugin instance name."""
-        return 'slurm_resource_control'
+        return 'slurm'
 
     def priority(self):
         """Get the priority of this name in this category."""
