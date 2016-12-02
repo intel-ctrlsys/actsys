@@ -25,7 +25,7 @@ class ClusterConfigurationExtractor(ClusterConfigurationExtractorInterface):
         :param data: Object storing the data
         """
         if not isinstance(data, ClusterConfigurationData):
-            raise TypeError
+            raise TypeError()
         self.data = data
 
     def get_device(self, device_id):
