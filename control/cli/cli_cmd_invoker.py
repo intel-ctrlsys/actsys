@@ -35,6 +35,7 @@ from ..power_control.mock.power_control_mock \
     import PluginMetadata as PMockNPower
 from ..power_control.nodes.node_power import PluginMetadata as PNPower
 from ..resource.slurm.slurm_resource_control import PluginMetadata as SlurmPluginMetadata
+from ..resource.mock.mock_resource_control import PluginMetadata as MockPluginMetadata
 
 
 class CommandExeFactory(object):
@@ -116,6 +117,7 @@ class CommandExeFactory(object):
         self.manager.add_provider(ServicesStopPluginMetadata())
         self.manager.add_provider(RCpluginMeta())
         self.manager.add_provider(SlurmPluginMetadata())
+        self.manager.add_provider(MockPluginMetadata())
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
