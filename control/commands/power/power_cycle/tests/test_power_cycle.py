@@ -24,7 +24,8 @@ class TestPowerCycleCommand(PowerCommandsCommon):
     def setUp(self):
         super(TestPowerCycleCommand, self).setUp()
         self.write_state('On:bmc_on')
-        self.command_options['arguments'] = ['cycle']
+        self.args.subcommand = 'cycle'
+        # self.command_options['arguments'] = ['cycle']
         self.command = PowerCycleCommand(self.command_options)
         self.command.plugin_name = 'mock'
 
@@ -59,21 +60,21 @@ class TestPowerCycleCommand(PowerCommandsCommon):
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_2(self):
-        self.command.args = []
+        self.args = None
         result = self.command.execute()
         self.assertEqual('Success: Device Cycled: test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
     def test_parse_arguments_3(self):
-        self.command.args = ['unknown']
+        self.args.subcommand = 'unknown'
         result = self.command.execute()
         self.assertEqual('Incorrect arguments passed to cycle a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_4(self):
-        self.command.args = ['force']
+        self.args.force = True
         result = self.command.execute()
         self.assertEqual('Success: Device Cycled: test_node',
                          result.message)

@@ -34,7 +34,7 @@ class CommonPowerCommand(Command):
         cfg = self.configuration
         mgr = self.plugin_manager
         # Device
-        node = cfg.get_node(self.device_name)
+        node = cfg.get_device(self.device_name)
 
         if not node:
             raise RuntimeError("Device {} was not found in the "
@@ -43,7 +43,7 @@ class CommonPowerCommand(Command):
         options['device_name'] = node.device_id
         options['device_type'] = node.device_type
         # BMC
-        if node and hasattr(node, "bmc"):
+        if node and hasattr(node, "bmc") and node.bmc is not None:
             # TODO: check if bmc access_type is not defined.
             bmc_plugin = mgr.factory_create_instance('bmc', node.bmc.access_type)
             bmc_access = RemoteAccessData(node.bmc.ip_address, node.bmc.port,
@@ -52,12 +52,16 @@ class CommonPowerCommand(Command):
         # Device OS
         if node:
             # TODO: Check if node access type is not defined
-            os_plugin = self.plugin_manager.factory_create_instance('os_remote_'
-                                                                    'access',
-                                                                    node.access_type)
-            os_access = RemoteAccessData(node.ip_address, node.port,
-                                         node.user, node.password)
-            options['os'] = (os_access, os_plugin)
+            try:
+                os_plugin = self.plugin_manager.factory_create_instance('os_remote_'
+                                                                        'access',
+                                                                        node.access_type)
+                os_access = RemoteAccessData(node.ip_address, node.port,
+                                             node.user, node.password)
+                options['os'] = (os_access, os_plugin)
+            except KeyError as ke:
+                self.logger.warning("Unable to load access plugin, {}".format(ke.message))
+
             # TODO: Check if all of these exist, is there a default?!?!?
             options['policy'] = {
                 'OSShutdownTimeoutSeconds': node.os_shutdown_timeout_seconds,
@@ -117,16 +121,14 @@ class CommonPowerCommand(Command):
         return True
 
     def _parse_power_arguments(self, default_target, targets):
-        force = False
         target = default_target
         if self.args is not None:
-            for arg in self.args:
-                if arg == 'force':
-                    force = True
-                elif arg in targets:
-                    target = targets[arg]
-                else:
-                    return None, None
+            force = self.args.force
+            if self.args.subcommand is not None:
+                try:
+                    target = targets[self.args.subcommand]
+                except KeyError:
+                    target = None
             return target, force
         else:
             return None, None
@@ -138,3 +140,22 @@ class CommonPowerCommand(Command):
     def _execute_for_power_switches(self):
         return CommandResult(message='"CommonPowerCommand._execute_for_power'
                                      '_switches" Not Implemented')
+
+    def switch_pdu(self, new_state):
+        device = self.configuration.get_pdu(self.device_name)
+
+        if device is None or device.device_type != "pdu":
+            return CommandResult(1, 'Invalid device type: Cannot toggle device type {}'.format(device.device_type))
+
+        pdu = self.plugin_manager.factory_create_instance('pdu', device.access_type)
+        remote_access = RemoteAccessData(str(device.ip_address), device.port, str(device.user), str(device.password))
+        outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
+        self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, outlet_state))
+        if outlet_state == new_state:
+            return CommandResult(0, '{} was already {}, no change made.'.format(self.device_name, new_state))
+        try:
+            pdu.set_outlet_state(remote_access, str(self.args.outlet), new_state)
+            self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, new_state))
+        except RuntimeError as ex:
+            return CommandResult(1, ex.message)
+        return CommandResult(0, 'Successfully switched {} {}'.format(self.device_name, new_state))

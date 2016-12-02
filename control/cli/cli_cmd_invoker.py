@@ -35,6 +35,8 @@ from ..power_control.mock.power_control_mock \
     import PluginMetadata as PMockNPower
 from ..power_control.nodes.node_power import PluginMetadata as PNPower
 from ..resource.slurm.slurm_resource_control import PluginMetadata as SlurmPluginMetadata
+from ..pdu.RaritanPX35180CR.RaritanPX35180CR import PluginMetadata as RaritanPluginMetadata
+from ..pdu.IPS400.IPS400 import PluginMetadata as IPSPluginMetadata
 from ..resource.mock.mock_resource_control import PluginMetadata as MockPluginMetadata
 
 
@@ -45,7 +47,6 @@ class CommandExeFactory(object):
 
     def __init__(self):
         self.invoker_ret_val = 0
-        self.sub_command_list = list()
         self.failed_device_name = list()
         self.logger = get_ctrl_logger()
         self.logger.setLevel(logging.DEBUG)
@@ -83,8 +84,8 @@ class CommandExeFactory(object):
             return dev_list
         else:
             device_err_msg = "ERROR: Wrong Device Name/List. " \
-                             "ctrl supports only comma separated list" \
-                             "if device(s)"
+                             "ctrl supports only comma separated list " \
+                             "of device(s)"
             print(device_err_msg.format(device_err_msg))
             return 1
 
@@ -117,6 +118,8 @@ class CommandExeFactory(object):
         self.manager.add_provider(ServicesStopPluginMetadata())
         self.manager.add_provider(RCpluginMeta())
         self.manager.add_provider(SlurmPluginMetadata())
+        self.manager.add_provider(RaritanPluginMetadata())
+        self.manager.add_provider(IPSPluginMetadata())
         self.manager.add_provider(MockPluginMetadata())
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
@@ -125,8 +128,6 @@ class CommandExeFactory(object):
         #   print, it should only use the logger, or return its messages)
         if self.manager is None:
             self.init_manager()
-
-        self.sub_command_list.append(sub_command)
 
         command_map = {'on': 'power_on',
                        'off': 'power_off',
@@ -144,21 +145,13 @@ class CommandExeFactory(object):
                        'service_start': 'service_start',
                        'service_stop': 'service_stop'
                        }
-
-        if cmd_args is not None:
-            if cmd_args:
-                self.sub_command_list.append('force')
         device_list = CommandExeFactory._device_name_check(device_name)
         if device_list == 1:
             self.logger.warning("Failed to parse a valid device name for {}".format(device_name))
             return 1
         for device in device_list:
-            cmd_dictionary = self.create_dictionary(device,
-                                                    self.sub_command_list)
-            cmd_obj = self.manager.factory_create_instance('command',
-                                                            command_map[
-                                                                sub_command],
-                                                            cmd_dictionary)
+            cmd_dictionary = self.create_dictionary(device, cmd_args)
+            cmd_obj = self.manager.factory_create_instance('command', command_map[sub_command], cmd_dictionary)
             self.logger.journal(cmd_obj)
             return_msg = cmd_obj.execute()
             self.logger.journal(cmd_obj, return_msg)

@@ -76,6 +76,10 @@ class MockPowerPluginException(PowerControlMock):
 
 class PowerCommandsCommon(unittest.TestCase):
     """Common to all power common tests"""
+
+    class Object(object):
+        pass
+
     @patch("control.ctrl_logger.ctrl_logger.CtrlLogger")
     def setUp(self, mock_ctrl_logger):
         self.node_name = 'test_node'
@@ -94,12 +98,15 @@ class PowerCommandsCommon(unittest.TestCase):
         self.manager.add_provider(ServicesStopPluginMetadata())
         self.configuration = MockConfiguration()
         self.setUpConfiguration()
+        self.args = self.Object()
+        setattr(self.args, "subcommand", "off")
+        setattr(self.args, "force", False)
         self.command_options = {
             'device_name': self.node_name,
             'configuration': self.configuration,
             'plugin_manager': self.manager,
             'logger': mock_ctrl_logger,
-            'arguments': ['off']
+            'arguments': self.args
         }
         self.options = {
             'device_name': self.node_name,

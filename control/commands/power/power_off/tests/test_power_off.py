@@ -24,7 +24,7 @@ class TestPowerOffCommand(PowerCommandsCommon):
     def setUp(self):
         super(TestPowerOffCommand, self).setUp()
         self.write_state('On:bmc_on')
-        self.command_options['arguments'] = ['off']
+        self.args.subcommand = 'off'
         self.command = PowerOffCommand(self.command_options)
         self.command.plugin_name = 'mock'
 
@@ -58,21 +58,21 @@ class TestPowerOffCommand(PowerCommandsCommon):
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_2(self):
-        self.command.args = []
+        self.args = None
         result = self.command.execute()
         self.assertEqual('Success: Power Off test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
     def test_parse_arguments_3(self):
-        self.command.args = ['unknown']
+        self.args.subcommand = 'unknown'
         result = self.command.execute()
         self.assertEqual('Incorrect arguments passed to turn off a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_4(self):
-        self.command.args = ['force']
+        self.args.force = True
         result = self.command.execute()
         self.assertEqual('Success: Power Off test_node',
                          result.message)

@@ -8,6 +8,7 @@ Node Power On Procedure plugin.
 from ..power_common.power_common import CommonPowerCommand
 from ... import CommandResult
 from ....plugin.manager import PluginMetadataInterface
+from ....utilities.remote_access_data import RemoteAccessData
 import time
 
 
@@ -111,3 +112,7 @@ class PowerOnCommand(CommonPowerCommand):
 
         return CommandResult(0, 'Success: Device Powered On: {}'.
                              format(self.device_name))
+
+    def _execute_for_power_switches(self):
+        """"""
+        return self.switch_pdu("on")

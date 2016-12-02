@@ -68,6 +68,8 @@ class CtrlCliParser(object):
         self.power_parser.add_argument("-f", "--force", action='store_true',
                                        help='This option will allow user to'
                                             ' force the Power On/Off/Reboot')
+        self.power_parser.add_argument("-o", "--outlet", nargs="?", type=int,
+                                       help='Specify the outlet to edit (PDUs only)')
 
     def add_resource_args(self):
         """Add the arguments for the Resource Sub-Parser"""

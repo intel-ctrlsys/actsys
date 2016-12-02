@@ -86,3 +86,7 @@ class PowerOffCommand(CommonPowerCommand):
 
         return CommandResult(0, 'Success: Power Off {}'.
                              format(self.device_name))
+
+    def _execute_for_power_switches(self):
+        """"""
+        return self.switch_pdu("off")
