@@ -24,6 +24,9 @@ class Command(object):
         """
         if args is None:
             raise RuntimeError('Cannot pass "None" as arguments for commands!')
+
+        self.command_args = args
+
         if 'device_name' not in args or args['device_name'] is None or \
                 len(args['device_name']) == 0:
             raise RuntimeError('The "device_name" argument cannot be missing '
@@ -43,9 +46,9 @@ class Command(object):
         else:
             self.logger = None
         if 'arguments' in args:
-            self.command_args = args['arguments']
+            self.args = args['arguments']
         else:
-            self.command_args = None
+            self.args = None
 
     def get_name(self):
         return self.__class__.__name__

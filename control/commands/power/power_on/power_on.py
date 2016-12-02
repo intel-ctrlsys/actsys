@@ -8,6 +8,7 @@ Node Power On Procedure plugin.
 from ..power_common.power_common import CommonPowerCommand
 from ... import CommandResult
 from ....plugin.manager import PluginMetadataInterface
+import time
 
 
 class PluginMetadata(PluginMetadataInterface):
@@ -82,19 +83,29 @@ class PowerOnCommand(CommonPowerCommand):
                 raise RuntimeError('Power already on for {}; use '
                                    'power cycle'.
                                    format(self.device_name))
-
             # STEP 6
             if not self.power_plugin.set_device_power_state(target, force):
                 raise RuntimeError('Failed to change state to {} on '
                                    'device {}'.
                                    format(target, self.device_name))
 
-            # STEP 7
-            if not self._update_resource_state(True):  # On state
-                raise RuntimeError('Failed to inform the resource '
-                                   'manager of the state change for '
-                                   'device {}'.
-                                   format(self.device_name))
+            # If a wait time is set, wait
+            device = self.configuration.get_node(self.device_name)
+            if hasattr(device, 'wait_time_after_boot_services') and hasattr(device, 'service_list'):
+                # We must wait here to allow systemctl time to enable servces.
+                self.logger.debug("Waiting for {} seconds for systemctl services to "
+                                  "enable...".format(device.wait_time_after_boot_services))
+                time.sleep(device.wait_time_after_boot_services)
+
+            # Start the service for the node
+            if not self._update_services("start"):  # On state
+                raise RuntimeError('Failed to start the services for device {}'.format(self.device_name))
+
+            # Add node to the resource pool
+            if not self._update_resource_state("add"):  # On state
+                raise RuntimeError('Failed to inform the resource manager of the state change for '
+                                   'device {}'.format(self.device_name))
+
         except RuntimeError as err:
             return CommandResult(message=err.message)
 

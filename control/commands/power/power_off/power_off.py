@@ -67,17 +67,20 @@ class PowerOffCommand(CommonPowerCommand):
                                      format(self.device_name))
 
             # STEP 5
+            if not self._update_resource_state("remove"):
+                raise RuntimeError('Failed to inform the resource manager of the state change for '
+                                   'device {}'.format(self.device_name))
+
+            # STEP 6: Stop node service
+            if not self._update_services("stop"):  # On state
+                raise RuntimeError('Failed to start the services for device {}'.format(self.device_name))
+
+            # STEP 7
             if not self.power_plugin.set_device_power_state(target, force):
                 raise RuntimeError('Failed to change state to {} on '
                                    'device {}'.
                                    format(target, self.device_name))
 
-            # STEP 6
-            if not self._update_resource_state(False):
-                raise RuntimeError('Failed to inform the resource '
-                                   'manager of the state change for '
-                                   'device {}'.
-                                   format(self.device_name))
         except RuntimeError as err:
             return CommandResult(message=err.message)
 

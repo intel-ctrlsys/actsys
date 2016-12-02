@@ -11,6 +11,7 @@ from ....utilities.remote_access_data import RemoteAccessData
 
 class CommonPowerCommand(Command):
     """Common functionality"""
+
     def __init__(self, args=None):
         super(CommonPowerCommand, self).__init__(args)
         self.power_plugin = None
@@ -83,17 +84,43 @@ class CommonPowerCommand(Command):
             return False
 
     def _update_resource_state(self, new_state):
-        """Inform the resource manager that the node is now on-line."""
-        valid_node_types = {'node', 'compute', 'service', 'master', 'login'}
-        # TODO: Update node state in Resource Manager when available!
-        device_type = self.configuration.get_device(self.device_name).device_type
-        return device_type in valid_node_types
+        """Inform the resource manager that the node can be added or removed."""
+        if new_state not in ['add', 'remove']:
+            return False
+
+        self.logger.debug("Removing {} from the resource pool.".format(self.device_name))
+        resource_pool = self.plugin_manager.factory_create_instance('command',
+                                                                    'resource_pool_{}'.format(new_state),
+                                                                    self.command_args)
+        resource_pool_command_result = resource_pool.execute()
+        if resource_pool_command_result.return_code != 0:
+            err_msg = "Power command failed due to failed resource {}.".format(new_state)
+            self.logger.fatal(err_msg)
+            return False
+
+        return True
+
+    def _update_services(self, new_state):
+        """Inform the node systemctl that the services can be started or stopped."""
+        if new_state not in ['start', 'stop']:
+            return False
+
+        self.logger.debug("{}ing services for {}".format(new_state, self.device_name))
+        service_stop = self.plugin_manager.factory_create_instance('command', 'service_{}'.format(new_state),
+                                                                   self.command_args)
+        service_stop_result = service_stop.execute()
+        if service_stop_result.return_code != 0:
+            err_msg = "Failed power command due to failed service {}.".format(new_state)
+            self.logger.fatal(err_msg)
+            return False
+
+        return True
 
     def _parse_power_arguments(self, default_target, targets):
         force = False
         target = default_target
-        if self.command_args is not None:
-            for arg in self.command_args:
+        if self.args is not None:
+            for arg in self.args:
                 if arg == 'force':
                     force = True
                 elif arg in targets:

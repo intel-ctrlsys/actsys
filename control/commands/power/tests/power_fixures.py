@@ -8,6 +8,7 @@ Common fixtures for the power commands.
 import unittest
 import os
 import json
+from mock import patch
 from ....plugin.manager import PluginManager
 from ....power_control.mock.power_control_mock import PluginMetadata as \
     NodePowerMetadata
@@ -15,7 +16,14 @@ from ....power_control.mock.power_control_mock import PowerControlMock
 from ....bmc.mock.bmc import PluginMetadata as BmcMetadata
 from ....os_remote_access.mock.os_remote_access import PluginMetadata as \
     RemoteMetadata
+from ....resource.tests.mock_resource_control import PluginMetadata as RCPluginMetaData
 from ....utilities.remote_access_data import RemoteAccessData
+from ...resource_pool.resource_pool_add import PluginMetadata as PRAdd
+from ...resource_pool.resource_pool_check import PluginMetadata as RCpluginMeta
+from ...resource_pool.resource_pool_remove import PluginMetadata as PRRemove
+from ...services import ServicesStartPluginMetadata
+from ...services import ServicesStatusPluginMetadata
+from ...services import ServicesStopPluginMetadata
 
 
 class MockConfiguration(object):
@@ -68,7 +76,8 @@ class MockPowerPluginException(PowerControlMock):
 
 class PowerCommandsCommon(unittest.TestCase):
     """Common to all power common tests"""
-    def setUp(self):
+    @patch("control.ctrl_logger.ctrl_logger.CtrlLogger")
+    def setUp(self, mock_ctrl_logger):
         self.node_name = 'test_node'
         self.persistent_file = os.path.join(os.path.sep, 'tmp',
                                             self.node_name + '.state')
@@ -76,13 +85,20 @@ class PowerCommandsCommon(unittest.TestCase):
         self.manager.add_provider(NodePowerMetadata())
         self.manager.add_provider(BmcMetadata())
         self.manager.add_provider(RemoteMetadata())
+        self.manager.add_provider(RCPluginMetaData())
+        self.manager.add_provider(PRAdd())
+        self.manager.add_provider(RCpluginMeta())
+        self.manager.add_provider(PRRemove())
+        self.manager.add_provider(ServicesStatusPluginMetadata())
+        self.manager.add_provider(ServicesStartPluginMetadata())
+        self.manager.add_provider(ServicesStopPluginMetadata())
         self.configuration = MockConfiguration()
         self.setUpConfiguration()
         self.command_options = {
             'device_name': self.node_name,
             'configuration': self.configuration,
             'plugin_manager': self.manager,
-            'logger': None,
+            'logger': mock_ctrl_logger,
             'arguments': ['off']
         }
         self.options = {
@@ -130,6 +146,8 @@ class PowerCommandsCommon(unittest.TestCase):
 
         setter(self.node_name, 'device_id', self.node_name)
         setter(self.node_name, 'access_type', 'mock')
+        setter(self.node_name, 'service_list', ['slurm'])
+        setter(self.node_name, 'resource_controller', 'mock')
         setter(self.node_name, 'ip_address', '192.168.128.50')
         setter(self.node_name, 'port', 22)
         setter(self.node_name, 'user', 'admin')
