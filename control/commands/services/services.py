@@ -38,6 +38,12 @@ class ServicesCommand(Command):
         result_string = ""
         result_msg = ""
         result_code = 0
+
+        if not hasattr(self.device, 'service_list'):
+            # set the service list attr, so that we can continue with the rest of the code
+            #   but skip over the for loop
+            setattr(self.device, 'service_list', [])
+
         for service in self.device.service_list:
             self.logger.debug("Attempting to check for service {} on node {}".format(service, self.device.device_id))
 

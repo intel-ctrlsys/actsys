@@ -18,6 +18,7 @@
       "os_shutdown_timeout_seconds": 150,
       "os_boot_timeout_seconds": 300,
       "os_network_to_halt_time": 5,
+      "wait_time_after_boot_services": 120,
       "bmc_boot_timeout_seconds": 10,
       "bmc_chassis_off_wait": 3
     },
@@ -40,6 +41,7 @@
       "os_shutdown_timeout_seconds": 150,
       "os_boot_timeout_seconds": 300,
       "os_network_to_halt_time": 5,
+      "wait_time_after_boot_services": 120,
       "bmc_boot_timeout_seconds": 10,
       "bmc_chassis_off_wait": 3
     },

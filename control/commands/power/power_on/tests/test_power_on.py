@@ -61,28 +61,28 @@ class TestPowerOnCommand(PowerCommandsCommon):
         self.assertEqual(0, result.return_code)
 
     def test_parse_arguments(self):
-        self.command.command_args = None
+        self.command.args = None
         result = self.command.execute()
         self.assertEqual('Incorrect arguments passed to turn on a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_2(self):
-        self.command.command_args = []
+        self.command.args = []
         result = self.command.execute()
         self.assertEqual('Success: Device Powered On: test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
     def test_parse_arguments_3(self):
-        self.command.command_args = ['unknown']
+        self.command.args = ['unknown']
         result = self.command.execute()
         self.assertEqual('Incorrect arguments passed to turn on a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_4(self):
-        self.command.command_args = ['force']
+        self.command.args = ['force']
         result = self.command.execute()
         self.assertEqual('Success: Device Powered On: test_node',
                          result.message)
