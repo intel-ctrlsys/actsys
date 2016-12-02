@@ -201,7 +201,8 @@ class NodePower(PowerControl):
         timeout = self.policy['OSShutdownTimeoutSeconds']
         address = self.os_credentials.address
         result = self._wait_for_network_availability(address, False, timeout)
-        time.sleep(self.policy['OSNetworkToHaltTime'])
+        if result:
+            time.sleep(self.policy['OSNetworkToHaltTime'])
         return result
 
     def _target_on_to_state(self, state, force):

@@ -35,7 +35,16 @@ class Utilities(object):
             return None, None
 
     def ping_check(self, address):
-        """Check if a network address has a OS responding to pings."""
-        options = ['ping', '-c', '1', '-W', '1', '-q']
-        result = self.execute_no_capture(options + [address])
+        """
+        Check if a network address has a OS responding to pings.  NOTE: until a
+        new plugin framework for network availability is created any address
+        starting with '127.' is considered a mocked address and only addresses
+        ending in ".1" will return True, all other return False.  This allows
+        for black box testing in BATS and functional testing.
+        """
+        if not address.startswith('127.'):
+            options = ['ping', '-c', '1', '-W', '1', '-q']
+            result = self.execute_no_capture(options + [address])
+        else:
+            return address.endswith('.1')
         return result == 0
