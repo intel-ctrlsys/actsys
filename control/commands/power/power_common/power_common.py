@@ -151,8 +151,9 @@ class CommonPowerCommand(Command):
         remote_access = RemoteAccessData(str(device.ip_address), device.port, str(device.user), str(device.password))
         outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
         self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, outlet_state))
-        if outlet_state == new_state:
-            return CommandResult(0, '{} was already {}, no change made.'.format(self.device_name, new_state))
+        if outlet_state.upper() == new_state.upper():
+            return CommandResult(0, '{} outlet {} was already {}, no change '
+                                    'made.'.format(self.device_name, self.args.outlet, new_state))
         try:
             pdu.set_outlet_state(remote_access, str(self.args.outlet), new_state)
             self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, new_state))

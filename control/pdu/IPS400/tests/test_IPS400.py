@@ -45,9 +45,9 @@ class TestPduIPS400(unittest.TestCase):
         pdu._execute_remote_telnet_command = MagicMock()
         MagicMock.return_value = 'Invalid command'
         with self.assertRaises(RuntimeError):
-           pdu.get_outlet_state(self.access, 'On')
+          pdu.get_outlet_state(self.access, 'On')
         MagicMock.return_value = IPS400_status
-        self.assertEqual('ON', pdu.get_outlet_state(self.access, '3'))
+        self.assertEqual('On', pdu.get_outlet_state(self.access, '3'))
 
     def test_set_outlet_state(self):
         pdu = PduIPS400()

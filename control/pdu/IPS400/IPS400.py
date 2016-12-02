@@ -48,14 +48,13 @@ class PduIPS400(PDUInterface):
         lines = output.split('\n')
         value = None
         for line in lines:
-            print line + "\n\n\n"
             if line.strip().startswith(outlet):
                 value = line.strip().split('|')[3].strip()
                 break
         if value is None:
             raise RuntimeError('Failed to retrieve'
                                ' IPS400 outlet %s state' % outlet)
-        return value
+        return value.capitalize()
 
     def set_outlet_state(self, connection, outlet, new_state):
         """
@@ -63,7 +62,7 @@ class PduIPS400(PDUInterface):
         """
         if new_state not in self.valid_states:
             raise RuntimeError('Invalid PDU state requested')
-        cmd = '/' + new_state.capitalize() + outlet + ',y'
+        cmd = '/' + new_state.capitalize() + ' ' + outlet + ',y'
         result = self._execute_remote_telnet_command(cmd, connection)
         if 'Invalid' in result:
             raise RuntimeError('Failed to set outlet {0} '
