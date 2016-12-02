@@ -137,19 +137,13 @@ class ClusterConfigurationParser(object):
                 if ListExpander.is_expandable(connected_device):
                     connected_device_list = \
                         ListExpander.expand_list(connected_device)
+                    outlet['device'] = connected_device_list
                 else:
                     connected_device_list = [connected_device]
                 for device_id in connected_device_list:
                     target_device = self.parsed_data.search_device(device_id)
                     update_power_outlet_list(target_device, relationship_info,
                                              attribute_name)
-
-    def print_parse_data(self):
-        """ Prints parsed data object """
-        for it1 in self.parsed_data:
-            print(it1)
-            for it2 in self.parsed_data[it1]:
-                print('\t{0}'.format(self.parsed_data[it1][it2]))
 
     def __parse_profile__(self, object_container):
         parse_method = {list: self.__parse_profile_list__,

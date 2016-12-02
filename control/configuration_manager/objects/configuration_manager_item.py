@@ -57,4 +57,4 @@ class ConfigurationManagerItem(object):
     def __ne__(self, other):
         if isinstance(other, self.__class__):
             return self.__dict__ <> other.__dict__
-        return False
+        return True

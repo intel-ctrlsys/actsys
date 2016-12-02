@@ -513,4 +513,228 @@ class TestJsonFiles(object):
 }
 
 ''',
-                     'non_parsable.json': '''This is not a json file'''}
+                     'non_parsable.json': '''This is not a json file''',
+                     'parser.json': '''{
+  "profile": [
+    {
+      "profile_name": "compute_node",
+      "role": [
+        "compute"
+      ],
+      "password": "pass@123",
+      "port": 20,
+      "image": "/etc/images/UBUNTU",
+      "user": "username",
+      "service_list": [
+        "gmond",
+        "orcmd"
+      ],
+      "os_shutdown_timeout_seconds": 150,
+      "os_boot_timeout_seconds": 300,
+      "os_network_to_halt_time": 5,
+      "bmc_boot_timeout_seconds": 10,
+      "bmc_chassis_off_wait": 3
+    },
+    {
+      "user": "username",
+      "channel": 11,
+      "priv_level": "USER",
+      "auth_method": "PASSWORD",
+      "password": "pass@123",
+      "port": 20,
+      "profile_name": "bmc_prof"
+    },
+    {
+      "profile_name": "power_units",
+      "outlets_count": 12,
+      "port": 20,
+      "user": "username",
+      "password": "pass@123"
+    },
+    {
+    }
+  ],
+  "node": [
+    {
+      "profile": "compute_node",
+      "ip_address": "192.168.1.33",
+      "hostname": "master5",
+      "role": [
+        "aggregator"
+      ],
+      "service_list": [
+        "gmond",
+        "gmetad",
+        "orcmd",
+        "orcmsched"
+      ],
+      "bmc": "bmc2"
+    },
+    {
+      "profile": "compute_node",
+      "ip_address": "192.168.1.32",
+      "hostname": "master4",
+      "bmc": "192.168.2.32"
+    },
+    {
+      "profile": "non_existent_profile",
+      "ip_address": "192.168.100.100",
+      "hostname": "badnode"
+    },
+    {
+      "device_id" : "rack[1:1-2]-node[1:1-2]"
+    },
+    {
+      "ip_address": "192.168.1.32",
+      "hostname": "master%4"
+    },
+    {
+    },
+    {
+      "ip_address": "500.168.1.32",
+      "hostname": "fakemaster"
+    },
+    {
+      "hostname": "just-hostname"
+    }
+   ],
+  "bmc": [
+    {
+      "profile": "bmc_prof",
+      "ip_address": "192.168.2.33",
+      "device_id": "bmc2"
+    },
+    {
+      "profile": "bmc_prof",
+      "ip_address": "192.168.2.32"
+    }
+  ],
+  "pdu": [
+    {
+      "profile": "power_units",
+      "ip_address": "192.168.3.32",
+      "connected_device": [
+        {
+          "outlet": "3",
+          "device": ["master4"]
+        },
+        {
+          "outlet": "0",
+          "device": ["192.168.4.32"]
+        }
+      ]
+    },
+    {
+      "profile": "power_units",
+      "ip_address": "192.168.3.33",
+      "hostname": "pdu2",
+      "connected_device": [
+        {
+          "outlet": "3",
+          "device": ["master5"]
+        },
+        {
+          "outlet": "0",
+          "device": ["bmc2"]
+        }
+      ]
+    }
+  ],
+
+  "psu": [
+    {
+      "profile": "power_units",
+      "outlets_count": 2,
+      "ip_address": "192.168.4.32",
+      "connected_device": [
+        {
+          "outlet": "1",
+          "device": ["master4"]
+        },
+        {
+          "outlet": "0",
+          "device": ["master5"]
+        },
+        {
+          "outlet": "3",
+          "device": ["rack1-node1"]
+        },
+        {
+          "outlet": "6",
+          "device": ["rack1-node1"]
+        }
+      ]
+    },
+    {
+      "profile": "power_units",
+      "outlets_count": 2,
+      "ip_address": "192.168.100.32"
+    },
+    {
+      "profile": "power_units",
+      "outlets_count": 2,
+      "ip_address": "192.168.100.33",
+      "connected_device": [
+        {
+          "outlet": "1",
+          "device": ["unknown[1:1-2]"]
+        },
+        {
+          "outlet": "1",
+          "devices": ["unknown[1:1-2]"]
+        }
+      ]
+    },
+    {
+      "profile": "power_units",
+      "outlets_count": 2,
+      "ip_address": "192.300.4.32",
+      "connected_devices": [
+        {
+          "outlet": "1",
+          "device": ["master4"]
+        },
+        {
+          "outlet": "0",
+          "device": ["master5"]
+        }
+      ]
+    }
+  ],
+  "vending_machine":{
+    "device_id" : "coffee machine"
+  },
+  "coffee_flavors":{
+    "flavor_list" : "latte, vanilla"
+  },
+  "unknown":[
+    {
+      "no_device_id" : "any_value"
+    }
+  ],
+  "configuration_variables": {
+    "provisioning_agent_software": "Warewulf",
+    "log_file": {
+      "path": "/var/log/ctrl.log",
+      "max_bytes": 10485760,
+      "retention_period": 30,
+      "level": "DEBUG"
+    },
+    "console_output": {
+      "file": [
+        "/opt/ctrl/console'"
+      ],
+      "error_level_regex": [
+        "regex"
+      ],
+      "warning_level_regex": [
+        "regex"
+      ]
+    }
+  },
+  "extra_configuration_variables": {
+    "extra_variable": "extra_value"
+  }
+}
+
+'''}
