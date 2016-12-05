@@ -86,6 +86,14 @@ class TestRemoteSshPlugin(unittest.TestCase):
         result = self.remote.execute(['whoami'], self.access, capture=True)
         self.assertEqual((255, None), result)
 
+    def test_ctor_with_options(self):
+        manager = PluginManager()
+        metadata = PluginMetadata()
+        manager.add_provider(metadata)
+        self.remote = manager.factory_create_instance(metadata.category(),
+                                                      metadata.name(),
+                                                      {'ConnectTimeout': 5})
+
 
 if __name__ == '__main__':
     unittest.main()

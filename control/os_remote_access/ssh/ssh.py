@@ -35,9 +35,13 @@ class PluginMetadata(PluginMetadataInterface):
 
 class RemoteSshPlugin(OsRemoteAccess):
     """SSH remote OS access implementation."""
+
     def __init__(self, options=None):
         super(RemoteSshPlugin, self).__init__(options)
+        self.__connect_timeout = 10
         self.__options = options
+        if self.__options is not None and 'ConnectTimeout' in self.__options:
+            self.__connect_timeout = self.__options['ConnectTimeout']
         self.utilities = Utilities()
 
     def execute(self, cmd, remote_access_data, capture=False, other=None):
@@ -47,8 +51,7 @@ class RemoteSshPlugin(OsRemoteAccess):
         else:
             return self._execute_ssh(cmd, remote_access_data)
 
-    @classmethod
-    def _build_command(cls, command, remote_access_data):
+    def _build_command(self, command, remote_access_data):
         """Make the ssh command"""
         platform = ['ssh', '-i', '-p', '-q']
         target = '%s@%s' % (remote_access_data.username,
@@ -61,21 +64,20 @@ class RemoteSshPlugin(OsRemoteAccess):
         if remote_access_data.port != 22:
             port_opt.append(platform[2])
             port_opt.append("%d" % remote_access_data.port)
-        cmd = [platform[0], platform[3]] + id_file + port_opt + [target]
+        cmd = [platform[0], platform[3]] + id_file + port_opt + [target] +\
+            ['-o', 'ConnectTimeout={}'.format(self.__connect_timeout)]
         cmd = cmd + command
         return cmd
 
     def _execute_ssh(self, cmdargs, remote_access_data):
         """Execute command on the remote server returning the result"""
-        full_command = RemoteSshPlugin._build_command(cmdargs,
-                                                      remote_access_data)
+        full_command = self._build_command(cmdargs, remote_access_data)
         return self.utilities.execute_no_capture(full_command), None
 
     def _execute_ssh_with_capture(self, command, remote_access_data):
         """Execute command on the remote server returning the result and
            output"""
-        full_command = RemoteSshPlugin._build_command(command,
-                                                      remote_access_data)
+        full_command = self._build_command(command, remote_access_data)
         stdout, stderr = self.utilities.execute_with_capture(full_command)
         if stdout is None:
             return 255, None
