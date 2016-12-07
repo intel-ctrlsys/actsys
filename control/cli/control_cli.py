@@ -54,8 +54,8 @@ class CtrlCliParser(object):
                            ' Ex: {} resource add node001'.format(self.CLI_COMMAND))
 
         self.add_subparser('process', 'Process list/kill on a node in a cluster.', ['list', 'kill'],
-                           'Select one of two options: list/kill. '
-                           ' Ex: {} resource kill 1232'.format(self.CLI_COMMAND),
+                           'Select one of two options: list/kill.'
+                           ' Ex: {} process kill 1232 node001'.format(self.CLI_COMMAND),
                            [
                                {
                                    'name': 'process_id',
