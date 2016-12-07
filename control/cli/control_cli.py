@@ -26,90 +26,85 @@ class CtrlCliParser(object):
             title='Sub Commands',
             description='List of Valid Sub Commands', dest='subparser_name')
 
+        self.add_simple_args()
+
         """Sub Parser for all Cli Commands"""
-        self.power_parser = self.ctrl_subparser.add_parser('power', help='Power on/off/reset a device.')
+        self.add_subparser('power', 'Power on/off/reset a device.',
+                           ['on', 'off', 'cycle', 'bios', 'efi', 'hdd', 'pxe', 'cdrom', 'removable'],
+                           'Select an option: on/off/cycle/bios/efi/hdd/pxe/cdrom/removable.'
+                           ' Ex: {} power on node001'.format(self.CLI_COMMAND),
+                           [
+                               {
+                                   'name': '-f',
+                                   'name2': '--force',
+                                   'action': 'store_true',
+                                   'help': 'This option will allow user to force the Power On/Off/Reboot'
+                               },
+                               {
+                                   'name': '-o',
+                                   'name2': '--outlet',
+                                   'type': int,
+                                   'nargs': '?',
+                                   'help': 'Specify the outlet to edit (PDUs only)'
+                               }
+                           ])
 
-        self.resource_parser = self.ctrl_subparser.add_parser('resource',
-                                                              help='Resource add/remove from a resource pool.')
+        self.add_subparser('resource', 'Resource add/remove from a resource pool.', ['add', 'remove', 'check'],
+                           'Select one of the following options: add/remove/check'
+                           ' Ex: {} resource add node001'.format(self.CLI_COMMAND))
 
-        self.process_parser = self.ctrl_subparser.add_parser('process',
-                                                             help='Process list/kill on a node in a cluster. ')
+        self.add_subparser('process', 'Process list/kill on a node in a cluster.', ['list', 'kill'],
+                           'Select one of two options: list/kill. '
+                           ' Ex: {} resource kill 1232'.format(self.CLI_COMMAND),
+                           [
+                               {
+                                   'name': 'process_id',
+                                   'help': 'Please provide process id to list or kill a process'
+                               }
+                           ])
 
-        self.get_parser = self.ctrl_subparser.add_parser('get',
-                                                         help='Get powercap/freq value of a node.')
+        self.add_subparser('get', 'Get powercap/freq value of a node.', ['freq', 'powercap'])
 
-        self.set_parser = self.ctrl_subparser.add_parser('set',
-                                                         help='Set powercap/freq value of a node.')
+        self.add_subparser('set', 'Set powercap/freq value of a node.', ['freq', 'powercap'], 'Select an option to set',
+                           [
+                               {
+                                   'name': 'value',
+                                   'help': 'Please provide the value to be set'
+                               }
+                           ])
 
-        self.service_parser = self.ctrl_subparser.add_parser('service',
-                                                             help='check, start or stop services specified in'
-                                                                  'the configuration file')
-        self.add_all_args()
+        self.add_subparser('service', 'Check, start or stop services specified in the configuration file',
+                           ['status', 'start', 'stop'], 'Select an action to perform')
 
+    def add_subparser(self, parser_name, parser_help, subcommand_choices=list(),
+                      subcommand_help=None, arg_list_kwargs=list()):
+        """
+        Helper function to add sub-parsers to ctrl. Note that device_name is added to the commands as the last arg.
+        """
+        subparser = self.ctrl_subparser.add_parser(parser_name, help=parser_help)
+        subparser.add_argument('subcommand', choices=subcommand_choices, help=subcommand_help)
 
-    def add_mandatory_args(self):
-        """Add the mandatory command line arguments here"""
-        self.ctrl_parser.add_argument('device_name', help='Please provide device name')
+        # additional arguments the user wants
+        for arg_kwarg in arg_list_kwargs:
+            # To the developer: arg_kwarg.pop will throw a key error is name is not specified in the arg_kwarg dict
+            #    this is intentional, please supply it.
+            name2 = arg_kwarg.pop('name2', None)
+            if name2 is not None:
+                # Optional args
+                subparser.add_argument(arg_kwarg.pop('name'), name2, **arg_kwarg)
+            else:
+                # positional args
+                subparser.add_argument(arg_kwarg.pop('name'), **arg_kwarg)
+
+        # Additional arguments that are applied to all commands (at the end).
+        subparser.add_argument('device_name', help='Device where command will be executed.')
+
+        return subparser
 
     def add_simple_args(self):
         """Add the simple arguments here"""
-        self.ctrl_parser.add_argument("-V", "--version", action="version",
-                                      version='1.0',
+        self.ctrl_parser.add_argument("-V", "--version", action="version", version='0.1.0',
                                       help='Provides the version of the tool')
-
-    def add_power_args(self):
-        """Add the arguments for the Power Sub-Parser"""
-        self.power_parser.add_argument('subcommand',
-                                       choices=['on', 'off', 'cycle', 'bios',
-                                                'efi', 'hdd', 'pxe', 'cdrom',
-                                                'removable'],
-                                       help='Select an option: on/off/cycle/bios/efi/hdd/pxe/cdrom/removable.'
-                                            ' Ex: {} power on node001'.format(self.CLI_COMMAND))
-        self.power_parser.add_argument("-f", "--force", action='store_true',
-                                       help='This option will allow user to'
-                                            ' force the Power On/Off/Reboot')
-        self.power_parser.add_argument("-o", "--outlet", nargs="?", type=int,
-                                       help='Specify the outlet to edit (PDUs only)')
-
-    def add_resource_args(self):
-        """Add the arguments for the Resource Sub-Parser"""
-        self.resource_parser.add_argument('subcommand',
-                                          choices=['add', 'remove', 'check'],
-                                          help='Select one of the following options: add/remove/check'
-                                               ' Ex: {} resource add node001'.format(self.CLI_COMMAND))
-
-    def add_process_args(self):
-        """Add the arguments for the Process Sub-Parser"""
-        self.process_parser.add_argument('subcommand', choices=['list', 'kill'],
-                                         help='Select one of two options: list/kill. '
-                                              ' Ex: {} resource kill 1232'.format(self.CLI_COMMAND))
-        self.process_parser.add_argument('process_id',
-                                         help='Please provide process id to list or kill a process')
-
-    def add_get_cmd_args(self):
-        """Add the arguments for the Get Sub-Parser"""
-        self.get_parser.add_argument('subcommand', choices=['freq', 'powercap'])
-
-    def add_set_cmd_args(self):
-        """Add the arguments for the Set Sub-Parser"""
-        self.set_parser.add_argument('subcommand', choices=['freq', 'powercap'])
-        self.set_parser.add_argument('value',
-                                     help='Please provide the value to be set')
-
-    def add_service_args(self):
-        """Add service args"""
-        self.service_parser.add_argument('subcommand', choices=['status', 'start', 'stop'])
-
-    def add_all_args(self):
-        """Retrieve all the arguments from parser"""
-        self.add_mandatory_args()
-        self.add_simple_args()
-        self.add_power_args()
-        self.add_resource_args()
-        self.add_process_args()
-        self.add_get_cmd_args()
-        self.add_set_cmd_args()
-        self.add_service_args()
 
     def get_all_args(self):
         return self.ctrl_parser.parse_args()
@@ -126,7 +121,8 @@ class CtrlCliExecutor(object):
                 print (f.value)
             else:
                 print (f)
-            raise RuntimeError("A runtime error occurred, exiting abnormally.")
+            from sys import exit
+            exit(1)
 
     def power_cmd_execute(self, cmd_args):
         """Function to call appropriate power sub-command"""
@@ -162,7 +158,7 @@ class CtrlCliExecutor(object):
         elif cmd_args.subcommand == 'check':
             return self.cmd_exe_factory_obj.resource_check(cmd_args.device_name, cmd_args)
         else:
-            print ("Invalid service command entered.")
+            print ("Invalid resource command entered.")
         return 1
 
     def get_cmd_execute(self, cmd_args):

@@ -14,6 +14,7 @@ from ..control_cli import CtrlCliParser, CtrlCliExecutor
 from ...commands import CommandResult
 from ...commands.resource_pool import ResourcePoolAddCommand
 from ...commands.resource_pool import ResourcePoolRemoveCommand
+from ...configuration_manager.json_parser.json_parser import FileNotFound
 
 
 class ControlCliParserTest(TestCase):
@@ -99,6 +100,17 @@ class ControlCliParserTest(TestCase):
         print"RETURN: {}" .format(ret)
         self.assertEqual(ret, 0)
 
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory.__init__", MagicMock(side_effect=RuntimeError("Error")))
+    def test_init_exception(self):
+        with self.assertRaises(SystemExit):
+            CtrlCliExecutor()
+
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory.__init__",
+           MagicMock(side_effect=FileNotFound("Error_file_path")))
+    def test_init_exception2(self):
+        with self.assertRaises(SystemExit):
+            CtrlCliExecutor()
+
     @patch("control.cli.cli_cmd_invoker.CommandExeFactory")
     def test_power_off_cmd_execute(self, mock_cmd_exe_factory):
         sys.argv[1:] = ['power', 'off', 'n01']
@@ -144,6 +156,43 @@ class ControlCliParserTest(TestCase):
         test_args = self.TestParser.get_all_args()
         ret = CtrlCliExecutor().resource_cmd_execute(test_args)
         self.assertEqual(ret, 0)
+
+    def test_resource_invalid_command(self):
+        sys.argv[1:] = ['resource', 'foo', 'n01']
+        with self.assertRaises(SystemExit):
+            test_args = self.TestParser.get_all_args()
+            ret = CtrlCliExecutor().resource_cmd_execute(test_args)
+
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory")
+    def test_service_start_cmd_execute(self, mock_cmd_exe_factory):
+        sys.argv[1:] = ['service', 'start', 'n01']
+        mock_cmd_exe_factory.service_on.return_value = 0
+        test_args = self.TestParser.get_all_args()
+        ret = CtrlCliExecutor().service_cmd_execute(test_args)
+        self.assertEqual(ret, 0)
+
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory")
+    def test_service_check_cmd_execute(self, mock_cmd_exe_factory):
+        sys.argv[1:] = ['service', 'status', 'n01']
+        mock_cmd_exe_factory.service_status.return_value = 0
+        test_args = self.TestParser.get_all_args()
+        ret = CtrlCliExecutor().service_cmd_execute(test_args)
+        self.assertEqual(ret, 0)
+
+    @patch("control.cli.cli_cmd_invoker.CommandExeFactory")
+    def test_service_remove_cmd_execute(self, mock_cmd_exe_factory):
+        sys.argv[1:] = ['service', 'stop', 'n01']
+        mock_cmd_exe_factory.service_off.return_value = 0
+        test_args = self.TestParser.get_all_args()
+        ret = CtrlCliExecutor().service_cmd_execute(test_args)
+        self.assertEqual(ret, 0)
+
+    def test_service_invalid_command(self):
+        sys.argv[1:] = ['service', 'foo', 'n01']
+        with self.assertRaises(SystemExit):
+            test_args = self.TestParser.get_all_args()
+            CtrlCliExecutor().resource_cmd_execute(test_args)
+
 
     def test_process_list_cmd_execute(self):
         sys.argv[1:] = ['process', 'list', 'n01', '178']
@@ -208,6 +257,12 @@ class ControlCliParserTest(TestCase):
     def test_exe_cli_cmd_with_resource(self, mock_rce):
         sys.argv[1:] = ['resource', 'add', 'n01']
         mock_rce.return_value = 0
+        self.assertEqual(CtrlCliExecutor().execute_cli_cmd(), 0)
+
+    @patch.object(CtrlCliExecutor, "service_cmd_execute")
+    def test_exe_cli_cmd_with_service(self, mock_sce):
+        sys.argv[1:] = ['service', 'status', 'n01']
+        mock_sce.return_value = 0
         self.assertEqual(CtrlCliExecutor().execute_cli_cmd(), 0)
 
     def test_exe_cli_cmd_with_get(self):
