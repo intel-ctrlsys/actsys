@@ -63,7 +63,7 @@ class CommandExeFactory(object):
             return os.path.join(os.path.curdir, self.BASE_CLUSTER_CONFIG_NAME)
 
         # check for file in ~/
-        home = os.path.join(os.getenv('HOME'), '.' + self.BASE_CLUSTER_CONFIG_NAME)
+        home = os.path.join(os.getenv('HOME'), self.BASE_CLUSTER_CONFIG_NAME)
         if os.path.isfile(home):
             return home
 
