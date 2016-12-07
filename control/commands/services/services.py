@@ -13,7 +13,7 @@ class ServicesCommand(Command):
     """ServicesCheckCommand"""
 
     SSH_CONNECTION_ERROR = 255
-    SSH_RETRIES = 3
+    SSH_RETRIES = 1
     SSH_SUCCESS = 0
 
     def __init__(self, args=None):

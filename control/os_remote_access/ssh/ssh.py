@@ -38,7 +38,7 @@ class RemoteSshPlugin(OsRemoteAccess):
 
     def __init__(self, options=None):
         super(RemoteSshPlugin, self).__init__(options)
-        self.__connect_timeout = 10
+        self.__connect_timeout = 6
         self.__options = options
         if self.__options is not None and 'ConnectTimeout' in self.__options:
             self.__connect_timeout = self.__options['ConnectTimeout']
