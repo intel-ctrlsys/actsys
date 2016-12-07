@@ -7,9 +7,14 @@ Implements the remote access contract using telnet
 """
 
 import telnetlib
+import time
 from ..os_remote_access import OsRemoteAccess
 from ...plugin.manager import PluginMetadataInterface
 
+# timeout parameter (estimated 10s) specifies timeout in seconds
+# for blocking connection attempt operation (default 4 m)
+TIMEOUT = 10
+SLEEP_TIME = TIMEOUT + 1
 
 class PluginMetadata(PluginMetadataInterface):
     """Required metadata class for a dynamic plugin."""
@@ -43,9 +48,9 @@ class RemoteTelnetPlugin(OsRemoteAccess):
         tnet = self._establish_connection(remote_access_data)
         result = None
         if tnet is not None:
-            tnet.read_some()
             tnet.write("\r" + cmd + "\r\n")
-            result = tnet.read_all()
+            tnet.read_until(">")
+            result = tnet.read_until(">")
             tnet.close()
         return result
 
@@ -53,14 +58,16 @@ class RemoteTelnetPlugin(OsRemoteAccess):
     def _establish_connection(cls, remote_access_data):
         """Establish telnet connection"""
         try:
-            tnet = telnetlib.Telnet(remote_access_data.address)
+            time.sleep(SLEEP_TIME)
+            tnet = telnetlib.Telnet(remote_access_data.address, timeout=TIMEOUT)
         except EnvironmentError:
             print "Telnet: Error connecting to remote device"
             return None
-        if remote_access_data.username:
+        if remote_access_data.username != 'None':
             tnet.read_until("login:")
             tnet.write("\r\n" + remote_access_data.username + "\r\n")
-        if remote_access_data.identifier:
+        if remote_access_data.identifier != 'None':
             tnet.read_until("Password: ")
             tnet.write("\r\n" + remote_access_data.identifier + "\r\n")
+            tnet.read_until(">")
         return tnet
