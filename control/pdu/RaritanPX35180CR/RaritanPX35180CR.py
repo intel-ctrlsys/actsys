@@ -9,6 +9,7 @@ Plugin to talk to the Raritan PX3 - 5180CR pdu
 from ...plugin.manager import PluginMetadataInterface
 from ..pdu_interface import PDUInterface
 from ...os_remote_access.ssh.ssh import RemoteSshPlugin
+from ...utilities.utilities import Utilities
 
 
 class PluginMetadata(PluginMetadataInterface):
@@ -37,6 +38,7 @@ class PduRaritanPX35180CR(PDUInterface):
     """Implement pdu contract using RaritanPX35180CR."""
     def __init__(self, options=None):
         super(PduRaritanPX35180CR, self).__init__(options=None)
+        self.utilities = Utilities()
 
     def get_outlet_state(self, connection, outlet):
         """Get the current power state of the node outlet as a boolean."""
@@ -54,18 +56,18 @@ class PduRaritanPX35180CR(PDUInterface):
             raise RuntimeError('Invalid PDU state requested')
         cmd = 'power outlets ' + outlet + ' ' + new_state.capitalize() + ' /y'
         result = self._execute_remote_pdu_command(connection, cmd)
-        if result is not None:
+        if "index" in result.lower() or "invalid" in result.lower():
             raise RuntimeError('Failed to set outlet {0} '
                                'state to {1}'.format(outlet, new_state))
 
-    @staticmethod
-    def _execute_remote_pdu_command(remote_access_data, cmd):
+    def _execute_remote_pdu_command(self, remote_access_data, cmd):
         """
         Execute commands on the PDU
         """
         pdu_remote_access = RemoteSshPlugin()
-        output = pdu_remote_access.execute([cmd], remote_access_data,
-                                           capture=True, other=None)
-        if output[0] != 0 or output[1] is None:
+        ssh_cmd = pdu_remote_access._build_command([], remote_access_data)
+        full_command = 'echo ' + cmd + ' | ' + ' '.join(ssh_cmd)
+        rv, stdout = self.utilities.execute_in_shell(full_command)
+        if rv != 0:
             raise RuntimeError('Failed to execute command %s' % cmd)
-        return output[1]
+        return stdout

@@ -37,5 +37,13 @@ class TestGetOsUtilities(unittest.TestCase):
         stdout, stderr = utilities.execute_with_capture(['whoami'])
         self.assertEqual(result, stdout)
 
+    def test_execute_in_shell(self):
+        utilities = Utilities()
+        rv, output = utilities.execute_in_shell('whoami')
+        self.assertEqual(0, rv)
+        self.assertEqual(getpass.getuser() + '\n', output)
+        rv1, result = utilities.execute_in_shell('ls /someunknownrootfolder')
+        self.assertEqual(255, rv1)
+
 if __name__ == '__main__':
     unittest.main()
