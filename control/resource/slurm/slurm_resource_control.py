@@ -198,7 +198,10 @@ class SlurmResource(ResourceControl):
         Check whether the Slurm resource manager is installed using the 'sinfo'
         Slurm command:
         """
-        stdout, stderr = self.utilities.execute_with_capture(['sinfo'])
+        try:
+            stdout, stderr = self.utilities.execute_with_capture(['sinfo'])
+        except OSError:
+            return False
         if None == stdout:
             return False
         if 'PARTITION' in stdout:
