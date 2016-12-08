@@ -34,6 +34,16 @@ class Utilities(object):
         else:
             return None, None
 
+    def execute_in_shell(self, command):
+        self.logger.debug("Attempting command {}".format(command))
+        pipe = subprocess.Popen(command, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, shell=True)
+        stdout, stderr = pipe.communicate()
+        if pipe.returncode == 0:
+            return 0, stdout
+        else:
+            return 255, None
+
     def ping_check(self, address):
         """
         Check if a network address has a OS responding to pings.  NOTE: until a

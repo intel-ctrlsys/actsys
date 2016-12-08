@@ -14,6 +14,7 @@ from ..RaritanPX35180CR import PduRaritanPX35180CR
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
 from ....os_remote_access.ssh.ssh import RemoteSshPlugin
+from ....utilities.utilities import Utilities
 
 class TestPduRaritanPX35180CR(unittest.TestCase):
     """Test the Raritan_PX3-5180CR pdu implementation."""
@@ -46,13 +47,13 @@ class TestPduRaritanPX35180CR(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             pdu.set_outlet_state(invalid_connection, '4', 'On')
         pdu._execute_remote_pdu_command = MagicMock()
-        MagicMock.return_value = None
+        MagicMock.return_value = 'power outlets 1 On /y'
         pdu.set_outlet_state(connection, '1', 'Off')
-        MagicMock.return_value = 'Error: Failed to set new state'
+        MagicMock.return_value = 'Error: Invalid outlet number'
         with self.assertRaises(RuntimeError):
             pdu.set_outlet_state(connection, '1', 'On')
 
-    @patch.object(RemoteSshPlugin, '_execute_ssh_with_capture')
+    @patch.object(Utilities, 'execute_in_shell')
     def test_execute_remote_pdu_command(self, mock_ssh):
         pdu = PduRaritanPX35180CR()
         connection = RemoteAccessData('127.0.0.1', 22, getpass.getuser(), None)
