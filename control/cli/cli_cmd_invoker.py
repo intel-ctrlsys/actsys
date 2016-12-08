@@ -150,6 +150,11 @@ class CommandExeFactory(object):
             self.logger.warning("Failed to parse a valid device name for {}".format(device_name))
             return 1
         for device in device_list:
+            if not self.device_exists_in_config(device):
+                msg = "Device {} skipped, because it is not found in the config file.".format(device)
+                self.logger.warning(msg)
+                print (msg)
+                continue
             cmd_dictionary = self.create_dictionary(device, cmd_args)
             cmd_obj = self.manager.factory_create_instance('command', command_map[sub_command], cmd_dictionary)
             self.logger.journal(cmd_obj)
@@ -165,6 +170,9 @@ class CommandExeFactory(object):
         if self.invoker_ret_val != 0:
             self.print_summary(self.failed_device_name)
         return self.invoker_ret_val
+
+    def device_exists_in_config(self, device_name):
+        return self.extractor.get_device(device_name) is not None
 
     def print_summary(self, failed_device_name):
         for failed_device in failed_device_name:
