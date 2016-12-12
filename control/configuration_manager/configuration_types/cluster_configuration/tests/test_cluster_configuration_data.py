@@ -70,11 +70,65 @@ class TestClusterConfigurationData(TestCase):
         self.assertFalse(self.container.add_device(Device({'key':'value'})))
         self.assertEqual(self.container, self.data)
 
+    def test_add_device_device_type_empty(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':'', 'device_id':'value'})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['']['value'], new_device)
+
+    def test_add_device_device_type_zero(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':0, 'device_id':'value'})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container[0]['value'], new_device)
+
     def test_add_device_no_device_id(self):
         """ Test add_device function """
         new_device = Device({'device_type':'new_type', 'key':'value'})
         self.assertFalse(self.container.add_device(new_device))
         self.assertEqual(self.container, self.data)
+
+    def test_add_device_empty_device_id(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':'',\
+                             'key':'value'})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node'][''], new_device)
+
+    def test_add_device_device_id_zero(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':0,\
+                             'key':'value'})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node'][0], new_device)
+
+    def test_add_device_empty_attribute(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':'myid',\
+                             '':'value'})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node']['myid'], new_device)
+
+    def test_add_device_attribute_value__zero(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':'myid',\
+                             'key':0})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node']['myid'], new_device)
+
+    def test_add_device_empty_attribute_value(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':'myid',\
+                             'key':''})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node']['myid'], new_device)
+
+    def test_add_device_attribute_zero(self):
+        """ Test add_device function """
+        new_device = Device({'device_type':'node', 'device_id':'myid',\
+                             0:'value'})
+        self.assertTrue(self.container.add_device(new_device))
+        self.assertEqual(self.container['node']['myid'], new_device)
 
     def test_add_device_new_device_type(self):
         """ Test add_device function """

@@ -3,10 +3,10 @@
 # Copyright (c) 2016 Intel Corp.
 #
 """ Configuration Manager Tests"""
-from unittest import TestCase
+import unittest
 from ..configuration_manager import ConfigurationManager
 from ..json_parser.json_parser import FileNotFound, NonParsableFile
-from test_json_files import TestJsonFiles
+from .test_json_files import TestJsonFiles
 
 
 def read_file(file_path):
@@ -18,7 +18,7 @@ def read_file(file_path):
     return configuration_manager.get_extractor()
 
 
-class TestConfigurationManager(TestCase):
+class TestConfigurationManager(unittest.TestCase):
     """ Configuration Manager Tests"""
 
     def setUp(self):
@@ -98,3 +98,24 @@ class TestConfigurationManager(TestCase):
         self.assertNotEqual({}, dev.log_file)
         dev.log_file['fake'] = 'fake'
         self.assertIsNone(extractor.get_config_vars().log_file.get('fake'))
+
+    def test_empty_values(self):
+        extractor = read_file('version1.json')
+        self.assertIsNotNone(extractor)
+        self.assertEqual(0, extractor.get_node('master4').zero_field)
+        self.assertEqual('', extractor.get_node('master4').empty_string)
+
+    def test_unexistent_attribute(self):
+        extractor = read_file('version1.json')
+        self.assertIsNotNone(extractor)
+        self.assertEqual(None, extractor.get_node('master4').unexistent_attribute)
+
+    def test_unexistent_device(self):
+        extractor = read_file('version1.json')
+        self.assertIsNotNone(extractor)
+        try:
+            extractor.get_device('unexistent_node').any_attribute
+        except AttributeError as aee:
+            print aee
+        else:
+            self.fail()

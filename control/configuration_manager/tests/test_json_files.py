@@ -82,7 +82,10 @@ class TestJsonFiles(object):
       "profile": "compute_node",
       "ip_address": "192.168.1.32",
       "hostname": "master4",
-      "bmc": "192.168.2.32"
+      "bmc": "192.168.2.32",
+      "zero_field": 0,
+      "empty_string": "",
+      "device_type": ""
     }
    ],
   "bmc": [

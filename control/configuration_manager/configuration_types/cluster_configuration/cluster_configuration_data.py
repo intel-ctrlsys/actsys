@@ -99,7 +99,7 @@ class ClusterConfigurationData(dict):
 
     def search_device(self, device_id, device_type=None):
         """ Searches a device by its device_id and device_type (optionally) """
-        if not device_type:
+        if device_type is None:
             for dtype in self.keys():
                 if device_id in self[dtype].keys():
                     return self[dtype][device_id]
