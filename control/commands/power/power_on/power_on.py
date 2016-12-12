@@ -92,8 +92,9 @@ class PowerOnCommand(CommonPowerCommand):
 
             # If a wait time is set, wait
             device = self.configuration.get_node(self.device_name)
-            if hasattr(device, 'wait_time_after_boot_services') and hasattr(device, 'service_list'):
-                # We must wait here to allow systemctl time to enable servces.
+            if getattr(device, 'wait_time_after_boot_services', None) and \
+                    getattr(device, 'service_list', None):
+                # We must wait here to allow systemctl time to enable services.
                 self.logger.debug("Waiting for {} seconds for systemctl services to "
                                   "enable...".format(device.wait_time_after_boot_services))
                 time.sleep(device.wait_time_after_boot_services)
