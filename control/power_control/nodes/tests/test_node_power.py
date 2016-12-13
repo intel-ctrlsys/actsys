@@ -68,6 +68,7 @@ class MockOsAccess(object):
     """Mock up OS access plugin for certain tests."""
     def __init__(self, options=None):
         self.stack = []
+        self.dfx_test_stack = []
 
     def execute(self, cmd, remote_access_data, capture=False, other=None):
         """Mocked call to execute."""
@@ -80,6 +81,14 @@ class MockOsAccess(object):
                 return 0, None
             else:
                 return 254, None
+
+    def test_connection(self, remote_access_data):
+        if len(self.dfx_test_stack) == 0:
+            return True
+        else:
+            rv = self.dfx_test_stack[0]
+            self.dfx_test_stack = self.dfx_test_stack[1:]
+            return rv
 
 
 class MockBmcAccess(BmcMock):
@@ -152,11 +161,11 @@ class TestNodePower(unittest.TestCase):
                 (self.switch_access2, self.switch_plugin2, '1')
             ],
             'policy': {
-                'OSShutdownTimeoutSeconds': 1.1,
-                'OSBootTimeoutSeconds': 1.1,
-                'OSNetworkToHaltTime': 1.1,
-                'BMCBootTimeoutSeconds': 1.1,
-                'BMCChassisOffWait': 1.1
+                'OSShutdownTimeoutSeconds': 4.2,
+                'OSBootTimeoutSeconds': 4.2,
+                'OSNetworkToHaltTime': 1.2,
+                'BMCBootTimeoutSeconds': 1.2,
+                'BMCChassisOffWait': 1.2
             }
         }
 
@@ -193,13 +202,13 @@ class TestNodePower(unittest.TestCase):
     def test_set_device_power_state(self):
         result = self.controller.set_device_power_state('On:bios')
         self.assertTrue(result)
-        self.__utilities.ping_stack = [True,  False]
+        self.os_plugin.dfx_test_stack = [True,  False]
         result = self.controller.set_device_power_state('Off')
         self.assertTrue(result)
-        self.__utilities.ping_stack = [False, True]
+        self.os_plugin.dfx_test_stack = [False, True]
         result = self.controller.set_device_power_state('On:bmc_on')
         self.assertTrue(result)
-        self.__utilities.ping_stack = [False, True]
+        self.os_plugin.dfx_test_stack = [False, True]
         result = self.controller.set_device_power_state('On')
         self.assertTrue(result)
 
@@ -248,11 +257,11 @@ class TestNodePower(unittest.TestCase):
         self.os_plugin.stack = [(255, None)]
         result = self.controller.set_device_power_state('Off')
         self.assertFalse(result)
-        self.__utilities.ping_stack = [False, True]
+        self.os_plugin.dfx_test_stack = [False, True]
         result = self.controller.set_device_power_state('On:bmc_on')
         self.assertTrue(result)
         self.bmc_plugin.set_failure = True
-        self.__utilities.ping_stack = [True, False]
+        self.os_plugin.dfx_test_stack = [True, False]
         result = self.controller.set_device_power_state('Off')
         self.assertFalse(result)
         self.bmc_plugin.set_failure = False
@@ -271,7 +280,7 @@ class TestNodePower(unittest.TestCase):
         power = NodePower(self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:on'))
-        self.__utilities.ping_stack = [True, False]
+        mock_os.dfx_test_stack = [True, False]
         self.assertTrue(power.set_device_power_state('On:efi'))
 
     def test_target_on_to_state_2(self):
@@ -279,9 +288,9 @@ class TestNodePower(unittest.TestCase):
         self.__options['os'] = (self.os_access, mock_os)
         power = MockNodePower(self.__options)
         power.utilities = self.__utilities
-        self.__utilities.ping_stack = [False, True]
+        mock_os.dfx_test_stack = [False, True]
         self.assertTrue(power.set_device_power_state('On'))
-        self.__utilities.ping_stack = [True, False]
+        mock_os.dfx_test_stack = [True, False]
         self.assertTrue(power.set_device_power_state('On:efi'))
 
     def test_target_off(self):
@@ -290,10 +299,10 @@ class TestNodePower(unittest.TestCase):
         power = MockNodePower(self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:efi'))
-        self.__utilities.ping_stack = [False]
+        mock_os.dfx_test_stack = [False]
         result = power.get_current_device_power_state()
         self.assertEqual('On', result)
-        self.__utilities.ping_stack = [False]
+        mock_os.dfx_test_stack = [False]
         self.assertTrue(power.set_device_power_state('Off'))
 
     def test_target_off_force(self):
@@ -302,10 +311,10 @@ class TestNodePower(unittest.TestCase):
         power = MockNodePower(self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
-        self.__utilities.ping_stack = [True]
+        self.os_plugin.dfx_test_stack = [True]
         result = power.get_current_device_power_state()
         self.assertEqual('On:bmc_on', result)
-        self.__utilities.ping_stack = [True]
+        self.os_plugin.dfx_test_stack = [True]
         self.assertTrue(power.set_device_power_state('Off', True))
 
     def test_target_on_force(self):
@@ -314,12 +323,12 @@ class TestNodePower(unittest.TestCase):
         power = MockNodePower(self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
-        self.__utilities.ping_stack = [True]
+        self.os_plugin.dfx_test_stack = [True]
         result = power.get_current_device_power_state()
         self.assertEqual('On:bmc_on', result)
         mock_os.stack = [False, False]
         self.graceful_fail = True
-        self.__utilities.ping_stack = [True, False]
+        self.os_plugin.dfx_test_stack = [True, False]
         self.assertTrue(power.set_device_power_state('On:bmc_on', True))
 
     def test__do_bmc_power_state(self):
@@ -339,9 +348,9 @@ class TestNodePower(unittest.TestCase):
         power = MockNodePower(self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
-        self.__utilities.ping_stack = [True]
+        self.os_plugin.dfx_test_stack = [True]
         result = power.get_current_device_power_state()
         self.assertEqual('On:bmc_on', result)
         self.graceful_fail = True
-        self.__utilities.ping_stack = [True]
+        self.os_plugin.dfx_test_stack = [True]
         self.assertFalse(power.set_device_power_state('On:bmc_on'))

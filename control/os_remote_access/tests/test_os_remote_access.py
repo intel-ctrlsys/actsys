@@ -15,6 +15,7 @@ class TestInterface(unittest.TestCase):
         """All tests."""
         interface = OsRemoteAccess()
         interface.execute([], None)
+        interface.test_connection([])
 
 
 if __name__ == '__main__':

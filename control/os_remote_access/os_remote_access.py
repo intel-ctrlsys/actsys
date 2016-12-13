@@ -15,3 +15,7 @@ class OsRemoteAccess(object):
     def execute(self, cmd, remote_access_data, capture=False, other=None):
         """Using address and credentials, execute the cmd remotely."""
         pass
+
+    def test_connection(self, remote_access_data):
+        """Test is the OS is currently responding to requests."""
+        pass

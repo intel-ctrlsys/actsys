@@ -27,6 +27,11 @@ class TestRemoteTelnetPlugin(unittest.TestCase):
         self.assertEqual(100, meta.priority())
         self.assertIsNotNone(meta.create_instance())
 
+    def test_test_connection(self):
+        with self.assertRaises(NotImplementedError):
+            telnet_session = RemoteTelnetPlugin()
+            telnet_session.test_connection(self.access2)
+
     @patch('telnetlib.Telnet')
     def test_execute1(self, mock_telnet):
         telnet_session = RemoteTelnetPlugin()
@@ -41,7 +46,3 @@ class TestRemoteTelnetPlugin(unittest.TestCase):
         op = telnet_session.execute('ls', self.access1)
         self.assertRaises(EnvironmentError)
         self.assertIsNone(op)
-
-
-
-

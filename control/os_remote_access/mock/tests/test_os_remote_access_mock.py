@@ -31,3 +31,20 @@ class TestMockPlugin(unittest.TestCase):
         access = RemoteAccessData('127.0.0.1', 22, 'PASSWORD', None)
         remote.execute([], access, True, None)
         remote.execute([], access, False, None)
+
+    def test_test_connection(self):
+        manager = PluginManager()
+        metadata = PluginMetadata()
+        manager.add_provider(metadata)
+        remote = manager.factory_create_instance(metadata.category(),
+                                                 metadata.name())
+        remote.dfx_result_list = [True, False, True]
+        access = RemoteAccessData('127.0.0.1', 22, 'PASSWORD', None)
+        self.assertTrue(remote.test_connection(access),
+                        'First try expected True!')
+        self.assertFalse(remote.test_connection(access),
+                         'Second try expected False!')
+        self.assertTrue(remote.test_connection(access),
+                        'Third try expected True!')
+        self.assertFalse(remote.test_connection(access),
+                         'Fourth try expected a default of False!')
