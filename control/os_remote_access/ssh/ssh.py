@@ -38,7 +38,7 @@ class RemoteSshPlugin(OsRemoteAccess):
 
     def __init__(self, options=None):
         super(RemoteSshPlugin, self).__init__(options)
-        self.__connect_timeout = 6
+        self.__connect_timeout = 4
         self.__options = options
         if self.__options is not None and 'ConnectTimeout' in self.__options:
             self.__connect_timeout = self.__options['ConnectTimeout']
@@ -50,6 +50,11 @@ class RemoteSshPlugin(OsRemoteAccess):
             return self._execute_ssh_with_capture(cmd, remote_access_data)
         else:
             return self._execute_ssh(cmd, remote_access_data)
+
+    def test_connection(self, remote_access_data):
+        """Test for ssh access."""
+        rv = self._execute_ssh(['echo', '-n', '""'], remote_access_data)[0] == 0
+        return rv
 
     def _build_command(self, command, remote_access_data):
         """Make the ssh command"""

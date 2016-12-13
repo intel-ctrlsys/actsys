@@ -59,6 +59,10 @@ class TestRemoteSshPlugin(unittest.TestCase):
         self.assertEqual(100, meta.priority())
         self.assertIsNotNone(meta.create_instance())
 
+    def test_test_connection(self):
+        rv = self.remote.test_connection(self.access)
+        self.assertTrue(rv, 'Could not verify ssh with 127.0.0.1!')
+
     def test_execute_1(self):
         """Test the RemoteSshPlugin.execute() method."""
         rv1, output = self.remote.execute(['whoami'], self.access)

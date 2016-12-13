@@ -54,6 +54,10 @@ class RemoteTelnetPlugin(OsRemoteAccess):
             tnet.close()
         return result
 
+    def test_connection(self, remote_access_data):
+        raise NotImplementedError('RemoteTelnetPlugin.test_connection is not '
+                                  'implemented!')
+
     @classmethod
     def _establish_connection(cls, remote_access_data):
         """Establish telnet connection"""

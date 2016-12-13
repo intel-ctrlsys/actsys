@@ -74,8 +74,7 @@ class NodePower(PowerControl):
         self._if_switches_off_exception()
         if self.bmc_access.get_chassis_state(self.bmc_credentials):
             result = 'On'
-            if self.utilities is not None and \
-                    self.utilities.ping_check(self.os_credentials.address):
+            if self.os_access.test_connection(self.os_credentials):
                 result += ':bmc_on'
             return result
         else:
@@ -178,13 +177,14 @@ class NodePower(PowerControl):
         result = elapsed < timeout
         return result
 
-    def _wait_for_network_availability(self, address, target, timeout):
+    def _wait_for_network_availability(self, target, timeout):
         """Wait for OS shutdown."""
         start = time.time()
         elapsed = 0
-        while self.utilities.ping_check(address) is not target and \
+        access, plugin = self.__options['os']
+        while plugin.test_connection(access) is not target and \
                 elapsed < timeout:
-            time.sleep(1)
+            time.sleep(4)
             now = time.time()
             elapsed = now - start
         result = elapsed < timeout
@@ -199,8 +199,7 @@ class NodePower(PowerControl):
             self._report_error("Failed to shutdown node's OS")
             return False
         timeout = self.policy['OSShutdownTimeoutSeconds']
-        address = self.os_credentials.address
-        result = self._wait_for_network_availability(address, False, timeout)
+        result = self._wait_for_network_availability(False, timeout)
         if result:
             time.sleep(self.policy['OSNetworkToHaltTime'])
         return result
@@ -231,9 +230,7 @@ class NodePower(PowerControl):
             else:
                 timeout = self.policy['OSBootTimeoutSeconds']
                 result = \
-                    self._wait_for_network_availability(
-                        self.os_credentials.address,
-                        True, timeout)
+                    self._wait_for_network_availability(True, timeout)
         return result
 
     def _do_simple_bmc_reboot(self, state):
@@ -242,6 +239,5 @@ class NodePower(PowerControl):
         if result and state in ['on', 'cycle']:
             timeout = self.policy['OSBootTimeoutSeconds']
             result = \
-                self._wait_for_network_availability(self.os_credentials.address,
-                                                    True, timeout)
+                self._wait_for_network_availability(True, timeout)
         return result
