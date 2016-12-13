@@ -37,6 +37,7 @@ from ..power_control.nodes.node_power import PluginMetadata as PNPower
 from ..resource.slurm.slurm_resource_control import PluginMetadata as SlurmPluginMetadata
 from ..pdu.RaritanPX35180CR.RaritanPX35180CR import PluginMetadata as RaritanPluginMetadata
 from ..pdu.IPS400.IPS400 import PluginMetadata as IPSPluginMetadata
+from ..pdu.mock.mock import PluginMetadata as MockPduPluginMetadata
 from ..resource.mock.mock_resource_control import PluginMetadata as MockPluginMetadata
 
 
@@ -120,6 +121,7 @@ class CommandExeFactory(object):
         self.manager.add_provider(SlurmPluginMetadata())
         self.manager.add_provider(RaritanPluginMetadata())
         self.manager.add_provider(IPSPluginMetadata())
+        self.manager.add_provider(MockPduPluginMetadata())
         self.manager.add_provider(MockPluginMetadata())
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
