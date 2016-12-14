@@ -14,6 +14,7 @@ from ....power_control.mock.power_control_mock import PluginMetadata as \
     NodePowerMetadata
 from ....power_control.mock.power_control_mock import PowerControlMock
 from ....bmc.mock.bmc import PluginMetadata as BmcMetadata
+from ....pdu.mock.mock import PluginMetadata as PduMetadata
 from ....os_remote_access.mock.os_remote_access import PluginMetadata as \
     RemoteMetadata
 from ....resource.tests.mock_resource_control import PluginMetadata as RCPluginMetaData
@@ -36,6 +37,10 @@ class MockConfiguration(object):
         self.data = dict()
 
     def get_node(self, device_name):
+        """Dummy getter"""
+        return self.data[device_name]
+
+    def get_pdu(self, device_name):
         """Dummy getter"""
         return self.data[device_name]
 
@@ -88,6 +93,7 @@ class PowerCommandsCommon(unittest.TestCase):
         self.manager = PluginManager()
         self.manager.add_provider(NodePowerMetadata())
         self.manager.add_provider(BmcMetadata())
+        self.manager.add_provider(PduMetadata())
         self.manager.add_provider(RemoteMetadata())
         self.manager.add_provider(RCPluginMetaData())
         self.manager.add_provider(PRAdd())
@@ -164,6 +170,12 @@ class PowerCommandsCommon(unittest.TestCase):
         setter(self.node_name, 'os_network_to_halt_time', 5)
         setter(self.node_name, 'bmc_boot_timeout_seconds', 10)
         setter(self.node_name, 'bmc_chassis_off_wait', 3)
+
+        #PDU
+        pdu_info = RemoteAccessData('', 22, 'admin', 'pass')
+        setter(self.node_name, 'device_id', self.node_name)
+        setter(self.node_name, 'device_type', 'pdu')
+        setter(self.node_name, 'access_type', 'mock')
 
     def write_state(self, state):
         """Write out a node power state to the mocked storage location"""

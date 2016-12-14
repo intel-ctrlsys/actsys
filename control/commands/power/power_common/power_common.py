@@ -146,10 +146,15 @@ class CommonPowerCommand(Command):
 
         if device is None or device.device_type != "pdu":
             return CommandResult(1, 'Invalid device type: Cannot toggle device type {}'.format(device.device_type))
-
+        if self.args.outlet is None:
+            return CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify outlet\n'
+                                    'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
         pdu = self.plugin_manager.factory_create_instance('pdu', device.access_type)
         remote_access = RemoteAccessData(str(device.ip_address), device.port, str(device.user), str(device.password))
-        outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
+        try:
+            outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
+        except RuntimeError as pdu_ex:
+            return CommandResult(1, pdu_ex.message)
         self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, outlet_state))
         if outlet_state.upper() == new_state.upper():
             return CommandResult(0, '{} outlet {} was already {}, no change '
