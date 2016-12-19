@@ -174,9 +174,11 @@ class CommandExeFactory(object):
         return self.invoker_ret_val
 
     def device_exists_in_config(self, device_name):
+        """Check if the device exists in the configuration file or not"""
         return self.extractor.get_device(device_name) is not None
 
     def print_summary(self, failed_device_name):
+        """print the command summary at the end of execution"""
         for failed_device in failed_device_name:
             print("\t*****************************")
             print("\t* COMMAND EXECUTION SUMMARY *")

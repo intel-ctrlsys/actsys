@@ -142,6 +142,7 @@ class CommonPowerCommand(Command):
                                      '_switches" Not Implemented')
 
     def switch_pdu(self, new_state):
+        """Execute PDU commands"""
         device = self.configuration.get_pdu(self.device_name)
 
         if device is None or device.device_type != "pdu":

@@ -70,5 +70,3 @@ class PduMock(PDUInterface):
         file_obj = open(self.__persistent_file, 'w')
         json.dump(self.__current_states, file_obj)
         file_obj.close()
-
-PDUInterface.register(PduMock)

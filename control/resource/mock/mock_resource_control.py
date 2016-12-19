@@ -73,18 +73,18 @@ class MockResource(ResourceControl):
                 self.nodes = None
 
     def _write_file(self):
-            try:
-                configure_manager = ConfigurationManager(
-                    self._get_correct_configuration_file())
-            except:
-                self.nodes = None
-                return
-            extractor = configure_manager.get_extractor()
-            nodes = extractor.get_devices_by_type('node').keys()
-            self.nodes = {}
-            for node in nodes:
-                self.nodes[node] = {'state': 'idle'}
-            self._save_mock_resource_file()
+        try:
+            configure_manager = ConfigurationManager(
+                self._get_correct_configuration_file())
+        except:
+            self.nodes = None
+            return
+        extractor = configure_manager.get_extractor()
+        nodes = extractor.get_devices_by_type('node').keys()
+        self.nodes = {}
+        for node in nodes:
+            self.nodes[node] = {'state': 'idle'}
+        self._save_mock_resource_file()
 
     def _load_mock_resource_file(self):
         """Load the mocked resource file, if not specified, create one"""

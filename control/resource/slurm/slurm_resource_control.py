@@ -66,10 +66,10 @@ class SlurmResource(ResourceControl):
         """
         reason = "For service"
         stdout, stderr = self.utilities.execute_with_capture(['scontrol', 'update',
-                                                      'nodename=' + node_name,
-                                                      'state=drain',
-                                                      'reason=' + reason,
-                                                      '-vvvv'])
+                                                              'nodename=' + node_name,
+                                                              'state=drain',
+                                                              'reason=' + reason,
+                                                              '-vvvv'])
         if 'Success' in stderr:
             message = 'Succeeded in removing node ' + node_name + \
                       ' from the cluster resource pool!'
@@ -134,10 +134,10 @@ class SlurmResource(ResourceControl):
         """
         reason = "Done with service"
         stdout, stderr = self.utilities.execute_with_capture(['scontrol', 'update',
-                                                      'nodename=' + node_name,
-                                                      'state=undrain',
-                                                      'reason=' + reason,
-                                                      '-vvvv'])
+                                                              'nodename=' + node_name,
+                                                              'state=undrain',
+                                                              'reason=' + reason,
+                                                              '-vvvv'])
         if 'Success' in stderr:
             message = 'Succeeded in adding node ' + node_name + \
                       ' back to the cluster resource pool!'

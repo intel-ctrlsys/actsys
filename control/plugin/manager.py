@@ -149,4 +149,3 @@ class PluginManager(object):
         key = PluginManager._make_key(category, name)
         factory_obj = self.__provider_categories[key]
         return factory_obj.create_instance(options=options)
-

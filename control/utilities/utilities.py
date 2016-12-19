@@ -37,7 +37,7 @@ class Utilities(object):
     def execute_in_shell(self, command):
         self.logger.debug("Attempting command {}".format(command))
         pipe = subprocess.Popen(command, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, shell=True)
+                                stderr=subprocess.PIPE, shell=True)
         stdout, stderr = pipe.communicate()
         if pipe.returncode == 0:
             return 0, stdout

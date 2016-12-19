@@ -31,6 +31,7 @@ class MockConfiguration(object):
     """Mock the configuration object"""
 
     class Object(object):
+        """pass"""
         pass
 
     def __init__(self):
@@ -83,6 +84,7 @@ class PowerCommandsCommon(unittest.TestCase):
     """Common to all power common tests"""
 
     class Object(object):
+        """pass"""
         pass
 
     @patch("control.ctrl_logger.ctrl_logger.CtrlLogger")

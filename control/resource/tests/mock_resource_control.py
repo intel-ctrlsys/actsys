@@ -34,7 +34,7 @@ class PluginMetadata(PluginMetadataInterface):
 class MockResourceControl(ResourceControl):
     """Interface for resource control classes."""
     def __init__(self):
-        super(ResourceControl, self).__init__()
+        super(MockResourceControl, self).__init__()
         self.return_value = True
 
     def remove_node_from_resource_pool(self, node_name):

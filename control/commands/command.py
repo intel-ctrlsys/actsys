@@ -51,6 +51,7 @@ class Command(object):
             self.args = None
 
     def get_name(self):
+        """Get the Class name"""
         return self.__class__.__name__
 
     def execute(self):
