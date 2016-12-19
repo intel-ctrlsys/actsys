@@ -174,10 +174,13 @@ class PowerCommandsCommon(unittest.TestCase):
         setter(self.node_name, 'bmc_chassis_off_wait', 3)
 
         #PDU
-        pdu_info = RemoteAccessData('', 22, 'admin', 'pass')
-        setter(self.node_name, 'device_id', self.node_name)
-        setter(self.node_name, 'device_type', 'pdu')
-        setter(self.node_name, 'access_type', 'mock')
+        setter('test_pdu', 'device_name', 'test_pdu')
+        setter('test_pdu', 'device_type', 'pdu')
+        setter('test_pdu', 'access_type', 'mock')
+        setter('test_pdu', 'ip_address', '192.168.1.1')
+        setter('test_pdu', 'port', 22)
+        setter('test_pdu', 'password', 'pass')
+        setter('test_pdu', 'user', 'admin')
 
     def write_state(self, state):
         """Write out a node power state to the mocked storage location"""

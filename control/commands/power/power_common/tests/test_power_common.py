@@ -16,6 +16,7 @@ class TestPowerCommonCommand(PowerCommandsCommon):
     def setUp(self):
         super(TestPowerCommonCommand, self).setUp()
         self.command = CommonPowerCommand(self.command_options)
+        self.command.device_name = 'test_pdu'
 
 
     def test_switch_pdu_no_outlet(self):
