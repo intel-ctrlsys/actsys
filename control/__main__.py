@@ -5,7 +5,7 @@
 
 """control.__main__: executed when bootstrap directory is called as script."""
 
-from .cli.control_cli import CtrlCliExecutor
+from .cli.control_cli import ControlCommandLineInterface
 
 
-CtrlCliExecutor().execute_cli_cmd()
+ControlCommandLineInterface().execute_cli_cmd()

@@ -13,6 +13,7 @@ class Command(object):
     Abstract Base Class for all command objects. Ensure derived objects follow
     its conventions.
     """
+
     def __init__(self, args):
         """
         Command 'args' are a dictionary of five items listed below:
@@ -27,16 +28,14 @@ class Command(object):
 
         self.command_args = args
 
-        if 'device_name' not in args or args['device_name'] is None or \
-                len(args['device_name']) == 0:
+        if 'device_name' not in args or args['device_name'] is None or len(args['device_name']) == 0:
             raise RuntimeError('The "device_name" argument cannot be missing '
                                'or "None" or an empty string!')
         self.device_name = args['device_name']
         if 'configuration' not in args or args['configuration'] is None:
-            raise RuntimeError('The "configuration" argument cannot be '
-                               'missing or "None"!')
+            raise RuntimeError('The "configuration" argument cannot be missing or "None"!')
         self.configuration = args['configuration']
-        if 'plugin_manager' not in args or args['plugin_manager'] is None or\
+        if 'plugin_manager' not in args or args['plugin_manager'] is None or \
                 not isinstance(args['plugin_manager'], PluginManager):
             raise RuntimeError('The "plugin_manager" argument cannot be '
                                'missing, "None" or a different type!')
@@ -61,10 +60,15 @@ class Command(object):
 
 class CommandResult(object):
     """How the result of commands is stored."""
-    def __init__(self, return_code=-1, message="Unknown Error"):
+
+    def __init__(self, return_code=-1, message="Unknown Error", device_name=None):
         """Construct a command result object."""
         self.return_code = return_code
         self.message = message
+        self.device_name = device_name
 
     def __str__(self):
-        return "{} - {}".format(self.return_code, self.message)
+        if self.device_name is None:
+            return "{} - {}".format(self.return_code, self.message)
+        else:
+            return "{}: {} - {}".format(self.device_name, self.return_code, self.message)

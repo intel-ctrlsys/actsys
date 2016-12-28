@@ -5,7 +5,6 @@
 """
 Implements a resource_control plugin for Slurm to control compute nodes.
 """
-from __future__ import print_function
 import os
 from ...plugin.manager import PluginMetadataInterface
 from ..resource_control import ResourceControl
@@ -44,10 +43,10 @@ class SlurmResource(ResourceControl):
 
     def _parse_node_state(self, output):
         lines = output.split(os.linesep)
-        colums = lines[1].split()
-        if 6 > len(colums):
-            return None
-        return colums[4]
+        for line in lines:
+            columns = line.split()
+            if len(columns) == 6 and columns[4] != 'n/a' and columns[4] != 'STATE':
+                return columns[4]
 
     def check_node_state(self, node_name):
         """
@@ -56,7 +55,7 @@ class SlurmResource(ResourceControl):
         stdout, stderr = self.utilities.execute_with_capture(['sinfo', '-n', node_name])
         state = self._parse_node_state(stdout)
         if None == state:
-            return 1, 'Node ' + node_name + ' not found!'
+            return 1, 'Node ' + node_name + ' not found in SLURM!'
         return 0, state
 
     def _remove_node_idle(self, node_name):

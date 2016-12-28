@@ -6,8 +6,6 @@
 This module is called "Command Invoker" which uses APIs from "commands" folder
 to perform user requested operations.
 """
-from __future__ import print_function
-
 import logging
 import os
 import re
@@ -39,9 +37,10 @@ from ..pdu.RaritanPX35180CR.RaritanPX35180CR import PluginMetadata as RaritanPlu
 from ..pdu.IPS400.IPS400 import PluginMetadata as IPSPluginMetadata
 from ..pdu.mock.mock import PluginMetadata as MockPduPluginMetadata
 from ..resource.mock.mock_resource_control import PluginMetadata as MockPluginMetadata
+from ..commands import CommandResult
 
 
-class CommandExeFactory(object):
+class CommandInvoker(object):
     """This class contains all the functions exposed to cli code"""
 
     BASE_CLUSTER_CONFIG_NAME = "ctrl-config.json"
@@ -84,10 +83,6 @@ class CommandExeFactory(object):
             dev_list = device_name.split(",")
             return dev_list
         else:
-            device_err_msg = "ERROR: Wrong Device Name/List. " \
-                             "ctrl supports only comma separated list " \
-                             "of device(s)"
-            print(device_err_msg.format(device_err_msg))
             return 1
 
     def create_dictionary(self, device_name, args):
@@ -126,8 +121,6 @@ class CommandExeFactory(object):
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
-        # TODO: Move print statements out of this function, and into the CLI! (Nothing should ever
-        #   print, it should only use the logger, or return its messages)
         if self.manager is None:
             self.init_manager()
 
@@ -147,43 +140,37 @@ class CommandExeFactory(object):
                        'service_start': 'service_start',
                        'service_stop': 'service_stop'
                        }
-        device_list = CommandExeFactory._device_name_check(device_name)
-        if device_list == 1:
-            self.logger.warning("Failed to parse a valid device name for {}".format(device_name))
-            return 1
+        device_list = CommandInvoker._device_name_check(device_name)
+        if not isinstance(device_list, list):
+            result = CommandResult(1, "Failed to parse a valid device name(s) in {}".format(device_name))
+            self.logger.warning(result.message)
+            return result
+        results = list()
         for device in device_list:
             if not self.device_exists_in_config(device):
                 msg = "Device {} skipped, because it is not found in the config file.".format(device)
                 self.logger.warning(msg)
-                print (msg)
+                results.append(CommandResult(1, msg, device))
                 continue
+
             cmd_dictionary = self.create_dictionary(device, cmd_args)
             cmd_obj = self.manager.factory_create_instance('command', command_map[sub_command], cmd_dictionary)
             self.logger.journal(cmd_obj)
-            return_msg = cmd_obj.execute()
-            self.logger.journal(cmd_obj, return_msg)
+            command_result = cmd_obj.execute()
 
-            print('{} - RETURN CODE: {}'.format(return_msg.message,
-                                                return_msg.return_code))
-            if return_msg.return_code != 0:
-                self.invoker_ret_val = return_msg.return_code
-                self.failed_device_name.append(device)
+            command_result.device_name = device
+            self.logger.journal(cmd_obj, command_result)
 
-        if self.invoker_ret_val != 0:
-            self.print_summary(self.failed_device_name)
-        return self.invoker_ret_val
+            results.append(command_result)
+
+        if len(results) == 1:
+            return results[0]
+
+        return results
 
     def device_exists_in_config(self, device_name):
         """Check if the device exists in the configuration file or not"""
         return self.extractor.get_device(device_name) is not None
-
-    def print_summary(self, failed_device_name):
-        """print the command summary at the end of execution"""
-        for failed_device in failed_device_name:
-            print("\t*****************************")
-            print("\t* COMMAND EXECUTION SUMMARY *")
-            print("\t*****************************")
-            print("\tFailed Device: {}".format(failed_device))
 
     def power_on_invoker(self, device_name, sub_command, cmd_args=None):
         """Execute Power On Command"""

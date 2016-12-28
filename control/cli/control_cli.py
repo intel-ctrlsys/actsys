@@ -7,11 +7,14 @@
 This module creates the command line parser and executes the user commands.
 """
 
+from __future__ import print_function
+import sys
 import argparse
-from cli_cmd_invoker import CommandExeFactory
+from .command_invoker import CommandInvoker
+from ..commands import CommandResult
 
 
-class CtrlCliParser(object):
+class ControlArgParser(object):
     """Control Parser Class"""
 
     CLI_COMMAND = "ctrl"
@@ -110,19 +113,18 @@ class CtrlCliParser(object):
         return self.ctrl_parser.parse_args()
 
 
-class CtrlCliExecutor(object):
+class ControlCommandLineInterface(object):
     """This class executes the commands based on user's request"""
 
     def __init__(self):
         try:
-            self.cmd_exe_factory_obj = CommandExeFactory()
+            self.cmd_exe_factory_obj = CommandInvoker()
         except Exception as f:
             if hasattr(f, 'value'):
                 print (f.value)
             else:
                 print (f)
-            from sys import exit
-            exit(1)
+            sys.exit(1)
 
     def power_cmd_execute(self, cmd_args):
         """Function to call appropriate power sub-command"""
@@ -139,15 +141,9 @@ class CtrlCliExecutor(object):
     def process_cmd_execute(self, cmd_args):
         """Function to call appropriate process sub-command"""
         if cmd_args.subcommand == 'list':
-            print("\tProcess List Command called\n"
-                  "\tHowever for this command work is in progress.\n"
-                  "\tSo hold your breath till we develop this module\n")
-            return 0
+            return CommandResult(0, "Command not implemented: Process List Command called")
         else:
-            print("\tProcess Kill Command Called\n"
-                  "\tHowever for this command work is in progress.\n"
-                  "\tSo hold your breath till we develop this module\n")
-            return 0
+            return CommandResult(0, "Command not implemented: Process Kill Command Called")
 
     def resource_cmd_execute(self, cmd_args):
         """Function to call appropriate resource sub-command"""
@@ -158,34 +154,21 @@ class CtrlCliExecutor(object):
         elif cmd_args.subcommand == 'check':
             return self.cmd_exe_factory_obj.resource_check(cmd_args.device_name, cmd_args)
         else:
-            print ("Invalid resource command entered.")
-        return 1
+            return CommandResult(1, "Invalid resource command entered.")
 
     def get_cmd_execute(self, cmd_args):
         """Function to call appropriate get sub-command"""
         if cmd_args.subcommand == 'powercap':
-            print("\tGet Powercap Command Called\n"
-                  "\tHowever for this command work is in progress.\n"
-                  "\tSo hold your breath till we develop this module\n")
-            return 0
+            return CommandResult(0, "Command not implemented: Get Powercap Command Called")
         else:
-            print("\tGet Freq Command Called\n"
-                  "\tHowever for this command work is in progress.\n"
-                  "\tSo hold your breath till we develop this module\n")
-            return 0
+            return CommandResult(0, "Command not implemented: Get Freq Command Called")
 
     def set_cmd_execute(self, cmd_args):
         """Function to call appropriate set sub-command"""
         if cmd_args.subcommand == 'powercap':
-            print("\tSet Powercap Command Called\n"
-                  "\tHowever for this command work is in progress.\n"
-                  "\tSo hold your breath till we develop this module\n")
-            return 0
+            return CommandResult(0, "Command not implemented: Set Powercap Command Called")
         else:
-            print("\tSet Freq Command Called\n"
-                  "\tHowever for this command work is in progress.\n"
-                  "\tSo hold your breath till we develop this module\n")
-            return 0
+            return CommandResult(0, "Command not implemented: Set Freq Command Called")
 
     def service_cmd_execute(self, cmd_args):
         """Function to call appropriate resource sub-command"""
@@ -196,30 +179,43 @@ class CtrlCliExecutor(object):
         elif cmd_args.subcommand == 'stop':
             return self.cmd_exe_factory_obj.service_off(cmd_args.device_name, cmd_args)
         else:
-            print ("Invalid service command entered.")
-        return 1
+            return CommandResult(1, "Invalid service command entered")
 
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
-        masterparser = CtrlCliParser()
+        masterparser = ControlArgParser()
         cmd_args = masterparser.get_all_args()
+        command_result = None
         if cmd_args.subparser_name == 'power':
-            retval = self.power_cmd_execute(cmd_args)
-            return retval
+            command_result = self.power_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'process':
-            retval = self.process_cmd_execute(cmd_args)
-            return retval
+            command_result = self.process_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'resource':
-            retval = self.resource_cmd_execute(cmd_args)
-            return retval
+            command_result = self.resource_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'get':
-            retval = self.get_cmd_execute(cmd_args)
-            return retval
+            command_result = self.get_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'set':
-            retval = self.set_cmd_execute(cmd_args)
-            return retval
+            command_result = self.set_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'service':
-            retval = self.service_cmd_execute(cmd_args)
-            return retval
+            command_result = self.service_cmd_execute(cmd_args)
+
+        return self.handle_command_result(command_result)
+
+    def handle_command_result(self, command_result):
+        if isinstance(command_result, list):
+            num_failures = 0
+            for cr in command_result:
+                if cr.return_code != 0:
+                    print (cr, file=sys.stderr)
+                    num_failures += 1
+                else:
+                    print(cr)
+            num_commands = len(command_result)
+            print ("Result: {}/{} devices were successful".format(num_commands - num_failures, num_commands))
+            return num_failures
         else:
-            return 0
+            if command_result.return_code != 0:
+                print(command_result, file=sys.stderr)
+            else:
+                print (command_result)
+            return command_result.return_code

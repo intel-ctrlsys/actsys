@@ -3,7 +3,6 @@
 # Copyright (c) 2016 Intel Corp.
 #
 """Implementation of a cluster configuration parser"""
-from __future__ import print_function
 import re
 from ...json_parser.json_parser import JsonParser
 from .cluster_configuration_data import ClusterConfigurationData

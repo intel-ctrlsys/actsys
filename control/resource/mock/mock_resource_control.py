@@ -5,7 +5,6 @@
 """
 Implements a mock resource_control plugin for DFx.
 """
-from __future__ import print_function
 import os
 import json
 from ...plugin.manager import PluginMetadataInterface
