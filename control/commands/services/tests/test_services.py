@@ -22,7 +22,7 @@ class TestServicesCommand(unittest.TestCase):
 
         self.node_name = "knl-123"
         self.mock_plugin_manager = mock_plugin_manager
-        self.ssh_mock = self.mock_plugin_manager.factory_create_instance.return_value
+        self.ssh_mock = self.mock_plugin_manager.create_instance.return_value
         self.ssh_mock.execute.return_value = [0, None]
 
         self.configuration = {
@@ -64,7 +64,7 @@ class TestServicesCommand(unittest.TestCase):
         self.services.device.service_list = ['orcmd']
         self.assertEqual(self.services.execute().message, "0 - Success: status - orcmd")
 
-        self.assertTrue(self.mock_plugin_manager.factory_create_instance.called)
+        self.assertTrue(self.mock_plugin_manager.create_instance.called)
         self.ssh_mock.execute.assert_called_with(
             ['systemctl', 'status', 'orcmd'],
             self.services.remote_access_data,

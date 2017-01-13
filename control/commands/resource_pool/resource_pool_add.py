@@ -6,38 +6,17 @@
 Resource Pool Add Plugin
 """
 from control.commands.command import CommandResult
-from control.plugin.manager import PluginMetadataInterface
+from control.plugin import DeclarePlugin
 from .resource_pool import ResourcePoolCommand
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Metadata for this plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'command'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'resource_pool_add'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return ResourcePoolAddCommand(options)
-
-
+@DeclarePlugin('resource_pool_add', 100)
 class ResourcePoolAddCommand(ResourcePoolCommand):
     """ResourcePoolAddCommand"""
 
     def __init__(self, args=None):
         """Retrieve dependencies and prepare for power on"""
-        super(ResourcePoolAddCommand, self).__init__(args)
+        ResourcePoolCommand.__init__(self, args)
 
     def execute(self):
         """Execute the command"""

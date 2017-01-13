@@ -3,14 +3,13 @@
 # Copyright (c) 2016 Intel Corp.
 #
 """
-Test the PowerOnCommand.
+Test the PowerOffCommand.
 """
-from ...tests.power_fixures import *
-from ..power_on import PowerOnCommand
-from ..power_on import PluginMetadata
+from .. import PowerOffCommand
+from .power_fixures import *
 
 
-class MockStepUpdateResource(PowerOnCommand):
+class MockStepUpdateResource(PowerOffCommand):
     """Fail resource update mocked object"""
     def __init__(self, args=None):
         super(MockStepUpdateResource, self).__init__(args)
@@ -19,86 +18,69 @@ class MockStepUpdateResource(PowerOnCommand):
         return False
 
 
-class TestPowerOnCommand(PowerCommandsCommon):
-    """Test case for the PowerOnNodeCommand class."""
+class TestPowerOffCommand(PowerCommandsCommon):
+    """Test case for the RemoteSshPlugin class."""
     def setUp(self):
-        super(TestPowerOnCommand, self).setUp()
-        self.write_state('Off')
-        self.args.subcommand = 'on'
-        self.command = PowerOnCommand(self.command_options)
+        super(TestPowerOffCommand, self).setUp()
+        self.write_state('On:bmc_on')
+        self.args.subcommand = 'off'
+        self.command = PowerOffCommand(self.command_options)
         self.command.plugin_name = 'mock'
 
-    def test_metadata(self):
-        metadata = PluginMetadata()
-        self.assertEqual('command', metadata.category())
-        self.assertEqual('power_on', metadata.name())
-        self.assertEqual(100, metadata.priority())
-        self.assertIsNotNone(metadata.create_instance(self.command_options))
-
-    def test_positive_on_from_off(self):
+    def test_positive_off_from_on(self):
         result = self.command.execute()
-        self.assertEqual('Success: Device Powered On: test_node',
+        self.assertEqual('Success: Power Off test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
-    def test_step_3_exception(self):
-        self.command.node_options['switches'] = {
-            (object(), object(), object()),
-            (object(), object(), object())
-        }
-        result = self.command.execute()
-        self.assertEqual('Hard switches for device test_node are off',
-                         result.message)
-        self.assertEqual(-1, result.return_code)
-
     def test_power_plugin_object_exists(self):
         self.command.power_plugin = self.manager.\
-            factory_create_instance('power_control', 'mock',
+            create_instance('power_control', 'mock',
                                     self.command.node_options)
         result = self.command.execute()
-        self.assertEqual('Success: Device Powered On: test_node',
+        self.assertEqual('Success: Power Off test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
     def test_parse_arguments(self):
         self.command.args = None
         result = self.command.execute()
-        self.assertEqual('Incorrect arguments passed to turn on a node: '
+        self.assertEqual('Incorrect arguments passed to turn off a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_2(self):
         self.args = None
         result = self.command.execute()
-        self.assertEqual('Success: Device Powered On: test_node',
+        self.assertEqual('Success: Power Off test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
     def test_parse_arguments_3(self):
         self.args.subcommand = 'unknown'
         result = self.command.execute()
-        self.assertEqual('Incorrect arguments passed to turn on a node: '
+        self.assertEqual('Incorrect arguments passed to turn off a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_4(self):
         self.args.force = True
         result = self.command.execute()
-        self.assertEqual('Success: Device Powered On: test_node',
+        self.assertEqual('Success: Power Off test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
-    def test_positive_on_from_on(self):
-        self.write_state('On:bmc_on')
+    def test_positive_off_from_off(self):
+        self.write_state('Off')
         result = self.command.execute()
-        self.assertEqual('Power already on for test_node; use power cycle',
+        self.assertEqual('Success: Power Off test_node',
                          result.message)
-        self.assertEqual(-1, result.return_code)
+        self.assertEqual(0, result.return_code)
 
     def test_failure_to_change_state(self):
         self.command.power_plugin = MockPowerPlugin(self.options)
         result = self.command.execute()
-        self.assertEqual('Failed to change state to On:bmc_on on device '
+        self.assertEqual('Failed to change state to Off on device '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 

@@ -6,8 +6,10 @@
 This defines the interface for PDU objects.
 """
 from abc import ABCMeta, abstractmethod
+from ..plugin import DeclareFramework
 
 
+@DeclareFramework('pdu')
 class PDUInterface(object):
     """Interface class for PDU classes."""
     __metaclass__ = ABCMeta

@@ -5,8 +5,10 @@
 """
 Interface for all device power control plugins.
 """
+from ..plugin import DeclareFramework
 
 
+@DeclareFramework('power_control')
 class PowerControl(object):
     """Interface for device power control classes."""
     def __init__(self, options=None):

@@ -9,7 +9,6 @@ import unittest
 from mock import patch, MagicMock
 
 from .. import ServicesStopCommand
-from .. import ServicesStopPluginMetadata as PluginMetadata
 from ....plugin.manager import PluginManager
 
 
@@ -22,7 +21,7 @@ class TestServicesStopCommand(unittest.TestCase):
 
         self.node_name = "knl-123"
         self.mock_plugin_manager = mock_plugin_manager
-        self.ssh_mock = self.mock_plugin_manager.factory_create_instance.return_value
+        self.ssh_mock = self.mock_plugin_manager.create_instance.return_value
         self.ssh_mock.execute.return_value = [0, None]
 
         self.configuration = {
@@ -43,13 +42,6 @@ class TestServicesStopCommand(unittest.TestCase):
         setattr(obj, "password", "pass")
         setattr(obj, "device_type", "compute")
         setattr(obj, "service_list", [])
-
-    def test_metadata(self):
-        metadata = PluginMetadata()
-        self.assertEqual('command', metadata.category())
-        self.assertEqual('service_stop', metadata.name())
-        self.assertEqual(100, metadata.priority())
-        self.assertIsNotNone(metadata.create_instance(self.configuration))
 
 
 if __name__ == '__main__':

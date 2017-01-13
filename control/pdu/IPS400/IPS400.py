@@ -6,39 +6,18 @@
 Plugin to talk to the IPS400 pdu
 """
 
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..pdu_interface import PDUInterface
 from ...os_remote_access.telnet.telnet import RemoteTelnetPlugin
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        PluginMetadataInterface.__init__(self)
-
-    def category(self):
-        """Get the plugin category"""
-        return 'pdu'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'IPS400'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return PduIPS400(options)
-
-
+@DeclarePlugin('IPS400', 100)
 class PduIPS400(PDUInterface):
     """
     Implement pdu contract using IPS400
     """
     def __init__(self, options=None):
-        super(PduIPS400, self).__init__(options=None)
+        PDUInterface.__init__(self, options)
 
     def get_outlet_state(self, connection, outlet):
         """

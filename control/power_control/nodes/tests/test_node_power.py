@@ -7,9 +7,7 @@ Test the node_power plugin implementation.
 """
 import unittest
 import time
-from ..node_power import PluginMetadata as NodePowerMD
-from ....bmc.mock.bmc import PluginMetadata as BmcMD
-from ....os_remote_access.mock.os_remote_access import PluginMetadata as OsMD
+from ....os_remote_access.mock.os_remote_access import OsRemoteAccessMock
 from ....utilities.utilities import Utilities
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
@@ -138,13 +136,12 @@ class TestNodePower(unittest.TestCase):
         time.sleep = self._my_sleep
         self.__utilities = MockUtilities()
         self.manager = PluginManager()
-        self.metadata = NodePowerMD()
-        self.manager.add_provider(NodePowerMD())
-        self.manager.add_provider(BmcMD())
-        self.manager.add_provider(OsMD())
+        self.manager.register_plugin_class(NodePower)
+        self.manager.register_plugin_class(BmcMock)
+        self.manager.register_plugin_class(OsRemoteAccessMock)
         self.os_access = RemoteAccessData('127.0.0.1', 22, 'admin', None)
         self.bmc_access = RemoteAccessData('127.0.0.2', 0, 'admin', None)
-        self.bmc_plugin = self.manager.factory_create_instance('bmc', 'mock')
+        self.bmc_plugin = self.manager.create_instance('bmc', 'mock')
         self.bmc_plugin.set_chassis_state(self.bmc_access, 'off')
         self.os_plugin = MockOsAccess()
         self.switch_access1 = RemoteAccessData('127.0.0.3', 22, 'admin', None)
@@ -169,7 +166,7 @@ class TestNodePower(unittest.TestCase):
             }
         }
 
-        self.controller = self.manager.factory_create_instance('power_control',
+        self.controller = self.manager.create_instance('power_control',
                                                                'node_power',
                                                                self.__options)
         self.controller.utilities = self.__utilities
@@ -181,16 +178,11 @@ class TestNodePower(unittest.TestCase):
         self._real_sleep(float(seconds) / 100.0)
 
     def test_ctor(self):
-        self.assertIsNotNone(self.controller)
-
-    def test_metadata(self):
-        self.assertEqual('power_control', self.metadata.category())
-        self.assertEqual('node_power', self.metadata.name())
-        self.assertEqual(100, self.metadata.priority())
+        self.assertIsNotNone(self.controller)\
 
     def test_no_options(self):
         with self.assertRaises(RuntimeError):
-            self.controller = self.manager.factory_create_instance(
+            self.controller = self.manager.create_instance(
                     'power_control',
                     'node_power')
 
@@ -215,33 +207,33 @@ class TestNodePower(unittest.TestCase):
     def test__parse_options(self):
         self.__options['device_type'] = 'network_switch'
         with self.assertRaises(RuntimeError):
-            self.manager.factory_create_instance('power_control', 'node_power',
+            self.manager.create_instance('power_control', 'node_power',
                                                  self.__options)
         self.__options['device_type'] = 'node'
         self.__options['os'] = (None, self.os_plugin)
         with self.assertRaises(RuntimeError):
-            self.manager.factory_create_instance('power_control', 'node_power',
+            self.manager.create_instance('power_control', 'node_power',
                                                  self.__options)
         self.__options['os'] = (self.os_access, None)
         with self.assertRaises(RuntimeError):
-            self.manager.factory_create_instance('power_control', 'node_power',
+            self.manager.create_instance('power_control', 'node_power',
                                                  self.__options)
         self.__options['os'] = (self.os_access, self.os_plugin)
         self.__options['bmc'] = (None, self.bmc_plugin)
         with self.assertRaises(RuntimeError):
-            self.manager.factory_create_instance('power_control', 'node_power',
+            self.manager.create_instance('power_control', 'node_power',
                                                  self.__options)
         self.__options['bmc'] = (self.bmc_access, None)
         with self.assertRaises(RuntimeError):
-            self.manager.factory_create_instance('power_control', 'node_power',
+            self.manager.create_instance('power_control', 'node_power',
                                                  self.__options)
         self.__options['bmc'] = (self.bmc_access, self.bmc_plugin)
         self.__options['switches'] = None
         self.__options['policy'] = None
-        self.manager.factory_create_instance('power_control',
+        self.manager.create_instance('power_control',
                                              'node_power', self.__options)
         self.__options['policy'] = {}
-        self.manager.factory_create_instance('power_control',
+        self.manager.create_instance('power_control',
                                              'node_power', self.__options)
 
     def test_switches_exceptions(self):

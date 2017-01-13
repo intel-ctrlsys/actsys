@@ -3,14 +3,13 @@
 # Copyright (c) 2016 Intel Corp.
 #
 """
-Test the PowerCycleCommand.
+Test the PowerOnCommand.
 """
-from ...tests.power_fixures import *
-from ..power_cycle import PowerCycleCommand
-from ..power_cycle import PluginMetadata
+from .. import PowerOnCommand
+from .power_fixures import *
 
 
-class MockStepUpdateResource(PowerCycleCommand):
+class MockStepUpdateResource(PowerOnCommand):
     """Fail resource update mocked object"""
     def __init__(self, args=None):
         super(MockStepUpdateResource, self).__init__(args)
@@ -19,26 +18,18 @@ class MockStepUpdateResource(PowerCycleCommand):
         return False
 
 
-class TestPowerCycleCommand(PowerCommandsCommon):
-    """Test case for the RemoteSshPlugin class."""
+class TestPowerOnCommand(PowerCommandsCommon):
+    """Test case for the PowerOnNodeCommand class."""
     def setUp(self):
-        super(TestPowerCycleCommand, self).setUp()
-        self.write_state('On:bmc_on')
-        self.args.subcommand = 'cycle'
-        # self.command_options['arguments'] = ['cycle']
-        self.command = PowerCycleCommand(self.command_options)
+        super(TestPowerOnCommand, self).setUp()
+        self.write_state('Off')
+        self.args.subcommand = 'on'
+        self.command = PowerOnCommand(self.command_options)
         self.command.plugin_name = 'mock'
 
-    def test_metadata(self):
-        metadata = PluginMetadata()
-        self.assertEqual('command', metadata.category())
-        self.assertEqual('power_cycle', metadata.name())
-        self.assertEqual(100, metadata.priority())
-        self.assertIsNotNone(metadata.create_instance(self.command_options))
-
-    def test_positive_on_from_on(self):
+    def test_positive_on_from_off(self):
         result = self.command.execute()
-        self.assertEqual('Success: Device Cycled: test_node',
+        self.assertEqual('Success: Device Powered On: test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
@@ -52,38 +43,47 @@ class TestPowerCycleCommand(PowerCommandsCommon):
                          result.message)
         self.assertEqual(-1, result.return_code)
 
+    def test_power_plugin_object_exists(self):
+        self.command.power_plugin = self.manager.\
+            create_instance('power_control', 'mock',
+                                    self.command.node_options)
+        result = self.command.execute()
+        self.assertEqual('Success: Device Powered On: test_node',
+                         result.message)
+        self.assertEqual(0, result.return_code)
+
     def test_parse_arguments(self):
         self.command.args = None
         result = self.command.execute()
-        self.assertEqual('Incorrect arguments passed to cycle a node: '
+        self.assertEqual('Incorrect arguments passed to turn on a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_2(self):
         self.args = None
         result = self.command.execute()
-        self.assertEqual('Success: Device Cycled: test_node',
+        self.assertEqual('Success: Device Powered On: test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
     def test_parse_arguments_3(self):
         self.args.subcommand = 'unknown'
         result = self.command.execute()
-        self.assertEqual('Incorrect arguments passed to cycle a node: '
+        self.assertEqual('Incorrect arguments passed to turn on a node: '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 
     def test_parse_arguments_4(self):
         self.args.force = True
         result = self.command.execute()
-        self.assertEqual('Success: Device Cycled: test_node',
+        self.assertEqual('Success: Device Powered On: test_node',
                          result.message)
         self.assertEqual(0, result.return_code)
 
-    def test_positive_initial_off(self):
-        self.write_state('Off')
+    def test_positive_on_from_on(self):
+        self.write_state('On:bmc_on')
         result = self.command.execute()
-        self.assertEqual('Power off for test_node; use the power on command',
+        self.assertEqual('Power already on for test_node; use power cycle',
                          result.message)
         self.assertEqual(-1, result.return_code)
 

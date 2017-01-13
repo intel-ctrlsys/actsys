@@ -5,15 +5,15 @@
 """
 Common functionality between power commands.
 """
-from ... import Command, CommandResult
-from ....utilities.remote_access_data import RemoteAccessData
+from control.commands import Command, CommandResult
+from control.utilities.remote_access_data import RemoteAccessData
 
 
 class CommonPowerCommand(Command):
     """Common functionality"""
 
     def __init__(self, args=None):
-        super(CommonPowerCommand, self).__init__(args)
+        Command.__init__(self, args)
         self.power_plugin = None
 
         # Step 1 & 2
@@ -45,7 +45,7 @@ class CommonPowerCommand(Command):
         # BMC
         if node and hasattr(node, "bmc") and node.bmc is not None:
             # TODO: check if bmc access_type is not defined.
-            bmc_plugin = mgr.factory_create_instance('bmc', node.bmc.access_type)
+            bmc_plugin = mgr.create_instance('bmc', node.bmc.access_type)
             bmc_access = RemoteAccessData(node.bmc.ip_address, node.bmc.port,
                                           node.bmc.user, node.bmc.password)
             options['bmc'] = (bmc_access, bmc_plugin)
@@ -53,7 +53,7 @@ class CommonPowerCommand(Command):
         if node:
             # TODO: Check if node access type is not defined
             try:
-                os_plugin = self.plugin_manager.factory_create_instance('os_remote_'
+                os_plugin = self.plugin_manager.create_instance('os_remote_'
                                                                         'access',
                                                                         node.access_type)
                 os_access = RemoteAccessData(node.ip_address, node.port,
@@ -93,7 +93,7 @@ class CommonPowerCommand(Command):
             return False
 
         self.logger.debug("Removing {} from the resource pool.".format(self.device_name))
-        resource_pool = self.plugin_manager.factory_create_instance('command',
+        resource_pool = self.plugin_manager.create_instance('command',
                                                                     'resource_pool_{}'.format(new_state),
                                                                     self.command_args)
         resource_pool_command_result = resource_pool.execute()
@@ -110,7 +110,7 @@ class CommonPowerCommand(Command):
             return False
 
         self.logger.debug("{}ing services for {}".format(new_state, self.device_name))
-        service_stop = self.plugin_manager.factory_create_instance('command', 'service_{}'.format(new_state),
+        service_stop = self.plugin_manager.create_instance('command', 'service_{}'.format(new_state),
                                                                    self.command_args)
         service_stop_result = service_stop.execute()
         if service_stop_result.return_code != 0:
@@ -150,7 +150,7 @@ class CommonPowerCommand(Command):
         if self.args.outlet is None:
             return CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify outlet\n'
                                     'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
-        pdu = self.plugin_manager.factory_create_instance('pdu', device.access_type)
+        pdu = self.plugin_manager.create_instance('pdu', device.access_type)
         remote_access = RemoteAccessData(str(device.ip_address), device.port, str(device.user), str(device.password))
         try:
             outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))

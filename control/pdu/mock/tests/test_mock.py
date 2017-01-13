@@ -7,7 +7,6 @@ Test the Mock plugin for pdu access/control.
 """
 import os
 import unittest
-from ..mock import PluginMetadata
 from ..mock import PduMock
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
@@ -15,16 +14,6 @@ from ....utilities.remote_access_data import RemoteAccessData
 class TestPduMock(unittest.TestCase):
     def setUp(self):
         self.pdu_file = os.path.sep + os.path.join('tmp', 'pdu_file')
-
-    def test_metadata_mock(self):
-        manager = PluginManager()
-        metadata = PluginMetadata()
-        self.assertEqual('pdu', metadata.category())
-        self.assertEqual('mock', metadata.name())
-        self.assertEqual(1000, metadata.priority())
-        manager.add_provider(metadata)
-        pdu = manager.factory_create_instance('pdu', 'mock')
-        self.assertIsNotNone(pdu)
 
     def test_persist_state(self):
         if os.path.exists(self.pdu_file):

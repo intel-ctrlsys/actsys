@@ -3,49 +3,29 @@
 # Copyright (c) 2016 Intel Corp.
 #
 """
-Node Power Cycle Procedure plugin.
+Node Power On Procedure plugin.
 """
-from ..power_common.power_common import CommonPowerCommand
-from ...command import CommandResult
-from ....plugin.manager import PluginMetadataInterface
+import time
+from .. import CommandResult
+from . import CommonPowerCommand
+from ...plugin import DeclarePlugin
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Metadata for this plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'command'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'power_cycle'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return PowerCycleCommand(options)
-
-
-class PowerCycleCommand(CommonPowerCommand):
-    """Power reboot command"""
+@DeclarePlugin('power_on', 100)
+class PowerOnCommand(CommonPowerCommand):
+    """PowerOn command"""
     def __init__(self, args=None):
-        """Retrieve dependencies and prepare for power reboot"""
-        super(PowerCycleCommand, self).__init__(args)
+        """Retrieve dependencies and prepare for power on"""
+        CommonPowerCommand.__init__(self, args)
 
     def _execute_for_node(self):
         """
-        Power Node Cycle Procedure:
+        Power Node On Procedure:
             1. create proper interface plugin instances here!
             2. build configuration object for NodePower!
-            3. if PDU is off, return an error!!!
+            3. if PDUs are off, return failure.
             4. create NodePower plugin instance
-            5. if state is off, return an error (use power on).
+            5. if node equals any 'On' state return failure
             6. if any other state, use the NodePower instance to change state
             7. if successful, inform resource manager here
         """
@@ -58,13 +38,13 @@ class PowerCycleCommand(CommonPowerCommand):
             # STEP 4
             if self.power_plugin is None:
                 self.power_plugin = self.plugin_manager.\
-                    factory_create_instance('power_control', self.plugin_name,
+                    create_instance('power_control', self.plugin_name,
                                             self.node_options)
 
             # STEP 5
             target, force = self._parse_power_arguments('On:bmc_on', {
                 '': 'On:bmc_on',
-                'cycle': 'On:bmc_on',
+                'on': 'On:bmc_on',
                 'bios': 'On:bios',
                 'efi': 'On:efi',
                 'hdd': 'On:hdd',
@@ -74,27 +54,34 @@ class PowerCycleCommand(CommonPowerCommand):
             })
             if target is None:
                 raise RuntimeError('Incorrect arguments passed to '
-                                   'cycle a node: {}'.
+                                   'turn on a node: {}'.
                                    format(self.device_name))
 
             state = self.power_plugin.get_current_device_power_state()
-            if state == 'Off':
-                raise RuntimeError('Power off for {}; use the '
-                                   'power on command'.
+            if state.startswith('On'):
+                raise RuntimeError('Power already on for {}; use '
+                                   'power cycle'.
                                    format(self.device_name))
-
-            # STEP 5
-            if not self._update_resource_state("remove"):
-                raise RuntimeError('Failed to inform the resource manager of the state change for '
-                                   'device {}'.format(self.device_name))
-
             # STEP 6
             if not self.power_plugin.set_device_power_state(target, force):
                 raise RuntimeError('Failed to change state to {} on '
                                    'device {}'.
                                    format(target, self.device_name))
 
-            # STEP 7
+            # If a wait time is set, wait
+            device = self.configuration.get_node(self.device_name)
+            if getattr(device, 'wait_time_after_boot_services', None) and \
+                    getattr(device, 'service_list', None):
+                # We must wait here to allow systemctl time to enable services.
+                self.logger.debug("Waiting for {} seconds for systemctl services to "
+                                  "enable...".format(device.wait_time_after_boot_services))
+                time.sleep(device.wait_time_after_boot_services)
+
+            # Start the service for the node
+            if not self._update_services("start"):  # On state
+                raise RuntimeError('Failed to start the services for device {}'.format(self.device_name))
+
+            # Add node to the resource pool
             if not self._update_resource_state("add"):  # On state
                 raise RuntimeError('Failed to inform the resource manager of the state change for '
                                    'device {}'.format(self.device_name))
@@ -102,5 +89,9 @@ class PowerCycleCommand(CommonPowerCommand):
         except RuntimeError as err:
             return CommandResult(message=err.message)
 
-        return CommandResult(0, 'Success: Device Cycled: {}'.
+        return CommandResult(0, 'Success: Device Powered On: {}'.
                              format(self.device_name))
+
+    def _execute_for_power_switches(self):
+        """"""
+        return self.switch_pdu("on")

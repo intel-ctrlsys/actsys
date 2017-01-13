@@ -2,3 +2,4 @@
 #
 # Copyright (c) 2016 Intel Corp.
 #
+from .manager import *

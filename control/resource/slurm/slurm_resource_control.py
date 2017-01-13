@@ -6,39 +6,18 @@
 Implements a resource_control plugin for Slurm to control compute nodes.
 """
 import os
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..resource_control import ResourceControl
 from ...utilities.utilities import Utilities
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'resource_control'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'slurm'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return SlurmResource()
-
-
+@DeclarePlugin('slurm', 100)
 class SlurmResource(ResourceControl):
     """This class controls cluster resource using Slurm resource manager."""
 
-    def __init__(self):
+    def __init__(self, options=None):
         """Constructor that creates an utility and gets configuration"""
-        super(SlurmResource, self).__init__()
+        ResourceControl.__init__(self, options)
         self.utilities = Utilities()
 
     def _parse_node_state(self, output):

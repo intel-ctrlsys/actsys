@@ -8,36 +8,15 @@ a compute node.
 """
 from ...utilities.utilities import Utilities
 from ..os_remote_access import OsRemoteAccess
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'os_remote_access'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'ssh'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return RemoteSshPlugin(options)
-
-
+@DeclarePlugin('ssh', 100)
 class RemoteSshPlugin(OsRemoteAccess):
     """SSH remote OS access implementation."""
 
     def __init__(self, options=None):
-        super(RemoteSshPlugin, self).__init__(options)
+        OsRemoteAccess.__init__(self, options)
         self.__connect_timeout = 4
         self.__options = options
         if self.__options is not None and 'ConnectTimeout' in self.__options:

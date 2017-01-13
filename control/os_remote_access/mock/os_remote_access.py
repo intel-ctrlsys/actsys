@@ -8,37 +8,16 @@ on a compute node.
 """
 from ...utilities.utilities import Utilities
 from ..os_remote_access import OsRemoteAccess
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 import json
 import os
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'os_remote_access'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'mock'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 1000
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return OsRemoteAccessMock(options)
-
-
+@DeclarePlugin('mock', 1000)
 class OsRemoteAccessMock(OsRemoteAccess):
     """SSH remote OS access implementation."""
     def __init__(self, options=None):
-        super(OsRemoteAccessMock, self).__init__(options)
+        OsRemoteAccess.__init__(self, options)
         self.__options = options
         self.utilities = Utilities()
         self.dfx_result_list = []

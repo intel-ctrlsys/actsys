@@ -6,37 +6,14 @@
 This module is called "Command Invoker" which uses APIs from "commands" folder
 to perform user requested operations.
 """
+from __future__ import print_function
 import logging
 import os
 import re
 
-from control.commands.resource_pool.resource_pool_add import \
-    PluginMetadata as PRAdd
-from control.commands.resource_pool.resource_pool_check import PluginMetadata as RCpluginMeta
-from control.commands.resource_pool.resource_pool_remove import \
-    PluginMetadata as PRRemove
-from ..bmc.ipmi_util.ipmi_util import PluginMetadata as PBmc
-from ..bmc.mock.bmc import PluginMetadata as PMockBmc
-from ..commands.power.power_cycle.power_cycle import PluginMetadata as PCycle
-from ..commands.power.power_off.power_off import PluginMetadata as POff
-from ..commands.power.power_on.power_on import PluginMetadata as POn
-from ..commands.services import ServicesStartPluginMetadata
-from ..commands.services import ServicesStatusPluginMetadata
-from ..commands.services import ServicesStopPluginMetadata
 from ..configuration_manager.configuration_manager import ConfigurationManager
 from ..ctrl_logger.ctrl_logger import get_ctrl_logger
-from ..os_remote_access.mock.os_remote_access \
-    import PluginMetadata as PMockSsh
-from ..os_remote_access.ssh.ssh import PluginMetadata as PSsh
 from ..plugin.manager import PluginManager
-from ..power_control.mock.power_control_mock \
-    import PluginMetadata as PMockNPower
-from ..power_control.nodes.node_power import PluginMetadata as PNPower
-from ..resource.slurm.slurm_resource_control import PluginMetadata as SlurmPluginMetadata
-from ..pdu.RaritanPX35180CR.RaritanPX35180CR import PluginMetadata as RaritanPluginMetadata
-from ..pdu.IPS400.IPS400 import PluginMetadata as IPSPluginMetadata
-from ..pdu.mock.mock import PluginMetadata as MockPduPluginMetadata
-from ..resource.mock.mock_resource_control import PluginMetadata as MockPluginMetadata
 from ..commands import CommandResult
 
 
@@ -97,27 +74,73 @@ class CommandInvoker(object):
         return cmd_dictionary
 
     def init_manager(self):
+        # self.manager = PluginManager()
+        # self.manager.register_plugin_class(POn())
+        # self.manager.register_plugin_class(POff())
+        # self.manager.register_plugin_class(PCycle())
+        # self.manager.register_plugin_class(PRAdd())
+        # self.manager.register_plugin_class(PRRemove())
+        # self.manager.register_plugin_class(PNPower())
+        # self.manager.register_plugin_class(PBmc())
+        # self.manager.register_plugin_class(PSsh())
+        # self.manager.register_plugin_class(PMockSsh())
+        # self.manager.register_plugin_class(PMockNPower())
+        # self.manager.register_plugin_class(PMockBmc())
+        # self.manager.register_plugin_class(ServicesStatusPluginMetadata())
+        # self.manager.register_plugin_class(ServicesStartPluginMetadata())
+        # self.manager.register_plugin_class(ServicesStopPluginMetadata())
+        # self.manager.register_plugin_class(RCpluginMeta())
+        # self.manager.register_plugin_class(SlurmPluginMetadata())
+        # self.manager.register_plugin_class(RaritanPluginMetadata())
+        # self.manager.register_plugin_class(IPSPluginMetadata())
+        # self.manager.register_plugin_class(MockPduPluginMetadata())
+        # self.manager.register_plugin_class(MockPluginMetadata())
+        # print (os.path.join(os.path.abspath(os.path.curdir), 'control', 'commands'))
+        # self.manager = PluginManager(os.path.join(os.path.abspath(os.path.curdir), 'control', 'commands'))
+        # self.manager = PluginManager(os.path.abspath(os.path.curdir))
+
         self.manager = PluginManager()
-        self.manager.add_provider(POn())
-        self.manager.add_provider(POff())
-        self.manager.add_provider(PCycle())
-        self.manager.add_provider(PRAdd())
-        self.manager.add_provider(PRRemove())
-        self.manager.add_provider(PNPower())
-        self.manager.add_provider(PBmc())
-        self.manager.add_provider(PSsh())
-        self.manager.add_provider(PMockSsh())
-        self.manager.add_provider(PMockNPower())
-        self.manager.add_provider(PMockBmc())
-        self.manager.add_provider(ServicesStatusPluginMetadata())
-        self.manager.add_provider(ServicesStartPluginMetadata())
-        self.manager.add_provider(ServicesStopPluginMetadata())
-        self.manager.add_provider(RCpluginMeta())
-        self.manager.add_provider(SlurmPluginMetadata())
-        self.manager.add_provider(RaritanPluginMetadata())
-        self.manager.add_provider(IPSPluginMetadata())
-        self.manager.add_provider(MockPduPluginMetadata())
-        self.manager.add_provider(MockPluginMetadata())
+
+        # Commands
+        #  Power Commands
+        from ..commands.power import PowerCycleCommand, PowerOffCommand, PowerOnCommand
+        self.manager.register_plugin_class(PowerCycleCommand)
+        self.manager.register_plugin_class(PowerOffCommand)
+        self.manager.register_plugin_class(PowerOnCommand)
+
+        #  Resource Commands
+        from ..commands.resource_pool import ResourcePoolCheckCommand, ResourcePoolAddCommand, ResourcePoolRemoveCommand
+        self.manager.register_plugin_class(ResourcePoolCheckCommand)
+        self.manager.register_plugin_class(ResourcePoolAddCommand)
+        self.manager.register_plugin_class(ResourcePoolRemoveCommand)
+
+        #  Service Commands
+        from ..commands.services import ServicesStartCommand, ServicesStatusCommand, ServicesStopCommand
+        self.manager.register_plugin_class(ServicesStartCommand)
+        self.manager.register_plugin_class(ServicesStatusCommand)
+        self.manager.register_plugin_class(ServicesStopCommand)
+
+        # BMC Plugins
+        from ..bmc.ipmi_util.ipmi_util import BmcIpmiUtil
+        self.manager.register_plugin_class(BmcIpmiUtil)
+
+        # os remote access plugins
+        from ..os_remote_access import RemoteSshPlugin, RemoteTelnetPlugin
+        self.manager.register_plugin_class(RemoteSshPlugin)
+        self.manager.register_plugin_class(RemoteTelnetPlugin)
+
+        # pdu plugins
+        from ..pdu import PduIPS400, PduRaritanPX35180CR
+        self.manager.register_plugin_class(PduIPS400)
+        self.manager.register_plugin_class(PduRaritanPX35180CR)
+
+        # power control plugins
+        from ..power_control import NodePower
+        self.manager.register_plugin_class(NodePower)
+
+        # Resource Manager Plugins
+        from ..resource.slurm.slurm_resource_control import SlurmResource
+        self.manager.register_plugin_class(SlurmResource)
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
@@ -154,7 +177,7 @@ class CommandInvoker(object):
                 continue
 
             cmd_dictionary = self.create_dictionary(device, cmd_args)
-            cmd_obj = self.manager.factory_create_instance('command', command_map[sub_command], cmd_dictionary)
+            cmd_obj = self.manager.create_instance('command', command_map[sub_command], cmd_dictionary)
             self.logger.journal(cmd_obj)
             command_result = cmd_obj.execute()
 

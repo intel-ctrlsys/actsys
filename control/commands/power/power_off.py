@@ -4,38 +4,17 @@
 """
 Node Power Off Procedure Plugin.
 """
-from ..power_common.power_common import CommonPowerCommand
-from ... import CommandResult
-from ....plugin.manager import PluginMetadataInterface
+from .. import CommandResult
+from . import CommonPowerCommand
+from ...plugin import DeclarePlugin
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Metadata for this plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'command'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'power_off'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return PowerOffCommand(options)
-
-
+@DeclarePlugin('power_off', 100)
 class PowerOffCommand(CommonPowerCommand):
     """PowerOff command"""
     def __init__(self, args):
         """Retrieve dependencies and prepare for power on"""
-        super(PowerOffCommand, self).__init__(args)
+        CommonPowerCommand.__init__(self, args)
 
     def _execute_for_node(self):
         """
@@ -51,7 +30,7 @@ class PowerOffCommand(CommonPowerCommand):
             # STEP 3
             if self.power_plugin is None:
                 self.power_plugin = self.plugin_manager.\
-                    factory_create_instance('power_control', self.plugin_name,
+                    create_instance('power_control', self.plugin_name,
                                             self.node_options)
 
             target, force = self._parse_power_arguments('Off', {'off': 'Off'})
@@ -76,10 +55,9 @@ class PowerOffCommand(CommonPowerCommand):
                 raise RuntimeError('Failed to start the services for device {}'.format(self.device_name))
 
             # STEP 7
+            self.logger.debug('Attempting to change state to {} on device {}'.format(target, self.device_name))
             if not self.power_plugin.set_device_power_state(target, force):
-                raise RuntimeError('Failed to change state to {} on '
-                                   'device {}'.
-                                   format(target, self.device_name))
+                raise RuntimeError('Failed to change state to {} on device {}'.format(target, self.device_name))
 
         except RuntimeError as err:
             return CommandResult(message=err.message)

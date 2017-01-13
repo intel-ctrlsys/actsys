@@ -9,17 +9,6 @@ import unittest
 from ....utilities.utilities import Utilities
 from mock import patch
 from ..slurm_resource_control import SlurmResource
-from ..slurm_resource_control import PluginMetadata
-
-
-class TestSlurmPluginMetadata(unittest.TestCase):
-    """Test the Slurm PluginMetadata class."""
-    def test_slurm_plugin(self):
-        slurmPlugin = PluginMetadata()
-        self.assertEqual("resource_control", slurmPlugin.category())
-        self.assertEqual("slurm", slurmPlugin.name())
-        self.assertEqual(100, slurmPlugin.priority())
-        self.assertIsNotNone(slurmPlugin.create_instance())
 
 
 class TestSlurmResourceControl(unittest.TestCase):

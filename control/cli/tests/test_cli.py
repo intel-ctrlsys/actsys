@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2016 Intel Corp.
 #
-
+from __future__ import print_function
 import sys
 from unittest import TestCase
 
@@ -137,7 +137,7 @@ class CommandExeFactoryTest(TestCase):
         self.command_invoker = CommandInvoker()
         self.command_invoker.logger = MagicMock()
         self.mock_plugin_manager = mock_plugin_manager
-        self.mock_plugin_manager.factory_create_instance.return_value.execute. \
+        self.mock_plugin_manager.create_instance.return_value.execute. \
             return_value = CommandResult(0)
         self.command_invoker.manager = self.mock_plugin_manager
 
@@ -276,7 +276,7 @@ class ControlCliParserTest(TestCase):
         CommandInvoker.BASE_CLUSTER_CONFIG_NAME = "ctrl-config-example.json"
         self.command_invoker = CommandInvoker()
         self.command_invoker.logger = MagicMock()
-        mock_plugin_manager.factory_create_instance.return_value.execute. \
+        mock_plugin_manager.create_instance.return_value.execute. \
             return_value = CommandResult(0)
         self.command_invoker.manager = mock_plugin_manager
 
@@ -411,7 +411,7 @@ class ControlCliParserTest(TestCase):
         args = CommandResult(message='pass', return_code=1)
         device_name = "compute-29,compute-30"
         sub_command = "on"
-        self.command_invoker.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.power_on_invoker(device_name, sub_command,
                                                        test_args)
         self.assertNotEqual(retval[0].return_code, 0)
@@ -421,7 +421,7 @@ class ControlCliParserTest(TestCase):
         args = CommandResult(message='pass', return_code=1)
         device_name = "compute-30,compute-29"
         sub_command = "off"
-        self.command_invoker.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.power_off_invoker(device_name, sub_command)
         self.assertNotEqual(retval[0].return_code, 0)
         self.assertNotEqual(retval[1].return_code, 0)
@@ -430,41 +430,41 @@ class ControlCliParserTest(TestCase):
         args = CommandResult(message='pass', return_code=1)
         device_name = "compute-29,compute-30"
         sub_command = "cycle"
-        self.command_invoker.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.power_cycle_invoker(device_name,
                                                           sub_command)
-        print"RETURN: {}".format(retval)
+        print("RETURN: {}".format(retval))
         self.assertNotEqual(retval, 0)
 
     def test_z_readd_neg(self):
         args = CommandResult(message='pass', return_code=1)
         device_name = "compute-29,compute-30"
         sub_command = "add"
-        self.command_invoker.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.resource_add(device_name, sub_command)
-        print"RETURN: {}".format(retval)
+        print("RETURN: {}".format(retval))
         self.assertNotEqual(retval, 0)
 
     def test_z_rerm_neg(self):
         args = CommandResult(message='pass', return_code=1)
         device_name = "compute-29,compute-30"
         sub_command = "remove"
-        self.command_invoker.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.resource_remove(device_name, sub_command)
-        print"RETURN: {}".format(retval)
+        print("RETURN: {}".format(retval))
         self.assertNotEqual(retval, 0)
 
     def test_invalid_device_name(self):
         device_name = "non-existant-node-1"
         sub_command = "remove"
-        self.command_invoker.manager.factory_create_instance.return_value.execute.return_value.return_code = 1
+        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.resource_remove(device_name, sub_command)
         self.assertEqual(retval.return_code, 0)
 
     def test_invalid_device_name(self):
         device_name = "non-existant-node-1,compute-30"
         sub_command = "remove"
-        self.command_invoker.manager.factory_create_instance.return_value.execute.return_value.return_code = [
+        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = [
             CommandResult(1), CommandResult(0)]
         retval = self.command_invoker.resource_remove(device_name, sub_command)
         self.assertEqual(retval[0].return_code, 1)

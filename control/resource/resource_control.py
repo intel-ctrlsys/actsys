@@ -6,10 +6,13 @@
 Interface for all resource control plugins.
 """
 
+from ..plugin import DeclareFramework
 
+
+@DeclareFramework('resource_control')
 class ResourceControl(object):
     """Interface for resource control classes."""
-    def __init__(self):
+    def __init__(self, options=None):
         pass
 
     def remove_node_from_resource_pool(self, node_name):

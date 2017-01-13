@@ -8,7 +8,6 @@ Test the mock power control object.
 import unittest
 import os
 from ..power_control_mock import PowerControlMock
-from ..power_control_mock import PluginMetadata
 
 
 class TestPowerControlMock(unittest.TestCase):
@@ -25,15 +24,6 @@ class TestPowerControlMock(unittest.TestCase):
             os.unlink(self.mock1.file_path)
         if os.path.exists(self.mock2.file_path):
             os.unlink(self.mock2.file_path)
-
-    def test_metadata(self):
-        metadata = PluginMetadata()
-        self.assertEqual('power_control', metadata.category())
-        self.assertEqual('mock', metadata.name())
-        self.assertEqual(1000, metadata.priority())
-        self.assertIsNotNone(metadata.create_instance({
-            'device_name': 'test_node_1',
-            'device_type': 'node'}))
 
     def test_mock_power_control(self):
         node1 = PowerControlMock({'device_name': 'test_node_1',

@@ -6,9 +6,9 @@
 Test the PowerOnCommand.
 """
 
-from ...tests.power_fixures import *
 from ..power_common import CommonPowerCommand
-from .....pdu.mock.mock import PduMock
+from .power_fixures import *
+from ....pdu.mock.mock import PduMock
 
 
 class TestPowerCommonCommand(PowerCommandsCommon):

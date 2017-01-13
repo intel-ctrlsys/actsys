@@ -6,7 +6,6 @@
 Test the RemoteTelnetPlugin.
 """
 import unittest
-from ..telnet import PluginMetadata
 from ....utilities.remote_access_data import RemoteAccessData
 from ..telnet import RemoteTelnetPlugin
 from mock import patch
@@ -18,14 +17,6 @@ class TestRemoteTelnetPlugin(unittest.TestCase):
     def setUp(self):
         self.access1 = RemoteAccessData('', 0, '', '')
         self.access2 = RemoteAccessData('', 0, 'user', 'pass')
-
-    def test_plugin_metadata(self):
-        """Test metadata."""
-        meta = PluginMetadata()
-        self.assertEqual('os_remote_access', meta.category())
-        self.assertEqual('telnet', meta.name())
-        self.assertEqual(100, meta.priority())
-        self.assertIsNotNone(meta.create_instance())
 
     def test_test_connection(self):
         with self.assertRaises(NotImplementedError):

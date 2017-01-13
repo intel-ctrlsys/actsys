@@ -7,36 +7,15 @@ Plugin to talk to mock pdu functionality.
 """
 import os.path
 import json
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..pdu_interface import PDUInterface
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        PluginMetadataInterface.__init__(self)
-
-    def category(self):
-        """Get the plugin category"""
-        return 'pdu'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'mock'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 1000
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return PduMock(options)
-
-
+@DeclarePlugin('mock', 1000)
 class PduMock(PDUInterface):
     """Implement pdu contract"""
     def __init__(self, options=None):
-        super(PduMock, self).__init__(options=None)
+        PDUInterface.__init__(self, options)
         self.__current_states = {}
         self.__persistent_file = os.path.sep + os.path.join('tmp', 'pdu_file')
         if os.path.exists(self.__persistent_file):

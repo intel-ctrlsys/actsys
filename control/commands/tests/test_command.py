@@ -7,7 +7,7 @@ Test the Command and CommandResult.
 """
 import unittest
 from .. import Command, CommandResult
-from ...plugin.manager import PluginManager
+from ...plugin import PluginManager, DeclarePlugin
 
 
 class TestCommandResult(unittest.TestCase):
@@ -71,11 +71,34 @@ class TestCommand(unittest.TestCase):
 
     def test_get_name(self):
         command = Command({'device_name': 'node_name',
-                            'configuration': [],  # Placeholder
-                            'plugin_manager': PluginManager(),
-                            'logger': None,
-                            'arguments': None})
-        self.assertEqual(command.get_name(), "Command")
+                           'configuration': [],  # Placeholder
+                           'plugin_manager': PluginManager(),
+                           'logger': None,
+                           'arguments': None})
+        self.assertEqual(command.get_name(), "command")
+
+    def test_get_name2(self):
+        @DeclarePlugin('sample_plugin', 100)
+        class CommandPlugin(Command):
+            pass
+
+        command = CommandPlugin({'device_name': 'node_name',
+                                 'configuration': [],  # Placeholder
+                                 'plugin_manager': PluginManager(),
+                                 'logger': None,
+                                 'arguments': None})
+        self.assertEqual(command.get_name(), "sample_plugin")
+
+    def test_get_name3(self):
+        class SomeObject(Command):
+            pass
+
+        command = SomeObject({'device_name': 'node_name',
+                              'configuration': [],  # Placeholder
+                              'plugin_manager': PluginManager(),
+                              'logger': None,
+                              'arguments': None})
+        self.assertEqual(command.get_name(), "SomeObject")
 
 
 if __name__ == '__main__':

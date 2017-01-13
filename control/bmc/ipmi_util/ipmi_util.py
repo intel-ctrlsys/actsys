@@ -6,37 +6,16 @@
 Plugin to talk to the BMC using IPMI versions 1.5 and 2.0.
 """
 from time import sleep
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ...utilities.utilities import Utilities
 from ..bmc import Bmc
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'bmc'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'ipmi_util'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return BmcIpmiUtil(options)
-
-
+@DeclarePlugin('ipmi_util', 100)
 class BmcIpmiUtil(Bmc):
     """Implement Bmc contract using IPMI."""
     def __init__(self, options=None):
-        super(BmcIpmiUtil, self).__init__(options)
+        Bmc.__init__(self, options)
         self.utilities = Utilities()
         self.tool = 'ipmiutil'
         self.name_to_find = 'chassis_power'
@@ -50,7 +29,9 @@ class BmcIpmiUtil(Bmc):
                                             'status')
         stdout, stderr = self.utilities.execute_with_capture(command)
         if stdout is None:
-            raise RuntimeError('Failed to execute "%s"!' % self.tool)
+            # TODO: Integrate Logger, and log this failure information
+            # TODO: Sometimes the ipmi tool fails, even though it actually succeeds. Root cause this, or double check.
+            raise RuntimeError('Failed to execute "{}"! Command: {} stdout: {} stderr: {}'.format(self.tool, command, stdout, stderr))
         lines = stdout.split('\n')
         value = None
         for line in lines:

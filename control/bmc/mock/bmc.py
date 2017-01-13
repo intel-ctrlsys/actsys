@@ -7,36 +7,15 @@ Plugin to talk to mock BMC functionality.
 """
 import os.path
 import json
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..bmc import Bmc
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'bmc'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'mock'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 1000
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return BmcMock(options)
-
-
+@DeclarePlugin('mock', 1000)
 class BmcMock(Bmc):
     """Implement Bmc contract using IPMI."""
     def __init__(self, options=None):
-        super(BmcMock, self).__init__(options)
+        Bmc.__init__(self, options)
         self.state_change_delay = 5  # seconds
         self.__current_states = {}
         self.__persistent_file = os.path.join(os.path.sep, 'tmp', 'bmc_file')

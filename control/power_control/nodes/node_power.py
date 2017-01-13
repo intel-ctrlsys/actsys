@@ -8,33 +8,12 @@ Implements a power_control plugin for controlling nodes.
 from __future__ import print_function
 import time
 import os
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..power_control import PowerControl
 from ...utilities.utilities import Utilities
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'power_control'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'node_power'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return NodePower(options)
-
-
+@DeclarePlugin('node_power', 100)
 class NodePower(PowerControl):
     """This class controls node power using a PDU, BMC, and the node OS.
 
@@ -55,7 +34,7 @@ class NodePower(PowerControl):
     """
     def __init__(self, options):
         """Will throw is bad or missing data is passed in options."""
-        super(NodePower, self).__init__(options)
+        PowerControl.__init__(self, options)
         self.__options = options
         if self.__options is None:
             raise RuntimeError('The options parameter to this class must not '

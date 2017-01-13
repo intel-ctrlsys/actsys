@@ -7,36 +7,15 @@ Power control mock class.
 """
 import os.path
 import json
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..power_control import PowerControl
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        PluginMetadataInterface.__init__(self)
-
-    def category(self):
-        """Get the plugin category"""
-        return 'power_control'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'mock'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 1000
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return PowerControlMock(options)
-
-
+@DeclarePlugin('mock', 1000)
 class PowerControlMock(PowerControl):
     """Plugin for mocking Power Control."""
     def __init__(self, options=None):
-        super(PowerControlMock, self).__init__(options)
+        PowerControl.__init__(self, options)
         self.device_name = options['device_name']
         if options['device_type'] not in ['node', 'compute', 'service',
                                           'master', 'login']:

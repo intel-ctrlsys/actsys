@@ -6,38 +6,17 @@
 Plugin to talk to the Raritan PX3 - 5180CR pdu
 """
 
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..pdu_interface import PDUInterface
 from ...os_remote_access.ssh.ssh import RemoteSshPlugin
 from ...utilities.utilities import Utilities
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        PluginMetadataInterface.__init__(self)
-
-    def category(self):
-        """Get the plugin category"""
-        return 'pdu'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'Raritan_PX3-5180CR'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return PduRaritanPX35180CR(options)
-
-
+@DeclarePlugin('Raritan_PX3-5180CR', 100)
 class PduRaritanPX35180CR(PDUInterface):
     """Implement pdu contract using RaritanPX35180CR."""
     def __init__(self, options=None):
-        super(PduRaritanPX35180CR, self).__init__(options=None)
+        PDUInterface.__init__(self, options)
         self.utilities = Utilities()
 
     def get_outlet_state(self, connection, outlet):

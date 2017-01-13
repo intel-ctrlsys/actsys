@@ -7,7 +7,6 @@ Test the Mock plugin for BMC access/control.
 """
 import os
 import unittest
-from ..bmc import PluginMetadata
 from ..bmc import BmcMock
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
@@ -20,12 +19,8 @@ class TestBmcMock(unittest.TestCase):
 
     def test_metadata_mock(self):
         manager = PluginManager()
-        metadata = PluginMetadata()
-        self.assertEqual('bmc', metadata.category())
-        self.assertEqual('mock', metadata.name())
-        self.assertEqual(1000, metadata.priority())
-        manager.add_provider(metadata)
-        bmc = manager.factory_create_instance('bmc', 'mock')
+        manager.register_plugin_class(BmcMock)
+        bmc = manager.create_instance('bmc', 'mock')
         self.assertIsNotNone(bmc)
 
     def test_persist_state(self):

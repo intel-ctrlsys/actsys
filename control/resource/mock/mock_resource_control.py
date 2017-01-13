@@ -7,39 +7,18 @@ Implements a mock resource_control plugin for DFx.
 """
 import os
 import json
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 from ..resource_control import ResourceControl
 from ...configuration_manager.configuration_manager import ConfigurationManager
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'resource_control'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'mock'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 1000
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return MockResource()
-
-
+@DeclarePlugin('mock', 1000)
 class MockResource(ResourceControl):
     """This class controls cluster resource using Mocked resource manager."""
 
-    def __init__(self):
+    def __init__(self, options=None):
         """Constructor that load the mocked resource file if there is any"""
-        super(MockResource, self).__init__()
+        ResourceControl.__init__(self, options)
         self.file_path = os.path.join(os.path.sep, 'tmp', 'mock_resource')
         self.configure_file = "ctrl-config.json"
         self.nodes = None

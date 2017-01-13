@@ -6,35 +6,14 @@
 Interface for all resource control plugins.
 """
 from ..resource_control import ResourceControl
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
-
-    def category(self):
-        """Get the plugin category"""
-        return 'resource_control'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'mock'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return MockResourceControl()
-
-
+@DeclarePlugin('mock', 100)
 class MockResourceControl(ResourceControl):
     """Interface for resource control classes."""
-    def __init__(self):
-        super(MockResourceControl, self).__init__()
+    def __init__(self, options=None):
+        ResourceControl.__init__(self, options)
         self.return_value = True
 
     def remove_node_from_resource_pool(self, node_name):

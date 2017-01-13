@@ -18,10 +18,10 @@ class ServicesCommand(Command):
 
     def __init__(self, args=None):
         """Retrieve dependencies and prepare for power on"""
-        super(ServicesCommand, self).__init__(args)
+        Command.__init__(self, args)
 
         self.device = self.configuration.get_device(self.device_name)
-        self.ssh = self.plugin_manager.factory_create_instance('os_remote_access', self.device.access_type)
+        self.ssh = self.plugin_manager.create_instance('os_remote_access', self.device.access_type)
         self.remote_access_data = RemoteAccessData(self.device.ip_address, self.device.port,
                                                    self.device.user, self.device.password)
         self.command = []

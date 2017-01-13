@@ -7,7 +7,7 @@ Test the RemoteSshPlugin.
 """
 import getpass
 import unittest
-from ..ssh import PluginMetadata
+from ..ssh import RemoteSshPlugin
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
 from ....utilities.utilities import Utilities
@@ -44,20 +44,10 @@ class TestRemoteSshPlugin(unittest.TestCase):
     """Test case for the RemoteSshPlugin class."""
     def setUp(self):
         manager = PluginManager()
-        metadata = PluginMetadata()
-        manager.add_provider(metadata)
-        self.remote = manager.factory_create_instance(metadata.category(),
-                                                      metadata.name())
+        manager.register_plugin_class(RemoteSshPlugin)
+        self.remote = manager.create_instance('os_remote_access', 'ssh')
         self.remote.utilities = MockUtilities()  # Mocking
         self.access = RemoteAccessData('127.0.0.1', 22, getpass.getuser(), None)
-
-    def test_plugin_metadata(self):
-        """Test metadata."""
-        meta = PluginMetadata()
-        self.assertEqual('os_remote_access', meta.category())
-        self.assertEqual('ssh', meta.name())
-        self.assertEqual(100, meta.priority())
-        self.assertIsNotNone(meta.create_instance())
 
     def test_test_connection(self):
         rv = self.remote.test_connection(self.access)
@@ -89,14 +79,6 @@ class TestRemoteSshPlugin(unittest.TestCase):
         self.remote.utilities.returned_value = None, None
         result = self.remote.execute(['whoami'], self.access, capture=True)
         self.assertEqual((255, None), result)
-
-    def test_ctor_with_options(self):
-        manager = PluginManager()
-        metadata = PluginMetadata()
-        manager.add_provider(metadata)
-        self.remote = manager.factory_create_instance(metadata.category(),
-                                                      metadata.name(),
-                                                      {'ConnectTimeout': 5})
 
 
 if __name__ == '__main__':

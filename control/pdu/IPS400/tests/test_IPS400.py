@@ -8,7 +8,7 @@ Test the IPS400 PDU plugin for PDU access/control.
 
 import unittest
 from mock import MagicMock, patch
-from ..IPS400 import PluginMetadata, PduIPS400
+from ..IPS400 import PduIPS400
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
 from ....os_remote_access.telnet.telnet import RemoteTelnetPlugin
@@ -29,16 +29,6 @@ class TestPduIPS400(unittest.TestCase):
 
     def setUp(self):
         self.access = RemoteAccessData('', 0, '', '')
-
-    def test_metadata_IPS400(self):
-        manager = PluginManager()
-        metadata = PluginMetadata()
-        self.assertEqual('pdu', metadata.category())
-        self.assertEqual('IPS400', metadata.name())
-        self.assertEqual(100, metadata.priority())
-        manager.add_provider(metadata)
-        pdu = manager.factory_create_instance('pdu', 'IPS400')
-        self.assertIsNotNone(pdu)
 
     def test_get_outlet_state(self):
         pdu = PduIPS400()

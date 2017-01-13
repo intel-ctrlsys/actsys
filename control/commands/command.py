@@ -5,9 +5,10 @@
 """
 Defines the layout of a command object
 """
-from ..plugin.manager import PluginManager
+from ..plugin import PluginManager, DeclareFramework
 
 
+@DeclareFramework('command')
 class Command(object):
     """
     Abstract Base Class for all command objects. Ensure derived objects follow
@@ -51,7 +52,12 @@ class Command(object):
 
     def get_name(self):
         """Get the Class name"""
-        return self.__class__.__name__
+        if self.__class__.__name__ not in ['_Framework', '_Plugin']:
+            return self.__class__.__name__
+        if hasattr(self, 'PLUGIN_NAME'):
+            return self.PLUGIN_NAME
+        elif hasattr(self, 'FRAMEWORK_NAME'):
+            return self.FRAMEWORK_NAME
 
     def execute(self):
         """How the command is performed; default returns unknown error."""

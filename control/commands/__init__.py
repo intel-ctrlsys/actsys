@@ -2,4 +2,4 @@
 #
 # Copyright (c) 2016 Intel Corp.
 #
-from command import *
+from .command import *

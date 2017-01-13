@@ -10,17 +10,6 @@ import os
 import json
 from ....utilities.utilities import Utilities
 from ..mock_resource_control import MockResource
-from ..mock_resource_control import PluginMetadata
-
-
-class TestMockPluginMetadata(unittest.TestCase):
-    """Test the Mock PluginMetadata class."""
-    def test_mock_plugin(self):
-        mock_plugin = PluginMetadata()
-        self.assertEqual("resource_control", mock_plugin.category())
-        self.assertEqual("mock", mock_plugin.name())
-        self.assertEqual(1000, mock_plugin.priority())
-        self.assertIsNotNone(mock_plugin.create_instance())
 
 
 class TestMockResourceControl(unittest.TestCase):

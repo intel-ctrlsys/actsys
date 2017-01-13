@@ -8,7 +8,7 @@ Test the IPMI plugin for BMC access/control.
 import os
 import time
 import unittest
-from ..ipmi_util import PluginMetadata
+from ..ipmi_util import BmcIpmiUtil
 from ....plugin.manager import PluginManager
 from ....utilities.utilities import Utilities
 from ....os_remote_access.ssh.ssh import RemoteSshPlugin
@@ -20,7 +20,7 @@ class MockUtilities(Utilities):
     """Mock class fake low level system call helpers."""
     def __init__(self):
         CtrlLogger.LOG_FILE = ".test.log"
-        super(MockUtilities, self).__init__()
+        Utilities.__init__(self)
         self.returned_value = None
 
     def execute_no_capture(self, command):
@@ -49,9 +49,8 @@ class TestBmcIpmi(unittest.TestCase):
     def setUp(self):
         self.__utilities = MockUtilities()
         self.manager = PluginManager()
-        self.metadata = PluginMetadata()
-        self.manager.add_provider(self.metadata)
-        self.bmc = self.manager.factory_create_instance('bmc', 'ipmi_util')
+        self.manager.register_plugin_class(BmcIpmiUtil)
+        self.bmc = self.manager.create_instance('bmc', 'ipmi_util')
         self.bmc.utilities = self.__utilities
         self.bmc.mandatory_bmc_wait_seconds = 0
         self.bmc_credentials = RemoteAccessData('127.0.0.2', 0, 'admin',
@@ -66,12 +65,6 @@ class TestBmcIpmi(unittest.TestCase):
             time.sleep(0.01)
             now = time.time()
             self.bmc.utilities.returned_value = True
-
-    def test_metadata_ipmi_util(self):
-        self.assertEqual('bmc', self.metadata.category())
-        self.assertEqual('ipmi_util', self.metadata.name())
-        self.assertEqual(100, self.metadata.priority())
-        self.assertIsNotNone(self.bmc)
 
     def test_get_chassis_state(self):
         self.bmc.utilities.returned_value = 'chassis_power = on'

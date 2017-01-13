@@ -5,8 +5,10 @@
 """
 This defines the interface for BMC objects.
 """
+from ..plugin import DeclareFramework
 
 
+@DeclareFramework('bmc')
 class Bmc(object):
     """Interface class for bmc classes."""
     def __init__(self, options=None):

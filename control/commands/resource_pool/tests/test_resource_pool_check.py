@@ -8,7 +8,6 @@ Test the ResourcePoolAdd Plugin.
 import unittest
 
 from mock import MagicMock, patch
-from ..resource_pool_check import PluginMetadata
 from .. import ResourcePoolCheckCommand
 from ....plugin.manager import PluginManager
 from ....ctrl_logger.ctrl_logger import CtrlLogger
@@ -23,7 +22,7 @@ class TestResourcePoolCheckCommand(unittest.TestCase):
         self.setup_mock_config()
         self.node_name = "knl-123"
         self.mock_plugin_manager = mock_plugin_manager
-        self.resource_manager_mock = self.mock_plugin_manager.factory_create_instance.return_value
+        self.resource_manager_mock = self.mock_plugin_manager.create_instance.return_value
         self.resource_manager_mock.check_node_state.return_value = (0, "foo")
 
         self.config = {
@@ -44,13 +43,6 @@ class TestResourcePoolCheckCommand(unittest.TestCase):
         setattr(obj, "password", "pass")
         setattr(obj, "device_type", "node")
         setattr(obj, "service_list", [])
-
-    def test_metadata(self):
-        metadata = PluginMetadata()
-        self.assertEqual('command', metadata.category())
-        self.assertEqual('resource_pool_check', metadata.name())
-        self.assertEqual(100, metadata.priority())
-        self.assertIsNotNone(metadata.create_instance(self.config))
 
     def test_execute(self):
         self.assertEqual(self.resource_check.execute().return_code, 0)

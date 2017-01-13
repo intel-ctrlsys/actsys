@@ -10,21 +10,17 @@ import os
 import json
 from mock import patch
 from ....plugin.manager import PluginManager
-from ....power_control.mock.power_control_mock import PluginMetadata as \
-    NodePowerMetadata
+from ....power_control.mock.power_control_mock import PowerControlMock as NodePowerMetadata
 from ....power_control.mock.power_control_mock import PowerControlMock
-from ....bmc.mock.bmc import PluginMetadata as BmcMetadata
-from ....pdu.mock.mock import PluginMetadata as PduMetadata
-from ....os_remote_access.mock.os_remote_access import PluginMetadata as \
-    RemoteMetadata
-from ....resource.tests.mock_resource_control import PluginMetadata as RCPluginMetaData
+from ....bmc.mock.bmc import BmcMock as BmcMetadata
+from ....pdu.mock.mock import PduMock as PduMetadata
+from ....os_remote_access.mock.os_remote_access import OsRemoteAccessMock as RemoteMetadata
+from ....resource.tests.mock_resource_control import MockResourceControl as RCPluginMetaData
 from ....utilities.remote_access_data import RemoteAccessData
-from ...resource_pool.resource_pool_add import PluginMetadata as PRAdd
-from ...resource_pool.resource_pool_check import PluginMetadata as RCpluginMeta
-from ...resource_pool.resource_pool_remove import PluginMetadata as PRRemove
-from ...services import ServicesStartPluginMetadata
-from ...services import ServicesStatusPluginMetadata
-from ...services import ServicesStopPluginMetadata
+from ...resource_pool.resource_pool_add import ResourcePoolAddCommand as PRAdd
+from ...resource_pool.resource_pool_check import ResourcePoolCheckCommand as RCpluginMeta
+from ...resource_pool.resource_pool_remove import ResourcePoolRemoveCommand as PRRemove
+from ...services import ServicesStatusCommand, ServicesStartCommand, ServicesStopCommand
 
 
 class MockConfiguration(object):
@@ -93,17 +89,17 @@ class PowerCommandsCommon(unittest.TestCase):
         self.persistent_file = os.path.join(os.path.sep, 'tmp',
                                             self.node_name + '.state')
         self.manager = PluginManager()
-        self.manager.add_provider(NodePowerMetadata())
-        self.manager.add_provider(BmcMetadata())
-        self.manager.add_provider(PduMetadata())
-        self.manager.add_provider(RemoteMetadata())
-        self.manager.add_provider(RCPluginMetaData())
-        self.manager.add_provider(PRAdd())
-        self.manager.add_provider(RCpluginMeta())
-        self.manager.add_provider(PRRemove())
-        self.manager.add_provider(ServicesStatusPluginMetadata())
-        self.manager.add_provider(ServicesStartPluginMetadata())
-        self.manager.add_provider(ServicesStopPluginMetadata())
+        self.manager.register_plugin_class(NodePowerMetadata)
+        self.manager.register_plugin_class(BmcMetadata)
+        self.manager.register_plugin_class(PduMetadata)
+        self.manager.register_plugin_class(RemoteMetadata)
+        self.manager.register_plugin_class(RCPluginMetaData)
+        self.manager.register_plugin_class(PRAdd)
+        self.manager.register_plugin_class(RCpluginMeta)
+        self.manager.register_plugin_class(PRRemove)
+        self.manager.register_plugin_class(ServicesStopCommand)
+        self.manager.register_plugin_class(ServicesStartCommand)
+        self.manager.register_plugin_class(ServicesStatusCommand)
         self.configuration = MockConfiguration()
         self.setUpConfiguration()
         self.args = self.Object()

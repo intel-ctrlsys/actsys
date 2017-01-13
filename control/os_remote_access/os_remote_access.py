@@ -5,8 +5,10 @@
 """
 Defines the interface for remote OS access execution of processes.
 """
+from ..plugin import DeclareFramework
 
 
+@DeclareFramework('os_remote_access')
 class OsRemoteAccess(object):
     """Interface for remote process execution."""
     def __init__(self, options=None):

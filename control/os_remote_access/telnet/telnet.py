@@ -9,39 +9,19 @@ Implements the remote access contract using telnet
 import telnetlib
 import time
 from ..os_remote_access import OsRemoteAccess
-from ...plugin.manager import PluginMetadataInterface
+from ...plugin import DeclarePlugin
 
 # timeout parameter (estimated 10s) specifies timeout in seconds
 # for blocking connection attempt operation (default 4 m)
 TIMEOUT = 10
 SLEEP_TIME = TIMEOUT + 1
 
-class PluginMetadata(PluginMetadataInterface):
-    """Required metadata class for a dynamic plugin."""
-    def __init__(self):
-        super(PluginMetadata, self).__init__()
 
-    def category(self):
-        """Get the plugin category"""
-        return 'os_remote_access'
-
-    def name(self):
-        """Get the plugin instance name."""
-        return 'telnet'
-
-    def priority(self):
-        """Get the priority of this name in this category."""
-        return 100
-
-    def create_instance(self, options=None):
-        """Create an instance of this named implementation."""
-        return RemoteTelnetPlugin(options)
-
-
+@DeclarePlugin('telnet', 100)
 class RemoteTelnetPlugin(OsRemoteAccess):
     """Telnet remote OS access implementation."""
     def __init__(self, options=None):
-        super(RemoteTelnetPlugin, self).__init__(options)
+        OsRemoteAccess.__init__(self, options)
 
     def execute(self, cmd, remote_access_data, capture=False, other=None):
         """Execute the remote command"""
@@ -65,7 +45,7 @@ class RemoteTelnetPlugin(OsRemoteAccess):
             time.sleep(SLEEP_TIME)
             tnet = telnetlib.Telnet(remote_access_data.address, timeout=TIMEOUT)
         except EnvironmentError:
-            print "Telnet: Error connecting to remote device"
+            # print "Telnet: Error connecting to remote device"
             return None
         if remote_access_data.username != 'None':
             tnet.read_until("login:")

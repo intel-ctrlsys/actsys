@@ -9,7 +9,6 @@ Test the RaritanPX35180CR PDU plugin for PDU access/control.
 import unittest
 import getpass
 from mock import MagicMock, patch
-from ..RaritanPX35180CR import PluginMetadata
 from ..RaritanPX35180CR import PduRaritanPX35180CR
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
@@ -18,15 +17,6 @@ from ....utilities.utilities import Utilities
 
 class TestPduRaritanPX35180CR(unittest.TestCase):
     """Test the Raritan_PX3-5180CR pdu implementation."""
-    def test_metadata_RaritanPX35180CR(self):
-        manager = PluginManager()
-        metadata = PluginMetadata()
-        self.assertEqual('pdu', metadata.category())
-        self.assertEqual('Raritan_PX3-5180CR', metadata.name())
-        self.assertEqual(100, metadata.priority())
-        manager.add_provider(metadata)
-        pdu = manager.factory_create_instance('pdu', 'Raritan_PX3-5180CR')
-        self.assertIsNotNone(pdu)
 
     def test_get_outlet_state(self):
         pdu = PduRaritanPX35180CR()
