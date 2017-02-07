@@ -78,3 +78,11 @@ class CommandResult(object):
             return "{} - {}".format(self.return_code, self.message)
         else:
             return "{}: {} - {}".format(self.device_name, self.return_code, self.message)
+
+    def __eq__(self, other):
+        if isinstance(other, CommandResult):
+            if (self.return_code == other.return_code and
+                    self.message == other.message and
+                    self.device_name == other.device_name):
+                return True
+        return False

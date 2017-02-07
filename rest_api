@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+## -*- coding: utf-8 -*-
+#
+# Copyright (c) 2017 Intel Corp.
+#
+""" Executes the REST API """
+from __future__ import print_function
+import argparse
+from control.rest_api.rest_api import ControlRestApi
+
+def parse_arguments():
+    """ Parse cmdline arguments and return a dictionary with them """
+    ctrl_parser = argparse.ArgumentParser(prog='rest_api', description='Control Rest API Parser')
+    ctrl_parser.add_argument("-V", "--version", action="version", version='0.1.0',
+                             help="Provides the tool's version.")
+    ctrl_parser.add_argument("-D", "--dfx", action='store_true', help="Enables DFx.")
+    ctrl_parser.add_argument("-d", "--debug", action='store_true', help="Enables debug messages.")
+    args = ctrl_parser.parse_args()
+    print (args)
+    return dict(dfx=args.dfx, debug=args.debug)
+
+if __name__ == '__main__':
+    FLAGS = parse_arguments()
+    try:
+        ControlRestApi(flags=FLAGS).run()
+    except Exception as failure:
+        print (failure)
+        exit(1)
