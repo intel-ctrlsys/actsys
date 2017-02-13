@@ -10,9 +10,7 @@ import unittest
 import getpass
 from mock import MagicMock, patch
 from ..RaritanPX35180CR import PduRaritanPX35180CR
-from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
-from ....os_remote_access.ssh.ssh import RemoteSshPlugin
 from ....utilities.utilities import Utilities
 
 class TestPduRaritanPX35180CR(unittest.TestCase):
@@ -21,11 +19,10 @@ class TestPduRaritanPX35180CR(unittest.TestCase):
     def test_get_outlet_state(self):
         pdu = PduRaritanPX35180CR()
         connection = RemoteAccessData('', '', '', None)
-        pdu._execute_remote_pdu_command = MagicMock()
-        MagicMock.return_value = 'Error: Failed to retrieve state'
+        pdu._execute_remote_pdu_command = MagicMock(return_value='Error: Failed to retrieve state')
         with self.assertRaises(RuntimeError):
             pdu.get_outlet_state(connection, 'On')
-        MagicMock.return_value = "Outlet 3: ('Knl-1to4-ps2') Power state: On"
+        pdu._execute_remote_pdu_command.return_value = "Outlet 3: ('Knl-1to4-ps2') Power state: On"
         self.assertEqual('On', pdu.get_outlet_state(connection, '3'))
 
     def test_set_outlet_state(self):
@@ -36,10 +33,9 @@ class TestPduRaritanPX35180CR(unittest.TestCase):
         invalid_connection = RemoteAccessData('', 12, '', None)
         with self.assertRaises(RuntimeError):
             pdu.set_outlet_state(invalid_connection, '4', 'On')
-        pdu._execute_remote_pdu_command = MagicMock()
-        MagicMock.return_value = 'power outlets 1 On /y'
+        pdu._execute_remote_pdu_command = MagicMock(return_value='power outlets 1 On /y')
         pdu.set_outlet_state(connection, '1', 'Off')
-        MagicMock.return_value = 'Error: Invalid outlet number'
+        pdu._execute_remote_pdu_command.return_value = 'Error: Invalid outlet number'
         with self.assertRaises(RuntimeError):
             pdu.set_outlet_state(connection, '1', 'On')
 

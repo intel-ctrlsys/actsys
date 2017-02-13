@@ -9,7 +9,6 @@ Test the IPS400 PDU plugin for PDU access/control.
 import unittest
 from mock import MagicMock, patch
 from ..IPS400 import PduIPS400
-from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
 from ....os_remote_access.telnet.telnet import RemoteTelnetPlugin
 
@@ -32,22 +31,20 @@ class TestPduIPS400(unittest.TestCase):
 
     def test_get_outlet_state(self):
         pdu = PduIPS400()
-        pdu._execute_remote_telnet_command = MagicMock()
-        MagicMock.return_value = 'Invalid command'
+        pdu._execute_remote_telnet_command = MagicMock(return_value='Invalid command')
         with self.assertRaises(RuntimeError):
-          pdu.get_outlet_state(self.access, 'On')
-        MagicMock.return_value = IPS400_status
+            pdu.get_outlet_state(self.access, 'On')
+        pdu._execute_remote_telnet_command.return_value = IPS400_status
         self.assertEqual('On', pdu.get_outlet_state(self.access, '3'))
 
     def test_set_outlet_state(self):
         pdu = PduIPS400()
         with self.assertRaises(RuntimeError):
             pdu.set_outlet_state(self.access, '', 'invalid_state')
-        pdu._execute_remote_telnet_command = MagicMock()
-        MagicMock.return_value = 'Invalid command'
+        pdu._execute_remote_telnet_command = MagicMock(return_value='Invalid command')
         with self.assertRaises(RuntimeError):
             pdu.set_outlet_state(self.access, '4', 'On')
-        MagicMock.return_value = IPS400_status
+        pdu._execute_remote_telnet_command.return_value = IPS400_status
         pdu.set_outlet_state(self.access, '2', 'Off')
 
     @patch.object(RemoteTelnetPlugin, 'execute')
