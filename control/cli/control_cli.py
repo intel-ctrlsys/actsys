@@ -8,10 +8,13 @@ This module creates the command line parser and executes the user commands.
 """
 
 from __future__ import print_function
-import sys
+
 import argparse
+import sys
+
 from .command_invoker import CommandInvoker
 from ..commands import CommandResult
+from ..datastore import DataStoreCLI
 
 
 class ControlArgParser(object):
@@ -22,7 +25,7 @@ class ControlArgParser(object):
     def __init__(self):
         """Init Function for Control Cli Parser"""
 
-        self.ctrl_parser = argparse.ArgumentParser(prog='ctrl',
+        self.ctrl_parser = argparse.ArgumentParser(prog=self.CLI_COMMAND,
                                                    description='Control Component Parser')
 
         self.ctrl_subparser = self.ctrl_parser.add_subparsers(
@@ -79,8 +82,10 @@ class ControlArgParser(object):
         self.add_subparser('service', 'Check, start or stop services specified in the configuration file',
                            ['status', 'start', 'stop'], 'Select an action to perform')
 
+        self.ctrl_subparser.add_parser('datastore', help='Access and edit items found in the DataStore')
+
     def add_subparser(self, parser_name, parser_help, subcommand_choices=list(),
-                      subcommand_help=None, arg_list_kwargs=list()):
+                      subcommand_help=None, arg_list_kwargs=list(), require_device_name=True):
         """
         Helper function to add sub-parsers to ctrl. Note that device_name is added to the commands as the last arg.
         """
@@ -99,8 +104,9 @@ class ControlArgParser(object):
                 # positional args
                 subparser.add_argument(arg_kwarg.pop('name'), **arg_kwarg)
 
-        # Additional arguments that are applied to all commands (at the end).
-        subparser.add_argument('device_name', help='Device where command will be executed.')
+        if require_device_name:
+            # Additional arguments that are applied to all commands (at the end).
+            subparser.add_argument('device_name', help='Device where command will be executed.')
 
         return subparser
 
@@ -109,8 +115,11 @@ class ControlArgParser(object):
         self.ctrl_parser.add_argument("-V", "--version", action="version", version='0.1.0',
                                       help='Provides the version of the tool')
 
-    def get_all_args(self):
-        return self.ctrl_parser.parse_args()
+    def get_all_args(self, args=None):
+        if args is not None:
+            return self.ctrl_parser.parse_args(args)
+        else:
+            return self.ctrl_parser.parse_args()
 
 
 class ControlCommandLineInterface(object):
@@ -118,25 +127,25 @@ class ControlCommandLineInterface(object):
 
     def __init__(self):
         try:
-            self.cmd_exe_factory_obj = CommandInvoker()
+            self.cmd_invoker = CommandInvoker()
         except Exception as f:
             if hasattr(f, 'value'):
-                print (f.value)
+                print(f.value)
             else:
-                print (f)
+                print(f)
             sys.exit(1)
 
     def power_cmd_execute(self, cmd_args):
         """Function to call appropriate power sub-command"""
         if cmd_args.subcommand == 'off':
-            return self.cmd_exe_factory_obj.power_off_invoker(cmd_args.device_name, cmd_args.subcommand,
-                                                              cmd_args)
+            return self.cmd_invoker.power_off_invoker(cmd_args.device_name, cmd_args.subcommand,
+                                                      cmd_args)
         elif cmd_args.subcommand == 'cycle':
-            return self.cmd_exe_factory_obj.power_cycle_invoker(cmd_args.device_name, cmd_args.subcommand,
-                                                                cmd_args)
+            return self.cmd_invoker.power_cycle_invoker(cmd_args.device_name, cmd_args.subcommand,
+                                                        cmd_args)
         else:
-            return self.cmd_exe_factory_obj.power_on_invoker(cmd_args.device_name, cmd_args.subcommand,
-                                                             cmd_args)
+            return self.cmd_invoker.power_on_invoker(cmd_args.device_name, cmd_args.subcommand,
+                                                     cmd_args)
 
     def process_cmd_execute(self, cmd_args):
         """Function to call appropriate process sub-command"""
@@ -148,11 +157,11 @@ class ControlCommandLineInterface(object):
     def resource_cmd_execute(self, cmd_args):
         """Function to call appropriate resource sub-command"""
         if cmd_args.subcommand == 'add':
-            return self.cmd_exe_factory_obj.resource_add(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.resource_add(cmd_args.device_name, cmd_args)
         elif cmd_args.subcommand == 'remove':
-            return self.cmd_exe_factory_obj.resource_remove(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.resource_remove(cmd_args.device_name, cmd_args)
         elif cmd_args.subcommand == 'check':
-            return self.cmd_exe_factory_obj.resource_check(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.resource_check(cmd_args.device_name, cmd_args)
         else:
             return CommandResult(1, "Invalid resource command entered.")
 
@@ -173,17 +182,23 @@ class ControlCommandLineInterface(object):
     def service_cmd_execute(self, cmd_args):
         """Function to call appropriate resource sub-command"""
         if cmd_args.subcommand == 'status':
-            return self.cmd_exe_factory_obj.service_status(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.service_status(cmd_args.device_name, cmd_args)
         elif cmd_args.subcommand == 'start':
-            return self.cmd_exe_factory_obj.service_on(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.service_on(cmd_args.device_name, cmd_args)
         elif cmd_args.subcommand == 'stop':
-            return self.cmd_exe_factory_obj.service_off(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.service_off(cmd_args.device_name, cmd_args)
         else:
             return CommandResult(1, "Invalid service command entered")
 
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
         masterparser = ControlArgParser()
+
+        # Following this pattern: http://chase-seibert.github.io/blog/2014/03/21/python-multilevel-argparse.html
+        if sys.argv[1] == 'datastore':
+            datastore_cli = DataStoreCLI.DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(sys.argv[2:])
+            return datastore_cli
+
         cmd_args = masterparser.get_all_args()
         command_result = None
         if cmd_args.subparser_name == 'power':
@@ -199,6 +214,7 @@ class ControlCommandLineInterface(object):
         elif cmd_args.subparser_name == 'service':
             command_result = self.service_cmd_execute(cmd_args)
 
+
         return self.handle_command_result(command_result)
 
     def handle_command_result(self, command_result):
@@ -206,16 +222,16 @@ class ControlCommandLineInterface(object):
             num_failures = 0
             for cr in command_result:
                 if cr.return_code != 0:
-                    print (cr, file=sys.stderr)
+                    print(cr, file=sys.stderr)
                     num_failures += 1
                 else:
                     print(cr)
             num_commands = len(command_result)
-            print ("Result: {}/{} devices were successful".format(num_commands - num_failures, num_commands))
+            print("Result: {}/{} devices were successful".format(num_commands - num_failures, num_commands))
             return num_failures
         else:
             if command_result.return_code != 0:
                 print(command_result, file=sys.stderr)
             else:
-                print (command_result)
+                print(command_result)
             return command_result.return_code

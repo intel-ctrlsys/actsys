@@ -21,10 +21,10 @@ class ResourcePoolCommand(Command):
         """Setup for the command"""
 
         self.device = self.configuration.get_device(self.device_name)
-        if 'compute' != self.device.device_type and 'node' != self.device.device_type:
+        if 'compute' != self.device.get("device_type") and 'node' != self.device.get("device_type"):
             return CommandResult(-1, "The device is not a compute node!")
         self.resource_manager = self.plugin_manager.create_instance('resource_control',
-                                                                    self.device.resource_controller, None)
+                                                                    self.device.get("resource_controller"), None)
         if not self.resource_manager.check_resource_manager_installed():
             return CommandResult(-2, "Resource manager is not installed!")
 

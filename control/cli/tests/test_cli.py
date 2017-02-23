@@ -11,7 +11,7 @@ from mock import patch, MagicMock
 from ..command_invoker import CommandInvoker
 from ..control_cli import ControlArgParser, ControlCommandLineInterface
 from ...commands import CommandResult
-from ...configuration_manager.json_parser.json_parser import FileNotFound
+from ...datastore.utilities import FileNotFound
 
 
 class CommandInvokerTest(TestCase):
@@ -32,7 +32,7 @@ class CommandInvokerTest(TestCase):
         mock_command_invoker.power_off_invoker.return_value = CommandResult(0)
         mock_command_invoker.power_cycle_invoker.return_value = CommandResult(0)
 
-        self.control_cli_executor.cmd_exe_factory_obj = mock_command_invoker
+        self.control_cli_executor.cmd_invoker = mock_command_invoker
 
     def tearDown(self):
         CommandInvoker.BASE_CLUSTER_CONFIG_NAME = self.original_cluster_config_name
@@ -141,11 +141,11 @@ class CommandExeFactoryTest(TestCase):
             return_value = CommandResult(0)
         self.command_invoker.manager = self.mock_plugin_manager
 
-        self.get_device = self.command_invoker.extractor.get_device
-        self.command_invoker.extractor.get_device = self.returns_true
+        self.get_device = self.command_invoker.datastore.get_device
+        self.command_invoker.datastore.get_device = self.returns_true
 
     def tearDown(self):
-        self.command_invoker.extractor.get_device = self.get_device
+        self.command_invoker.datastore.get_device = self.get_device
         CommandInvoker.BASE_CLUSTER_CONFIG_NAME = self.original_cluster_config_name
 
     def returns_true(self, device_name):
@@ -166,7 +166,7 @@ class CommandExeFactoryTest(TestCase):
         self.assertEqual(ret_val, 1)
 
     def test_wrong_device_name2(self):
-        self.command_invoker.extractor.get_device = self.get_device
+        self.command_invoker.datastore.get_device = self.get_device
         retval = self.command_invoker.service_status("co!m@pute-29")
         self.assertEqual(retval.return_code, 1)
 

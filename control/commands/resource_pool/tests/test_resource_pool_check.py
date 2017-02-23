@@ -10,13 +10,13 @@ import unittest
 from mock import MagicMock, patch
 from .. import ResourcePoolCheckCommand
 from ....plugin.manager import PluginManager
-from ....ctrl_logger.ctrl_logger import CtrlLogger
+from ....datastore import DataStore
 
 
 class TestResourcePoolCheckCommand(unittest.TestCase):
     """Test case for the ProcessListCommand class."""
 
-    @patch("control.ctrl_logger.ctrl_logger.CtrlLogger", spec=CtrlLogger)
+    @patch("control.datastore.DataStore", spec=DataStore)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
     def setUp(self, mock_plugin_manager, mock_logger):
         self.setup_mock_config()
@@ -26,23 +26,24 @@ class TestResourcePoolCheckCommand(unittest.TestCase):
         self.resource_manager_mock.check_node_state.return_value = (0, "foo")
 
         self.config = {
-                'device_name': self.node_name,
-                'configuration': self.configuration_manager,
-                'plugin_manager': mock_plugin_manager,
-                'logger': mock_logger,
-                'arguments': None
-            }
+            'device_name': self.node_name,
+            'configuration': self.configuration_manager,
+            'plugin_manager': mock_plugin_manager,
+            'logger': mock_logger,
+            'arguments': None
+        }
         self.resource_check = ResourcePoolCheckCommand(self.config)
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()
-        obj = self.configuration_manager.get_device.return_value
-        setattr(obj, "ip_address", "192.168.1.1")
-        setattr(obj, "port", "22")
-        setattr(obj, "user", "user")
-        setattr(obj, "password", "pass")
-        setattr(obj, "device_type", "node")
-        setattr(obj, "service_list", [])
+        self.configuration_manager.get_device.return_value = {
+            "ip_address": "192.168.1.1",
+            "port": 22,
+            "user": "user",
+            "password": "pass",
+            "device_type": "node",
+            "service_list": []
+        }
 
     def test_execute(self):
         self.assertEqual(self.resource_check.execute().return_code, 0)

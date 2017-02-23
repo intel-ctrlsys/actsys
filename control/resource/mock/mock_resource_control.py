@@ -9,7 +9,7 @@ import os
 import json
 from ...plugin import DeclarePlugin
 from ..resource_control import ResourceControl
-from ...configuration_manager.configuration_manager import ConfigurationManager
+from ...datastore.filestore import FileStore
 
 
 @DeclarePlugin('mock', 1000)
@@ -52,12 +52,12 @@ class MockResource(ResourceControl):
 
     def _write_file(self):
         try:
-            configure_manager = ConfigurationManager(
+            configure_manager = FileStore(
                 self._get_correct_configuration_file())
         except:
             self.nodes = None
             return
-        extractor = configure_manager.get_extractor()
+        extractor = configure_manager
         nodes = extractor.get_devices_by_type('node').keys()
         self.nodes = {}
         for node in nodes:

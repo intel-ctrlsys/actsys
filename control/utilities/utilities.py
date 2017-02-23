@@ -7,7 +7,7 @@
 """
 import subprocess
 import os
-from ..ctrl_logger.ctrl_logger import get_ctrl_logger
+from ..datastore.datastore import get_ctrl_logger
 
 
 class Utilities(object):

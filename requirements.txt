@@ -1,4 +1,6 @@
+psycopg2
 coverage
 pytest
 pylint
 mock
+python-dateutil

@@ -26,7 +26,7 @@ class CommonPowerCommand(Command):
             'node': self._execute_for_node,
             'pdu': self._execute_for_power_switches,
         }
-        return dispatch[self.configuration.get_device(self.device_name).device_type]()
+        return dispatch[self.configuration.get_device(self.device_name).get("device_type")]()
 
     def _options_from_node(self):
         """Return the node power control options based on the node_name and
@@ -40,42 +40,40 @@ class CommonPowerCommand(Command):
             raise RuntimeError("Device {} was not found in the "
                                "configuration".format(self.device_name))
         options = dict()
-        options['device_name'] = node.device_id
-        options['device_type'] = node.device_type
+        options['device_name'] = node.get("device_id")
+        options['device_type'] = node.get("device_type")
         # BMC
-        if node and hasattr(node, "bmc") and node.bmc is not None:
-            # TODO: check if bmc access_type is not defined.
-            bmc_plugin = mgr.create_instance('bmc', node.bmc.access_type)
-            bmc_access = RemoteAccessData(node.bmc.ip_address, node.bmc.port,
-                                          node.bmc.user, node.bmc.password)
-            options['bmc'] = (bmc_access, bmc_plugin)
+        if node and node.get("bmc"):
+            bmc = cfg.get_device(node.get("bmc"))
+            if bmc is not None:
+                # TODO: check if bmc access_type is not defined.
+                bmc_plugin = mgr.create_instance('bmc', bmc.get("access_type"))
+                bmc_access = RemoteAccessData(node.bmc.ip_address, node.bmc.port,
+                                              node.bmc.user, node.bmc.password)
+                options['bmc'] = (bmc_access, bmc_plugin)
         # Device OS
         if node:
             # TODO: Check if node access type is not defined
             try:
-                os_plugin = self.plugin_manager.create_instance('os_remote_'
-                                                                        'access',
-                                                                        node.access_type)
-                os_access = RemoteAccessData(node.ip_address, node.port,
-                                             node.user, node.password)
+                os_plugin = self.plugin_manager.create_instance('os_remote_access', node.get("access_type"))
+                os_access = RemoteAccessData(node.get("ip_address"), node.get("port"),
+                                             node.get("user"), node.get("password"))
                 options['os'] = (os_access, os_plugin)
             except KeyError as ke:
                 self.logger.warning("Unable to load access plugin, {}".format(ke.message))
 
             # TODO: Check if all of these exist, is there a default?!?!?
             options['policy'] = {
-                'OSShutdownTimeoutSeconds': node.os_shutdown_timeout_seconds,
-                'OSBootTimeoutSeconds': node.os_boot_timeout_seconds,
-                'OSNetworkToHaltTime': node.os_network_to_halt_time,
-                'BMCBootTimeoutSeconds': node.bmc_boot_timeout_seconds,
-                'BMCChassisOffWait': node.bmc_chassis_off_wait
+                'OSShutdownTimeoutSeconds': node.get("os_shutdown_timeout_seconds"),
+                'OSBootTimeoutSeconds': node.get("os_boot_timeout_seconds"),
+                'OSNetworkToHaltTime': node.get("os_network_to_halt_time"),
+                'BMCBootTimeoutSeconds': node.get("bmc_boot_timeout_seconds"),
+                'BMCChassisOffWait': node.get("bmc_chassis_off_wait")
             }
         options['switches'] = list()
-        if node and hasattr(node, "pdu_list"):
-            options['switches'] = node.pdu_list
-        power_plugin_name = 'node_power'
-        if hasattr(node, "device_power_control"):
-            power_plugin_name = node.device_power_control
+        if node.get("pdu_list", None) is not None:
+            options['switches'] = node.get("pdu_list")
+        power_plugin_name = node.get("device_power_control", 'node_power')
 
         return options, power_plugin_name
 
@@ -145,13 +143,13 @@ class CommonPowerCommand(Command):
         """Execute PDU commands"""
         device = self.configuration.get_pdu(self.device_name)
 
-        if device is None or device.device_type != "pdu":
+        if device is None or device.get("device_type") != "pdu":
             return CommandResult(1, 'Invalid device type: Cannot toggle device type {}'.format(device.device_type))
         if self.args.outlet is None:
             return CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify outlet\n'
                                     'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
-        pdu = self.plugin_manager.create_instance('pdu', device.access_type)
-        remote_access = RemoteAccessData(str(device.ip_address), device.port, str(device.user), str(device.password))
+        pdu = self.plugin_manager.create_instance('pdu', device.get("access_type"))
+        remote_access = RemoteAccessData(str(device.get("ip_address")), device.get("port"), str(device.get("user")), str(device.get("password")))
         try:
             outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
         except RuntimeError as pdu_ex:

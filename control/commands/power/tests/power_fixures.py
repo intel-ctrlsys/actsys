@@ -53,13 +53,14 @@ class MockConfiguration(object):
 
     def set_device_data(self, device_name, param, value):
         """Dummy setter"""
-        if not self.data.has_key(device_name):
-            self.data[device_name] = self.Object()
-        setattr(self.data[device_name], param, value)
+        if self.data.get(device_name, None) is None:
+            self.data[device_name] = {}
+        self.data[device_name][param] = value
 
 
 class MockPowerPlugin(PowerControlMock):
     """Pre-programmed responses"""
+
     def __init__(self, options=None):
         super(MockPowerPlugin, self).__init__(options)
 
@@ -69,6 +70,7 @@ class MockPowerPlugin(PowerControlMock):
 
 class MockPowerPluginException(PowerControlMock):
     """Pre-programmed responses"""
+
     def __init__(self, options=None):
         super(MockPowerPluginException, self).__init__(options)
 
@@ -83,11 +85,10 @@ class PowerCommandsCommon(unittest.TestCase):
         """pass"""
         pass
 
-    @patch("control.ctrl_logger.ctrl_logger.CtrlLogger")
+    @patch("control.datastore.DataStoreLogger")
     def setUp(self, mock_ctrl_logger):
         self.node_name = 'test_node'
-        self.persistent_file = os.path.join(os.path.sep, 'tmp',
-                                            self.node_name + '.state')
+        self.persistent_file = os.path.join(os.path.sep, 'tmp', self.node_name + '.state')
         self.manager = PluginManager()
         self.manager.register_plugin_class(NodePowerMetadata)
         self.manager.register_plugin_class(BmcMetadata)
@@ -169,7 +170,7 @@ class PowerCommandsCommon(unittest.TestCase):
         setter(self.node_name, 'bmc_boot_timeout_seconds', 10)
         setter(self.node_name, 'bmc_chassis_off_wait', 3)
 
-        #PDU
+        # PDU
         setter('test_pdu', 'device_name', 'test_pdu')
         setter('test_pdu', 'device_type', 'pdu')
         setter('test_pdu', 'access_type', 'mock')

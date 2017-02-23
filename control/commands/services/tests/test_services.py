@@ -9,13 +9,13 @@ import unittest
 from mock import patch, MagicMock
 from ..services import ServicesCommand
 from ....plugin.manager import PluginManager
-from ....ctrl_logger.ctrl_logger import CtrlLogger
+from ....datastore import DataStoreLogger
 
 
 class TestServicesCommand(unittest.TestCase):
     """Test case for the ServicesCheckCommand class."""
 
-    @patch("control.ctrl_logger.ctrl_logger.CtrlLogger", spec=CtrlLogger)
+    @patch("control.datastore.DataStoreLogger", spec=DataStoreLogger)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
     def setUp(self, mock_plugin_manager, mock_logger):
         self.setup_mock_config()
@@ -37,17 +37,17 @@ class TestServicesCommand(unittest.TestCase):
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()
-        obj = self.configuration_manager.get_device.return_value
-        setattr(obj, "ip_address", "192.168.1.1")
-        setattr(obj, "port", "22")
-        setattr(obj, "user", "user")
-        setattr(obj, "password", "pass")
-        setattr(obj, "device_type", "node")
-        setattr(obj, "service_list", [])
+        self.configuration_manager.get_device.return_value = {
+            "ip_address": "192.168.1.1",
+            "port": 22,
+            "user": "user",
+            "password": "pass",
+            "device_type": "node",
+            "service_list": []
+        }
 
     def test_incorrect_node_type(self):
-        self.configuration_manager.get_device. \
-            return_value.device_type = 'Not Compute'
+        self.configuration_manager.get_device.return_value["device_type"] = 'Not Compute'
 
         result = self.services.execute()
 
@@ -61,7 +61,7 @@ class TestServicesCommand(unittest.TestCase):
 
     def test_services_success(self):
         """Stub test, please update me"""
-        self.services.device.service_list = ['orcmd']
+        self.services.device["service_list"] = ['orcmd']
         self.assertEqual(self.services.execute().message, "0 - Success: status - orcmd")
 
         self.assertTrue(self.mock_plugin_manager.create_instance.called)
@@ -73,7 +73,7 @@ class TestServicesCommand(unittest.TestCase):
 
     def test_services_failure(self):
         """Failing, failing all the day"""
-        self.services.device.service_list = ['orcmd']
+        self.services.device["service_list"] = ['orcmd']
         self.ssh_mock.execute.return_value = [1, None]
 
         self.assertEqual(self.services.execute().message, "1 - Failed: status - orcmd")
@@ -83,7 +83,7 @@ class TestServicesCommand(unittest.TestCase):
 
     def test_services_unable_to_connect(self):
         self.ssh_mock.execute.return_value = [255, None]
-        self.services.device.service_list = ['orcmd']
+        self.services.device["service_list"] = ['orcmd']
 
         self.assertEqual(self.services.execute().message,
                          "255 - Failed: status - orcmd")

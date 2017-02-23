@@ -13,13 +13,11 @@ from ....plugin.manager import PluginManager
 from ....utilities.utilities import Utilities
 from ....os_remote_access.ssh.ssh import RemoteSshPlugin
 from ....utilities.remote_access_data import RemoteAccessData
-from ....ctrl_logger.ctrl_logger import CtrlLogger
 
 
 class MockUtilities(Utilities):
     """Mock class fake low level system call helpers."""
     def __init__(self):
-        CtrlLogger.LOG_FILE = ".test.log"
         Utilities.__init__(self)
         self.returned_value = None
 

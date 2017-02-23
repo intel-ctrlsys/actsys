@@ -1,182 +1,229 @@
 {
+  "configuration_variables": {
+    "console_output": {
+      "error_level_regex": [
+        "regex"
+      ],
+      "file": [
+        "/var/log/ctrl.console.log'"
+      ],
+      "warning_level_regex": [
+        "regex"
+      ]
+    },
+    "log_file": {
+      "level": "DEBUG",
+      "retention_period": 30
+    },
+    "log_file_path": "/tmp/ctrl.log",
+    "log_file_max_bytes": 10485760,
+    "provisioning_agent_software": "Warewulf"
+  },
+  "device": [
+    {
+      "bmc": "compute-29-bmc",
+      "device_id": 1,
+      "device_type": "node",
+      "hostname": "compute-29",
+      "ip_address": "192.168.1.29",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node",
+      "sku": [
+        {
+          "device_id": 1,
+          "hardware_type": null,
+          "model_number": null,
+          "sku": "111-asdd-1234-tres",
+          "step": null
+        }
+      ]
+    },
+    {
+      "bmc": "compute-30-bmc",
+      "device_id": 2,
+      "device_type": "node",
+      "hostname": "compute-30",
+      "ip_address": "192.168.1.30",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node",
+      "sku": [
+        {
+          "hardware_type": "cpu",
+          "sku": "2222-asdd-1234-tres"
+        }
+      ]
+    },
+    {
+      "bmc": "compute-31-bmc",
+      "device_id": 3,
+      "device_type": "node",
+      "hostname": "compute-31",
+      "ip_address": "192.168.1.31",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node",
+      "sku": [
+        {
+          "device_id": 3,
+          "hardware_type": "FAT32",
+          "model_number": null,
+          "sku": "111-asdd-1234-tres",
+          "step": "cpu"
+        }
+      ]
+    },
+    {
+      "bmc": "compute-32-bmc",
+      "device_id": 4,
+      "device_type": "node",
+      "hostname": "compute-32",
+      "ip_address": "192.168.1.32",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node"
+    },
+    {
+      "device_id": 5,
+      "device_type": "bmc",
+      "hostname": "compute-29-bmc",
+      "ip_address": "192.168.2.29",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "bmc_default"
+    },
+    {
+      "device_id": 6,
+      "device_type": "bmc",
+      "hostname": "compute-30-bmc",
+      "ip_address": "192.168.2.30",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "bmc_default"
+    },
+    {
+      "device_id": 7,
+      "device_type": "bmc",
+      "hostname": "compute-31-bmc",
+      "ip_address": "192.168.2.31",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "bmc_default"
+    },
+    {
+      "device_id": 8,
+      "device_type": "bmc",
+      "hostname": "compute-32-bmc",
+      "ip_address": "192.168.2.32",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "bmc_default"
+    },
+    {
+      "connected_device": [
+        {
+          "device": [
+            "compute-29",
+            "compute-30"
+          ],
+          "outlet": "5"
+        }
+      ],
+      "device_id": 9,
+      "device_type": "pdu",
+      "hostname": "pdu-1",
+      "ip_address": "192.168.3.1",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "pdu_default"
+    },
+    {
+      "connected_device": [
+        {
+          "device": [
+            "compute-31"
+          ],
+          "outlet": "1"
+        },
+        {
+          "device": [
+            "compute-32"
+          ],
+          "outlet": "2"
+        }
+      ],
+      "device_id": 10,
+      "device_type": "pdu",
+      "hostname": "pdu-2",
+      "ip_address": "192.168.3.2",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "pdu_default"
+    }
+  ],
   "profile": [
     {
-      "profile_name": "compute_node",
-      "user": "user",
+      "access_type": "ssh",
+      "bmc_boot_timeout_seconds": 10,
+      "bmc_chassis_off_wait": 3,
+      "image": "centos7.2",
+      "os_boot_timeout_seconds": 300,
+      "os_network_to_halt_time": 5,
+      "os_shutdown_timeout_seconds": 150,
       "password": "password",
       "port": 22,
-      "access_type": "ssh",
+      "profile_name": "compute_node",
       "resource_controller": "slurm",
-      "image": "centos7.2",
+      "role": [
+        "compute"
+      ],
       "service_list": [
         "orcmd",
         "gmond"
       ],
-      "role": [
-        "compute"
-      ],
-      "os_shutdown_timeout_seconds": 150,
-      "os_boot_timeout_seconds": 300,
-      "os_network_to_halt_time": 5,
-      "wait_time_after_boot_services": 120,
-      "bmc_boot_timeout_seconds": 10,
-      "bmc_chassis_off_wait": 3
+      "type": "node",
+      "user": "user",
+      "wait_time_after_boot_services": 120
     },
     {
-      "profile_name": "service_node",
-      "user": "user",
+      "access_type": "ssh",
+      "bmc_boot_timeout_seconds": 10,
+      "bmc_chassis_off_wait": 3,
+      "image": "centos7.2",
+      "os_boot_timeout_seconds": 300,
+      "os_network_to_halt_time": 5,
+      "os_shutdown_timeout_seconds": 150,
       "password": "password",
       "port": 22,
-      "access_type": "ssh",
-      "image": "centos7.2",
+      "profile_name": "service_node",
+      "role": [
+        "service"
+      ],
       "service_list": [
         "orcmsched",
         "orcmd",
         "gmond",
         "gmetad"
       ],
-      "role": [
-        "service"
-      ],
-      "os_shutdown_timeout_seconds": 150,
-      "os_boot_timeout_seconds": 300,
-      "os_network_to_halt_time": 5,
-      "wait_time_after_boot_services": 120,
-      "bmc_boot_timeout_seconds": 10,
-      "bmc_chassis_off_wait": 3
-    },
-    {
-      "profile_name": "bmc_default",
+      "type": "node",
       "user": "user",
-      "password": "password",
-      "channel": 2,
-      "priv_level": "ADMINISTRATOR",
-      "auth_method": "PASSWORD",
-      "port": 22,
-      "access_type": "ipmi_util"
+      "wait_time_after_boot_services": 120
     },
     {
-      "profile_name": "pdu_default",
+      "access_type": "ipmi_util",
+      "auth_method": "PASSWORD",
+      "channel": 2,
+      "password": "password",
+      "port": 22,
+      "priv_level": "ADMINISTRATOR",
+      "profile_name": "bmc_default",
+      "type": "bmc",
+      "user": "user"
+    },
+    {
+      "access_type": "ipmi_util",
       "device_type": "pdu",
       "outlets_count": 8,
-      "port": 22,
-      "user": "user",
       "password": "password",
-      "access_type": "ipmi_util"
+      "port": 22,
+      "profile_name": "pdu_default",
+      "type": "pdu",
+      "user": "user"
+    },
+    {
+      "port": 411786,
+      "profile_name": "test"
     }
-  ],
-  "node": [
-    {
-      "profile": "compute_node",
-      "hostname": "compute-29",
-      "ip_address": "192.168.1.29",
-      "mac_address": "00:00:00:00:00:00",
-      "bmc": "compute-29-bmc"
-    },
-    {
-      "profile": "compute_node",
-      "hostname": "compute-30",
-      "ip_address": "192.168.1.30",
-      "mac_address": "00:00:00:00:00:00",
-      "bmc": "compute-30-bmc"
-    },
-    {
-      "profile": "compute_node",
-      "hostname": "compute-31",
-      "ip_address": "192.168.1.31",
-      "mac_address": "00:00:00:00:00:00",
-      "bmc": "compute-31-bmc"
-    },
-    {
-      "profile": "compute_node",
-      "hostname": "compute-32",
-      "ip_address": "192.168.1.32",
-      "mac_address": "00:00:00:00:00:00",
-      "bmc": "compute-32-bmc"
-    }
-  ],
-  "bmc": [
-    {
-      "profile": "bmc_default",
-      "hostname": "compute-29-bmc",
-      "ip_address": "192.168.2.29",
-      "mac_address": "00:00:00:00:00:00"
-    },
-    {
-      "profile": "bmc_default",
-      "hostname": "compute-30-bmc",
-      "ip_address": "192.168.2.30",
-      "mac_address": "00:00:00:00:00:00"
-    },
-    {
-      "profile": "bmc_default",
-      "hostname": "compute-31-bmc",
-      "ip_address": "192.168.2.31",
-      "mac_address": "00:00:00:00:00:00"
-    },
-    {
-      "profile": "bmc_default",
-      "hostname": "compute-32-bmc",
-      "ip_address": "192.168.2.32",
-      "mac_address": "00:00:00:00:00:00"
-    }
-  ],
-  "pdu": [
-    {
-      "profile": "pdu_default",
-      "hostname": "pdu-1",
-      "ip_address": "192.168.3.1",
-      "mac_address": "00:00:00:00:00:00",
-      "connected_device": [
-        {
-          "outlet": "5",
-          "device": [
-            "compute-29",
-            "compute-30"
-          ]
-        }
-      ]
-    },
-    {
-      "profile": "pdu_default",
-      "hostname": "pdu-2",
-      "ip_address": "192.168.3.2",
-      "mac_address": "00:00:00:00:00:00",
-      "connected_device": [
-        {
-          "outlet": "1",
-          "device": [
-            "compute-31"
-          ]
-        },
-        {
-          "outlet": "2",
-          "device": [
-            "compute-32"
-          ]
-        }
-      ]
-    }
-  ],
-  "configuration_variables": {
-    "provisioning_agent_software": "Warewulf",
-    "log_file": {
-      "path": "/var/log/ctrl.log",
-      "max_bytes": 10485760,
-      "retention_period": 30,
-      "level": "DEBUG"
-    },
-    "console_output": {
-      "file": [
-        "/var/log/ctrl.console.log'"
-      ],
-      "error_level_regex": [
-        "regex"
-      ],
-      "warning_level_regex": [
-        "regex"
-      ]
-    }
-  }
+  ]
 }
-

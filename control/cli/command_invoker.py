@@ -7,33 +7,43 @@ This module is called "Command Invoker" which uses APIs from "commands" folder
 to perform user requested operations.
 """
 from __future__ import print_function
-import logging
 import os
 import re
-
-from ..configuration_manager.configuration_manager import ConfigurationManager
-from ..ctrl_logger.ctrl_logger import get_ctrl_logger
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
+from ..datastore import DataStoreBuilder
 
 
 class CommandInvoker(object):
     """This class contains all the functions exposed to cli code"""
 
     BASE_CLUSTER_CONFIG_NAME = "ctrl-config.json"
+    POSTGRES_ENV_VAR = "CTRL_POSTGRES_CONNECTION_STRING"
+    FILE_LOCATION_ENV_VAR = "CTRL_CONFIG_FILE"
+    POSTGRES_CONNECTION_STRING = None
 
     def __init__(self):
         self.invoker_ret_val = 0
         self.failed_device_name = list()
-        self.logger = get_ctrl_logger()
-        self.logger.setLevel(logging.DEBUG)
-        self.logger.handlers[0].setLevel(logging.DEBUG)
-        self.configuration = ConfigurationManager(file_path=self._get_correct_configuration_file())
-        self.extractor = self.configuration.get_extractor()
+
+        if os.environ.get(self.POSTGRES_ENV_VAR) is not None:
+            self.POSTGRES_CONNECTION_STRING = os.environ.get(self.POSTGRES_ENV_VAR)
+
+        self.datastore = DataStoreBuilder()
+        file_location = self._get_correct_configuration_file()
+        self.datastore.add_file_db(file_location)
+        if self.POSTGRES_CONNECTION_STRING is not None:
+            self.datastore.add_postgres_db(self.POSTGRES_CONNECTION_STRING)
+        self.datastore = self.datastore.build()
+
+        self.logger = self.datastore.get_logger()
+
         self.manager = None
 
     def _get_correct_configuration_file(self):
         """Resolve the configuration file if possible."""
+        if os.environ.get(self.FILE_LOCATION_ENV_VAR) is not None:
+            return os.environ.get(self.FILE_LOCATION_ENV_VAR)
 
         # Check for the file in the current working directory
         if os.path.isfile(self.BASE_CLUSTER_CONFIG_NAME):
@@ -50,7 +60,8 @@ class CommandInvoker(object):
             return etc
 
         # Failed to resolve, so return the base name... hopefully someone else can resolve it.
-        self.logger.warning("The config file was not found in the current working directory, ~/ or /etc/.")
+        if self.logger is not None:
+            self.logger.warning("The config file was not found in the current working directory, ~/ or /etc/.")
         return self.BASE_CLUSTER_CONFIG_NAME
 
     @classmethod
@@ -66,7 +77,7 @@ class CommandInvoker(object):
         """Function to create dictionary for interface"""
         cmd_dictionary = {
             'device_name': device_name,
-            'configuration': self.extractor,
+            'configuration': self.datastore,
             'plugin_manager': self.manager,
             'logger': self.logger,
             'arguments': args
@@ -193,7 +204,7 @@ class CommandInvoker(object):
 
     def device_exists_in_config(self, device_name):
         """Check if the device exists in the configuration file or not"""
-        return self.extractor.get_device(device_name) is not None
+        return self.datastore.get_device(device_name) is not None
 
     def power_on_invoker(self, device_name, sub_command, cmd_args=None):
         """Execute Power On Command"""
@@ -230,3 +241,12 @@ class CommandInvoker(object):
     def service_off(self, device_name, cmd_args=None):
         """Execute a service check command"""
         return self.common_cmd_invoker(device_name, "service_stop", cmd_args)
+
+    def get_datastore(self):
+        """
+        This is not a command, but configuration and node information is stored here and should be acessable from the
+        from end. Because DataStore already has a solid API, it doesn't make sense to replicate it here. Instead
+        direct access to the DataStore module is given.
+        :return: DataStore Module
+        """
+        return self.datastore

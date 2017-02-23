@@ -11,13 +11,13 @@ from mock import MagicMock, patch
 
 from .. import ResourcePoolRemoveCommand
 from ....plugin.manager import PluginManager
-from ....ctrl_logger.ctrl_logger import CtrlLogger
+from ....datastore import DataStore
 
 
 class TestResourcePoolAddCommand(unittest.TestCase):
     """Test case for the ProcessListCommand class."""
 
-    @patch("control.ctrl_logger.ctrl_logger.CtrlLogger", spec=CtrlLogger)
+    @patch("control.datastore.DataStore", spec=DataStore)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
     def setUp(self, mock_plugin_manager, mock_logger):
         self.setup_mock_config()
@@ -37,19 +37,20 @@ class TestResourcePoolAddCommand(unittest.TestCase):
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()
-        obj = self.configuration_manager.get_device.return_value
-        setattr(obj, "ip_address", "192.168.1.1")
-        setattr(obj, "port", "22")
-        setattr(obj, "user", "user")
-        setattr(obj, "password", "pass")
-        setattr(obj, "device_type", "node")
-        setattr(obj, "service_list", [])
+        self.configuration_manager.get_device.return_value = {
+            "ip_address": "192.168.1.1",
+            "port": 22,
+            "user": "user",
+            "password": "pass",
+            "device_type": "node",
+            "service_list": []
+        }
 
     def test_execute(self):
         self.assertEqual(self.resource_remove.execute().return_code, 0)
 
     def test_execute_wrong_node_type(self):
-        self.configuration_manager.get_device.return_value.device_type = "Problems"
+        self.configuration_manager.get_device.return_value["device_type"] = "Problems"
 
         self.assertEqual(-1, self.resource_remove.execute().return_code)
 
