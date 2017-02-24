@@ -9,9 +9,9 @@ Revises:
 Create Date: 2017-02-16 16:32:08.305724
 
 """
+from alembic import op
 import sqlalchemy as sa
 import textwrap
-from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'e4d4e95ae481'
@@ -21,8 +21,19 @@ depends_on = None
 
 
 def creating_functions():
+
     op.execute(textwrap.dedent("""
-        CREATE OR REPLACE FUNCTION public.add_log( p_process character varying, p_timestamp timestamp with time zone,
+       CREATE TYPE change_result AS (affected_rows integer, device_id integer);
+    """))
+
+    op.execute(textwrap.dedent("""
+        CREATE TYPE type_device_details AS (device_id integer, device_type character varying,
+        properties jsonb, hostname character varying, ip_address character varying,
+        mac_address character varying, profile_name character varying, profile_properties jsonb);
+    """))
+
+    op.execute(textwrap.dedent("""
+        CREATE OR REPLACE FUNCTION public.add_log(p_process character varying, p_timestamp timestamp with time zone,
         p_level integer, p_device_name integer, p_message text)
         RETURNS integer AS
         $BODY$
@@ -45,10 +56,12 @@ def creating_functions():
         RETURN num_rows;
         END;
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
-        CREATE OR REPLACE FUNCTION public.add_log, p_process character varying, p_timestamp timestamp with time zone,
+        CREATE OR REPLACE FUNCTION public.add_log(p_process character varying, p_timestamp timestamp with time zone,
         p_level integer, p_device_name character varying, p_message text)
         RETURNS integer AS
         $BODY$
@@ -69,7 +82,10 @@ def creating_functions():
         GET DIAGNOSTICS num_rows = ROW_COUNT;
         RETURN num_rows;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -81,7 +97,10 @@ def creating_functions():
             EXCEPTION when invalid_text_representation THEN
             RETURN $2;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -95,7 +114,10 @@ def creating_functions():
         GET DIAGNOSTICS num_rows = ROW_COUNT;
         RETURN num_rows;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -119,6 +141,8 @@ def creating_functions():
         END;
 
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -139,7 +163,10 @@ def creating_functions():
             GET DIAGNOSTICS num_rows = ROW_COUNT;
             RETURN QUERY SELECT num_rows, v_device_id;
         END;
-        BODY$
+
+        $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -154,7 +181,10 @@ def creating_functions():
             GET DIAGNOSTICS num_rows = ROW_COUNT;
             RETURN num_rows;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -171,7 +201,10 @@ def creating_functions():
             GET DIAGNOSTICS num_rows = ROW_COUNT;
             RETURN num_rows;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -187,7 +220,10 @@ def creating_functions():
             RETURN passed;
         END;
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -220,7 +256,10 @@ def creating_functions():
             RETURN;
         END
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -256,7 +295,10 @@ def creating_functions():
             RETURN v_device_id;
         END
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -277,7 +319,10 @@ def creating_functions():
 
         END;
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -305,7 +350,10 @@ def creating_functions():
 
         END;
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -324,7 +372,10 @@ def creating_functions():
 
         END;
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -343,7 +394,10 @@ def creating_functions():
             ORDER BY device_id;
         END
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
 
     """))
 
@@ -369,7 +423,10 @@ def creating_functions():
             RETURN;
         END
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -396,7 +453,10 @@ def creating_functions():
             END IF;
             RETURN;
         END
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -415,7 +475,10 @@ def creating_functions():
             GET DIAGNOSTICS num_rows = ROW_COUNT;
             RETURN num_rows;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -447,7 +510,10 @@ def creating_functions():
         GET DIAGNOSTICS num_rows = ROW_COUNT;
         RETURN QUERY SELECT num_rows, p_device_id;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -467,7 +533,10 @@ def creating_functions():
             RETURN num_rows;
         END;
 
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
     op.execute(textwrap.dedent("""
@@ -495,7 +564,10 @@ def creating_functions():
             GET DIAGNOSTICS num_rows = ROW_COUNT;
             RETURN num_rows;
         END;
+
         $BODY$
+            LANGUAGE plpgsql VOLATILE
+            COST 100;
     """))
 
 
@@ -565,6 +637,13 @@ def drop_functions():
         DROP FUNCTION public.upsert_sku(character varying, character varying, character varying, character varying, integer);
     """))
 
+    op.execute(textwrap.dedent("""
+    DROP TYPE IF EXISTS type_device_details;
+    """))
+
+    op.execute(textwrap.dedent("""
+    DROP TYPE IF EXISTS change_result;
+    """))
 
 def upgrade():
     # ### commands auto generated by Alembic - please adjust! ###
@@ -572,12 +651,14 @@ def upgrade():
     op.create_table('profile',
                     sa.Column('profile_name', sa.String(length=128), nullable=False),
                     sa.Column('properties', sa.JSON(), nullable=False),
-                    sa.PrimaryKeyConstraint('profile_name', name=op.f('profile_pkey')))
+                    sa.PrimaryKeyConstraint('profile_name', name=op.f('profile_pkey'))
+                    )
 
     op.create_table('configuration',
                     sa.Column('key', sa.String(length=128), nullable=False),
                     sa.Column('value', sa.String(length=1024), nullable=False),
-                    sa.PrimaryKeyConstraint('key', name=op.f('configuration_pkey')))
+                    sa.PrimaryKeyConstraint('key', name=op.f('configuration_pkey'))
+                    )
 
     op.create_table('device',
                     sa.Column('device_id', sa.Integer(), nullable=False, autoincrement=True),
@@ -590,7 +671,8 @@ def upgrade():
                     sa.Column('deleted', sa.BOOLEAN(), nullable=False),
                     sa.PrimaryKeyConstraint('device_id', name=op.f('device_pkey')),
                     sa.ForeignKeyConstraint(['profile_name'], ['profile.profile_name'], name='device_profile',
-                                            match='SIMPLE', ondelete='NO ACTION', onupdate='NO ACTION'))
+                                            match='SIMPLE', ondelete='NO ACTION', onupdate='NO ACTION')
+                    )
 
     op.create_table('sku_history',
                     sa.Column('device_id', sa.Integer(), nullable=False),
@@ -598,7 +680,8 @@ def upgrade():
                     sa.Column('step', sa.String(length=128), nullable=True),
                     sa.Column('hardware_type', sa.String(length=256), nullable=True),
                     sa.Column('model_number', sa.Integer(), nullable=True),
-                    sa.Column('sys_period', sa.DateTime(), nullable=False))
+                    sa.Column('sys_period', sa.DateTime(), nullable=False),
+                    )
 
     op.create_table('log',
                     sa.Column('process', sa.String(length=128), nullable=True),
@@ -608,7 +691,8 @@ def upgrade():
                     sa.Column('message', sa.Text(), nullable=False),
                     sa.ForeignKeyConstraint(['device_id'], ['device.device_id'], name='log_process',
                                             match='SIMPLE', ondelete='NO ACTION', onupdate='NO ACTION'),
-                    sa.CheckConstraint('level = ANY (ARRAY[0, 10, 20, 30, 40, 50])', name=op.f('valid_log_levels')))
+                    sa.CheckConstraint('level = ANY (ARRAY[0, 10, 20, 30, 40, 50])', name=op.f('valid_log_levels'))
+                    )
 
     op.create_table('sku',
                     sa.Column('device_id', sa.Integer(), nullable=False),
@@ -617,9 +701,9 @@ def upgrade():
                     sa.Column('hardware_type', sa.String(length=256), nullable=True),
                     sa.Column('model_number', sa.Integer(), nullable=True),
                     sa.Column('sys_period', sa.DateTime(), nullable=False),
-                    sa.ForeignKeyConstraint(['device_id'], ['device.device_id'], name=op.f('fk_sku_device_id_device'),
-                                            onupdate='CASCADE', ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('device_id', 'sku_name', name=op.f('pk_sku')))
+                    sa.ForeignKeyConstraint(['device_id'], ['device.device_id'], name=op.f('fk_sku_device_id_device'), onupdate='CASCADE', ondelete='CASCADE'),
+                    sa.PrimaryKeyConstraint('device_id', 'sku_name', name=op.f('pk_sku'))
+                    )
 
     creating_functions()
     # ### end Alembic commands ###
@@ -631,7 +715,7 @@ def downgrade():
     op.drop_table('sku')
     op.drop_table('log')
     op.drop_table('sku_history')
-    op.drop_table('profile')
     op.drop_table('device')
+    op.drop_table('profile')
     op.drop_table('configuration')
     # ### end Alembic commands ###

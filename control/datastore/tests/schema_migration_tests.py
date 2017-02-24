@@ -29,7 +29,7 @@ class TestDBSchemaMigration(unittest.TestCase):
         self.assertTrue(os.path.exists(DATABASE_DIR_PATH),
                         msg="Path '%s' does not exist.  "
                             "Cannot run test without files expected in '%s'" %
-                            DATABASE_DIR_PATH)
+                            (DATABASE_DIR_PATH, DATABASE_DIR_PATH))
         # Connect to DB just to check connection only
         db_conn = create_engine(DB_URL).connect()
         self.assertIsNotNone(db_conn)

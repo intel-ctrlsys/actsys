@@ -7,10 +7,10 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 import sys
 import os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import models
 
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 logging.basicConfig(level=logging.INFO)
 
@@ -109,4 +109,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

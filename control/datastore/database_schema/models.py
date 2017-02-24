@@ -14,11 +14,11 @@ from alembic import command
 import logging
 import datetime
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship, sessionmaker, backref
-from sqlalchemy import BigInteger, Column, create_engine, CheckConstraint
-from sqlalchemy import Date, DateTime
-from sqlalchemy import Float, ForeignKey, ForeignKeyConstraint, Integer, String
-from sqlalchemy import SmallInteger, Table, Text, JSON, BOOLEAN
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, create_engine
+from sqlalchemy import DateTime
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import Text, JSON, BOOLEAN
 from sqlalchemy.ext import declarative, compiler
 
 # disabling Pylint error messages on SQLAlchemy classes and convention
@@ -96,8 +96,7 @@ class Device(Base):
     """device table"""
     __tablename__ = 'device'
 
-    device_id = Column(Integer, primary_key=True, autoincrement=True,
-                          nullable=False)
+    device_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     device_type = Column(String(64), nullable=False)
     properties = Column(JSON)
     hostname = Column(String(256))
@@ -169,8 +168,7 @@ def setup(alembic_ini="schema_migration.ini"):
     if not db_url:
         db_url = os.getenv("PG_DB_URL")
     if not db_url:
-        raise RuntimeError("The db_url is not in the kwarg "
-                             "nor in the alembic_ini file.")
+        raise RuntimeError("The db_url is not in the kwarg nor in the alembic_ini file.")
     sqlalchemy_db_url = sa.engine.url.make_url(db_url)
 
     print("-" * 50)
