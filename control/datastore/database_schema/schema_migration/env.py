@@ -7,10 +7,10 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 import sys
 import os
-import models
-
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import models
+
 
 logging.basicConfig(level=logging.INFO)
 
