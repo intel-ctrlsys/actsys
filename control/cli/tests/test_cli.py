@@ -31,6 +31,7 @@ class CommandInvokerTest(TestCase):
         mock_command_invoker.power_on_invoker.return_value = CommandResult(0)
         mock_command_invoker.power_off_invoker.return_value = CommandResult(0)
         mock_command_invoker.power_cycle_invoker.return_value = CommandResult(0)
+        mock_command_invoker.bios_update.return_value = CommandResult(0)
 
         self.control_cli_executor.cmd_invoker = mock_command_invoker
 
@@ -123,6 +124,12 @@ class CommandInvokerTest(TestCase):
 
     def test_set_power_cmd_execute(self):
         sys.argv[1:] = ['set', 'powercap', 'compute-29', '452']
+        test_args = self.TestParser.get_all_args()
+        ret = ControlCommandLineInterface().set_cmd_execute(test_args)
+        self.assertEqual(ret.return_code, 0)
+
+    def test_bios_update_cmd_execute(self):
+        sys.argv[1:] = ['bios', 'update', 'compute-29']
         test_args = self.TestParser.get_all_args()
         ret = ControlCommandLineInterface().set_cmd_execute(test_args)
         self.assertEqual(ret.return_code, 0)
@@ -349,6 +356,16 @@ class ControlCliParserTest(TestCase):
         test_args = self.TestParser.get_all_args()
         self.assertEqual(test_args.subcommand, "powercap")
 
+    def test_bios_update_only(self):
+        sys.argv[1:] = ['bios', 'update', '-i test.bin', 'compute-29']
+        test_args = self.TestParser.get_all_args()
+        self.assertEqual(test_args.subcommand, "update")
+
+    def test_bios_version_only(self):
+        sys.argv[1:] = ['bios', 'get-version', 'compute-29']
+        test_args = self.TestParser.get_all_args()
+        self.assertEqual(test_args.subcommand, "get-version")
+
     @patch("control.cli.CommandInvoker.__init__", MagicMock(side_effect=RuntimeError("Error")))
     def test_init_exception(self):
         with self.assertRaises(SystemExit):
@@ -394,6 +411,12 @@ class ControlCliParserTest(TestCase):
     def test_exe_cli_cmd_with_service(self, mock_sce):
         sys.argv[1:] = ['service', 'status', 'compute-29']
         mock_sce.return_value = CommandResult(0)
+        self.assertEqual(ControlCommandLineInterface().execute_cli_cmd(), 0)
+
+    @patch.object(ControlCommandLineInterface, "bios_cmd_execute")
+    def test_exe_cli_with_bios(self, mock_bios):
+        sys.argv[1:] = ['bios', 'update','-i /tmp/test.bin', 'compute-29']
+        mock_bios.return_value = CommandResult(0)
         self.assertEqual(ControlCommandLineInterface().execute_cli_cmd(), 0)
 
     def test_exe_cli_cmd_with_get(self):

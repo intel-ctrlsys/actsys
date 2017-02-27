@@ -1,0 +1,24 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2017 Intel Corp.
+#
+"""
+Interface for Node Controllers specific bios flash/settings.
+"""
+
+from ..plugin import DeclareFramework
+
+
+@DeclareFramework('bios')
+class BiosControl(object):
+    """Interface for Node controller type classes."""
+    def __init__(self, options=None):
+        pass
+
+    def get_version(self, node_name):
+        """Read the bios image info for a compute node"""
+        pass
+
+    def bios_update(self, node_name, image):
+        """Update bios on a compute node"""
+        pass

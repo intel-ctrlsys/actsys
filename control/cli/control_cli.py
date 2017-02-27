@@ -84,6 +84,17 @@ class ControlArgParser(object):
 
         self.ctrl_subparser.add_parser('datastore', help='Access and edit items found in the DataStore')
 
+        self.add_subparser('bios', 'Update or get version of bios on specified nodes/group of nodes',
+                           ['update', 'get-version'], 'Select an action to perform',
+                           [
+                               {
+                                   'name': '-i',
+                                   'name2': '--image',
+                                   'nargs': '?',
+                                   'help': 'Specify the bios image'
+                               }
+                           ])
+
     def add_subparser(self, parser_name, parser_help, subcommand_choices=list(),
                       subcommand_help=None, arg_list_kwargs=list(), require_device_name=True):
         """
@@ -190,6 +201,14 @@ class ControlCommandLineInterface(object):
         else:
             return CommandResult(1, "Invalid service command entered")
 
+    def bios_cmd_execute(self, cmd_args):
+        if cmd_args.subcommand == 'update':
+            return self.cmd_invoker.bios_update(cmd_args.device_name, cmd_args)
+        elif cmd_args.subcommand == 'get-version':
+            return self.cmd_invoker.bios_version(cmd_args.device_name, cmd_args)
+        else:
+            return CommandResult(1, "Invalid bios command entered")
+
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
         masterparser = ControlArgParser()
@@ -213,6 +232,8 @@ class ControlCommandLineInterface(object):
             command_result = self.set_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'service':
             command_result = self.service_cmd_execute(cmd_args)
+        elif cmd_args.subparser_name == 'bios':
+            command_result = self.bios_cmd_execute(cmd_args)
 
         return self.handle_command_result(command_result)
 

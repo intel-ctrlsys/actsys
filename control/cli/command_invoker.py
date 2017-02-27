@@ -111,6 +111,11 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(ServicesStatusCommand)
         self.manager.register_plugin_class(ServicesStopCommand)
 
+        #  BIOS Commands
+        from ..commands.bios import BiosUpdateCommand, BiosVersionCommand
+        self.manager.register_plugin_class(BiosUpdateCommand)
+        self.manager.register_plugin_class(BiosVersionCommand)
+
         # BMC Plugins
         from ..bmc import BmcIpmiUtil, BmcMock
         self.manager.register_plugin_class(BmcIpmiUtil)
@@ -138,6 +143,10 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(SlurmResource)
         self.manager.register_plugin_class(MockResource)
 
+        # NodeController Plugins for BIOS
+        from ..bios import MockNC
+        self.manager.register_plugin_class(MockNC)
+
         try:
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)
@@ -163,7 +172,9 @@ class CommandInvoker(object):
                        'resource_check': 'resource_pool_check',
                        'service_status': 'service_status',
                        'service_start': 'service_start',
-                       'service_stop': 'service_stop'
+                       'service_stop': 'service_stop',
+                       'bios_update': 'bios_update',
+                       'bios_version': 'bios_version'
                        }
         device_list = CommandInvoker._device_name_check(device_name)
         if not isinstance(device_list, list):
@@ -241,3 +252,12 @@ class CommandInvoker(object):
         :return: DataStore Module
         """
         return self.datastore
+
+    def bios_update(self, device_name, cmd_args=None):
+        """Execute a bios update"""
+        return self.common_cmd_invoker(device_name, "bios_update", cmd_args)
+
+    def bios_version(self, device_name, cmd_args=None):
+        """Get BIOS version on node"""
+        return self.common_cmd_invoker(device_name, "bios_version", cmd_args)
+
