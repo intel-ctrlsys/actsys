@@ -1,10 +1,12 @@
 
 PYLINT_ERR_LEVEL=8
 
+xml_report=ctrl-results.xml
+
 all: rpm test pylint coverage
 
 test:
-	py.test --junit-xml=ctrl-results.xml
+	py.test --junit-xml=$(xml_report)
 
 pylint:
 	python run-pylint.py || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
@@ -19,7 +21,7 @@ clean:
 	find . -name '*.pyc' -exec rm --force {} +
 	find . -name '*.pyo' -exec rm --force {} +
 	find . -name '*~' -exec rm --force {} +
-	rm ctrl-results.xml
+	rm $(xml_report)
 
 help:
 	@echo "Supported actions are:"
