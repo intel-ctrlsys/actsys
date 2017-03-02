@@ -1,0 +1,47 @@
+## Generic single-database configuration.
+
+1. Installing Postgres9.5+
+    Follow the instructions on the Postgres website based on the underlying OS:
+        https://wiki.postgresql.org/wiki/Detailed_installation_guides
+
+2. Verifying the Postgres9.5+ installation
+    Start the service
+        $ service postgresql start
+        NOTE:
+            Depending on the version, before being able to start the service it may be necessary to execute:
+            $ service postgresql initdb
+
+3. Enabling client authentication
+    a. Edit the pga_hba.conf file based on the detailed instructions in the file.
+        NOTE: The file can be located in various locations based on the installation
+            eg. “/etc/postgresql/9.3/main”
+                “/var/lib/pgsql/9.3/data/”
+    b. Enable networking for Postgres
+            i. Edit the postgresql.conf in the same folder mentioned above
+            ii. Edit the line listen_address = <list of addresses> or '*'
+    c. Restart the postgres service
+            $ service postgresql restart
+
+4. Setting up the database
+    a. Create a control user
+            $ sudo u postgres createuser P ctrluser
+    b. Create a control Database
+            $ sudo u postgres createdb --owner ctrluser control_db
+
+5. Setting up Alembic
+    a. Install SQLAlchemy version 0.9.2 or higher.
+            $ sudo pip install --upgrade SQLAlchemy
+
+    b. If you already have Alembic, install Alembic version 0.8.2 or higher.
+            $ sudo pip install --upgrade Alembic
+
+    c. Set the database connection info in PG_DB_URL environment variable.
+            $ export PG_DB_URL=postgresql://[username[:password]]@host[:port]/database
+            NOTE: Alternative this can be set it in the schema_migration.ini file or
+                  passed to the "alembic" command using "-x db_url" option.
+
+6. Migrating the code to bring the database to the current schema
+    a. Go to the database_schema directory in control
+            $ cd control/datastore/database_schema
+    b. Run the setup_controldb.py script
+            $ python setup_controldb.py --alembic-ini=schema_migration.ini
