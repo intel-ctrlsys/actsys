@@ -194,7 +194,12 @@ class TestFileStore(unittest.TestCase):
 
     def test_log_add(self):
         import logging
+        from logging.handlers import RotatingFileHandler
         logger = self.fs.get_logger()
+        for index, handler in enumerate(logger.handlers):
+            if not isinstance(handler, RotatingFileHandler):
+                logger.handlers.pop(index)
+
         logger.debug("Does this work?", "knl-29", "BATS")
         logger.info("Does this work?", "knl-30", "BATS")
         logger.warning("Does this work?", "knl-31", "BATS")

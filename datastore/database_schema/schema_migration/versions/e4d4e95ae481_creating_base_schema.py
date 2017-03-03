@@ -40,50 +40,25 @@ def creating_functions():
 
     op.execute(textwrap.dedent("""
         CREATE OR REPLACE FUNCTION public.add_log(p_process character varying, p_timestamp timestamp with time zone,
-        p_level integer, p_device_name integer, p_message text)
-        RETURNS integer AS
-        $BODY$
-        DECLARE num_rows integer;
-        DECLARE m_device_id integer;
-        BEGIN
-            IF (p_device_name is not null) THEN
-                SELECT device_id into m_device_id FROM public.get_device_details(p_device_name);
-            END IF;
-
-            EXECUTE 'INSERT INTO public.log (message, level' || CASE WHEN p_process IS NULL THEN '' ELSE ', process'
-                    END || CASE WHEN p_timestamp IS NULL THEN '' ELSE ', timestamp' END ||
-                    CASE WHEN p_device_name IS NULL THEN '' ELSE ', device_id' END ||')
-                VALUES (' || quote_literal(p_message) ||', ' || p_level ||
-                    CASE WHEN p_process IS NULL THEN '' ELSE ', ' || quote_literal(p_process) END ||
-                    CASE WHEN p_timestamp IS NULL THEN '' ELSE ', ' || quote_literal(p_timestamp) END ||
-                    CASE WHEN p_device_name IS NULL THEN '' ELSE ', ' || m_device_id END ||
-                    ');';
-        GET DIAGNOSTICS num_rows = ROW_COUNT;
-        RETURN num_rows;
-        END;
-        $BODY$
-            LANGUAGE plpgsql VOLATILE
-            COST 100;
-    """))
-
-    op.execute(textwrap.dedent("""
-        CREATE OR REPLACE FUNCTION public.add_log(p_process character varying, p_timestamp timestamp with time zone,
         p_level integer, p_device_name character varying, p_message text)
         RETURNS integer AS
         $BODY$
         DECLARE num_rows integer;
         DECLARE m_device_id integer;
         BEGIN
+            m_device_id := null;
             IF (p_device_name is not null) THEN
-                SELECT device_id into m_device_id FROM public.get_device_details(p_device_name);
+                m_device_id := public.get_device_id(p_device_name);
             END IF;
 
-            EXECUTE 'INSERT INTO public.log (message, level' || CASE WHEN p_process IS NULL THEN '' ELSE ', process' END ||
-                CASE WHEN p_timestamp IS NULL THEN '' ELSE ', timestamp' END || CASE WHEN p_device_name IS NULL THEN '' ELSE ',
-                device_id' END ||')
-            VALUES (' || quote_literal(p_message) ||', ' || p_level || CASE WHEN p_process IS NULL THEN '' ELSE ', ' ||
-                quote_literal(p_process) END || CASE WHEN p_timestamp IS NULL THEN '' ELSE ', ' || quote_literal(p_timestamp) END ||
-                CASE WHEN p_device_name IS NULL THEN '' ELSE ', ' || m_device_id END ||');';
+            EXECUTE 'INSERT INTO public.log (message, level' ||
+                CASE WHEN p_process IS NULL THEN '' ELSE ', process' END ||
+                CASE WHEN p_timestamp IS NULL THEN '' ELSE ', timestamp' END ||
+                CASE WHEN m_device_id IS NULL THEN '' ELSE ', device_id' END ||')
+            VALUES (' || quote_literal(p_message) ||', ' || p_level ||
+                CASE WHEN p_process IS NULL THEN '' ELSE ', ' || quote_literal(p_process) END ||
+                CASE WHEN p_timestamp IS NULL THEN '' ELSE ', ' || quote_literal(p_timestamp) END ||
+                CASE WHEN m_device_id IS NULL THEN '' ELSE ', ' || m_device_id END ||');';
 
         GET DIAGNOSTICS num_rows = ROW_COUNT;
         RETURN num_rows;
@@ -226,7 +201,9 @@ def creating_functions():
                 RETURN QUERY SELECT device_id, device_type, device.properties,
                     hostname, ip_address, mac_address, device.profile_name, profile.properties
                 FROM device
-                LEFT JOIN profile ON device.profile_name = profile.profile_name;
+                LEFT JOIN profile ON device.profile_name = profile.profile_name
+                WHERE device.deleted = false
+                ORDER BY device.device_id;
             ELSE
             -- Get the device ID
                 v_device_id := public.get_device_id(p_device_name);
@@ -235,7 +212,8 @@ def creating_functions():
                     hostname, ip_address, mac_address, device.profile_name, profile.properties
                 FROM device
                 LEFT JOIN profile ON device.profile_name = profile.profile_name
-                WHERE device_id = v_device_id;
+                WHERE device_id = v_device_id AND device.deleted = false
+                ORDER BY device.device_id;
             END IF;
             RETURN;
         END
@@ -309,6 +287,7 @@ def creating_functions():
             COST 100;
     """))
 
+    # TODO this one might need device_name translated into device_id
     op.execute(textwrap.dedent("""
         CREATE OR REPLACE FUNCTION public.get_log_timeslice(
         IN p_device_name character varying,
@@ -467,10 +446,6 @@ def creating_functions():
 
 
 def drop_functions():
-    op.execute(textwrap.dedent("""
-        DROP FUNCTION public.add_log(character varying, timestamp with time zone, integer, integer, text);
-    """))
-
     op.execute(textwrap.dedent("""
         DROP FUNCTION public.add_log(character varying, timestamp with time zone, integer, character varying, text);
     """))

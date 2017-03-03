@@ -26,7 +26,7 @@ class TestDataStoreBuilder(unittest.TestCase):
         self.assertEqual(len(res.dbs), 0)
 
     def test_add_file_db(self):
-        self.dsb.add_file_db("ctrl-config-example.json")
+        self.dsb.add_file_db("config-example.json")
         self.assertTrue(isinstance(self.dsb.dbs[0], FileStore))
 
     @patch("psycopg2.connect")
@@ -36,7 +36,7 @@ class TestDataStoreBuilder(unittest.TestCase):
 
     @patch("psycopg2.connect")
     def test_set_print_to_screen(self, mock_connect):
-        self.dsb.add_file_db("ctrl-config-example.json")
+        self.dsb.add_file_db("config-example.json")
         self.dsb.add_postgres_db("")
         self.dsb.set_print_to_screen(True)
         self.assertTrue(self.dsb.print_to_screen)
@@ -46,7 +46,7 @@ class TestDataStoreBuilder(unittest.TestCase):
     def test_set_log_level(self, mock_connect):
         import logging
 
-        self.dsb.add_file_db("ctrl-config-example.json")
+        self.dsb.add_file_db("config-example.json")
         self.dsb.add_postgres_db("")
         self.dsb.set_log_level(logging.INFO)
 
@@ -55,7 +55,7 @@ class TestDataStoreBuilder(unittest.TestCase):
 
     @patch("psycopg2.connect")
     def test_build(self, mock_connect):
-        self.dsb.add_file_db("ctrl-config-example.json")
+        self.dsb.add_file_db("config-example.json")
         filestore = self.dsb.build()
         self.assertTrue(isinstance(filestore, FileStore))
 

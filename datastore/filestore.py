@@ -179,9 +179,9 @@ class FileStore(DataStore):
 
         index, device = self._device_find(device_name, devices, True)
         if index is not None:
-            deleted_device = self.add_profile_to_device(devices.pop(index))
+            devices.pop(index)
             self.save_file()
-            return deleted_device
+            return device.get("device_id")
         else:
             return None
 
@@ -330,6 +330,7 @@ class FileStore(DataStore):
         self.parsed_file[self.CONFIG_KEY][key] = value
         self._print_if_ok("configuration_upsert result: Success")
         self.save_file()
+        return key
 
     def configuration_delete(self, key):
         """
@@ -338,6 +339,11 @@ class FileStore(DataStore):
         super(FileStore, self).configuration_delete(key)
         if self.parsed_file.get(self.CONFIG_KEY) is None:
             return None
-        self.parsed_file[self.CONFIG_KEY].pop(key, None)
+        popped_value = self.parsed_file[self.CONFIG_KEY].pop(key, None)
         self._print_if_ok("configuration_delete result: Success")
         self.save_file()
+        if popped_value is None:
+            # Nothing was deleted...
+            return None
+        else:
+            return key

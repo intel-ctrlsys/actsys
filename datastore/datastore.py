@@ -19,9 +19,7 @@ class DataStore(object):
 
     def __init__(self, print_to_screen):
         self.print_to_screen = print_to_screen
-        logging.addLevelName(self.LOG_LEVEL_JOURNAL, "JOURNAL")
-        self.logger = logging.getLogger('DataStore')
-        self.logger.setLevel(self.LOG_LEVEL)
+        self.logger = get_logger()
 
     def get_device(self, device_name):
         """
@@ -97,7 +95,8 @@ class DataStore(object):
     def device_logical_delete(self, device_name):
         """
         Logically removes a device from the system database. This device will remain in the database, but no longer
-        be reachable via getters and setters
+        be reachable via getters and setters. The purpose of this option is to allow data about old devices to
+        persist for history's sake, but not be part of the system.
         :param device_name: As explained in DataStore.device_get()
         :return: device_id of the affected device or None
         """
@@ -147,6 +146,10 @@ class DataStore(object):
         :raise DataStoreException if the profile cannot be delete because it is in use by devices.
         """
         self._print_if_ok("profile_delete: {}".format(profile_name))
+        devices_using_profile = self.get_profile_devices(profile_name)
+        if len(devices_using_profile) != 0:
+            raise DataStoreException("The profile '{}' cannot be deleted because it is in use by the following devices:"
+                                     "{}". format(profile_name, devices_using_profile))
         return profile_name
 
     @abstractmethod
@@ -183,8 +186,13 @@ class DataStore(object):
         :param msg:
         :param device_name: As explained in DataStore.device_get()
         :return: None
+        :raise DataStore Expection if the level is not a valid log level as sepecified in
+            Datastore.get_log_levels()
         """
         self._print_if_ok("log_add: [{}][{}] {} - {}".format(level, process, device_name, msg))
+        if level not in self.get_log_levels():
+            raise DataStoreException("Invalid log level specified. Please use the appropriate level as determined"
+                                     "in Datastore.get_log_levels()")
 
     @abstractmethod
     def configuration_get(self, key):
@@ -246,7 +254,7 @@ class DataStore(object):
         The same as running DataStoreLogger(DataStore)
         :return: An instance of DataStoreLogger
         """
-        return DataStoreLogger(self)
+        return get_logger()
 
     def _remove_profile_from_device(self, device_list):
         if device_list is None:
@@ -350,50 +358,92 @@ class DataStoreException(Exception):
         return repr(self.msg)
 
 
-class DataStoreLogger(object):
+class DataStoreLogger(logging.getLoggerClass()):
     """
     Following the logging interface, so that we don't have to change code to use a traditional logger or a
     datastore logger.
     """
 
-    def __init__(self, datastore):
-        self.ds = datastore
+    def __init__(self, name=None, level=logging.NOTSET):
+        super(DataStoreLogger, self).__init__(name, level)
+        logging.addLevelName(DataStore.LOG_LEVEL_JOURNAL, "JOURNAL")
 
-    def critical(self, log_msg, device_name=None, process=None):
+    def critical(self, log_msg, device_name=None, process=None, *args, **kwargs):
         """A serious problem, indication that the program itself may be unable
            to continue."""
-        self.ds.log_add(logging.CRITICAL, log_msg, device_name, process)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(DataStoreLogger, self).critical(msg)
+        else:
+            super(DataStoreLogger, self).critical(log_msg, extra={
+                "device_name": device_name,
+                "datastore_process": process
+            }, *args, **kwargs)
 
-    def error(self, log_msg, device_name=None, process=None):
+    def error(self, log_msg, device_name=None, process=None, *args, **kwargs):
         """Due to a more serious problem, the software has not been able to
            perform some function."""
-        self.ds.log_add(logging.ERROR, log_msg, device_name, process)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(DataStoreLogger, self).error(msg)
+        else:
+            super(DataStoreLogger, self).error(log_msg, extra={
+                "device_name": device_name,
+                "datastore_process": process
+            }, *args, **kwargs)
 
-    def journal(self, command_name, command_args=None, device_name=None, command_result=None):
+    def journal(self, command_name, command_args=None, device_name=None, command_result=None, *args, **kwargs):
         """ Logs the user's transactions, where transaction is the command
             isued by the user"""
         if command_result is None:
-            msg = "Command Started: ({}) Args: ({})".format(command_name, command_args)
+            msg = "Command Started: ({}) Args: ({})".format(command_name, command_args, *args, **kwargs)
         else:
             msg = "Command Ended: ({}) Args: ({}) Result: {}".format(command_name, command_args, command_result)
 
-        self.ds.log_add(self.ds.JOURNAL, msg, device_name, "Journal")
+        # self.ds.log_add(self.ds.JOURNAL, msg, device_name, "Journal")
+        super(DataStoreLogger, self).log(DataStore.LOG_LEVEL_JOURNAL, msg, extra={
+            "device_name": device_name
+        },  *args, **kwargs)
 
-    def warning(self, log_msg, device_name=None, process=None):
+    def warning(self, log_msg, device_name=None, process=None, *args, **kwargs):
         """An indication that something unexpected happened, or indicative of
            some problem in the near future. The software is still working as
            expected."""
-        self.ds.log_add(logging.WARNING, log_msg, device_name, process)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(DataStoreLogger, self).warning(msg)
+        else:
+            super(DataStoreLogger, self).warning(log_msg, extra={
+                "device_name": device_name,
+                "datastore_process": process
+            },  *args, **kwargs)
 
-    def info(self, log_msg, device_name=None, process=None):
+    def info(self, log_msg, device_name=None, process=None, *args, **kwargs):
         """Confirmation that things are working as expected."""
-        self.ds.log_add(logging.INFO, log_msg, device_name, process)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(DataStoreLogger, self).info(msg)
+        else:
+            super(DataStoreLogger, self).info(log_msg, extra={
+                "device_name": device_name,
+                "datastore_process": process
+            }, *args, **kwargs)
 
-    def debug(self, log_msg, device_name=None, process=None):
+    def debug(self, log_msg, device_name=None, process=None, *args, **kwargs):
         """Detailed information, typically of interest only when diagnosing
            problems."""
-        self.ds.log_add(logging.DEBUG, log_msg, device_name, process)
+        if isinstance(log_msg, list):
+            for msg in log_msg:
+                super(DataStoreLogger, self).debug(msg)
+        else:
+            super(DataStoreLogger, self).debug(log_msg, extra={
+                "device_name": device_name,
+                "datastore_process": process
+            }, *args, **kwargs)
 
 
-def get_ctrl_logger():
-    return logging.getLogger('DataStore')
+def get_logger():
+    logging.setLoggerClass(DataStoreLogger)
+    logger = logging.getLogger('DataStore')
+    logger.setLevel(DataStore.LOG_LEVEL)
+    return logger

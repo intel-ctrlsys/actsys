@@ -8,6 +8,21 @@ import json
 from .utilities import DataStoreUtilities
 from uuid import uuid4
 import copy
+import logging
+
+
+class PostgresLogHandler(logging.Handler):
+
+    def __init__(self, datastore):
+        super(PostgresLogHandler, self).__init__()
+        self.datastore = datastore
+
+    def emit(self, record):
+        try:
+            self.datastore.log_add(record.levelno, record.msg, getattr(record, "device_name", None),
+                               getattr(record, "datastore_process", None))
+        except psycopg2.InterfaceError:
+            self.datastore.connect()
 
 
 class PostgresStore(DataStore):
@@ -15,13 +30,44 @@ class PostgresStore(DataStore):
     Data Store interface.
     """
     def __init__(self, print_to_screen, location):
+        """
+        Creates the object with parameters passed in. Then calles the connect method, and sets up
+        the logger for use.
+        :param print_to_screen:
+        :param location:
+        """
         super(PostgresStore, self).__init__(print_to_screen)
-        self.connection = psycopg2.connect(location)
-        self.cursor = self.connection.cursor()
+        self.connection_uri = location
+        self.connection = None
+        self.cursor = None
+        self.connect()
+        self._setup_logger()
 
     def __del__(self):
         self.cursor.close()
         self.connection.close()
+
+    def _setup_logger(self):
+        has_postgres_logger = False
+        for handler in self.logger.handlers:
+            if isinstance(handler, PostgresLogHandler):
+                has_postgres_logger = True
+
+        if has_postgres_logger is False:
+            self.logger.addHandler(PostgresLogHandler(self))
+
+    def connect(self):
+        """
+        Close any open connections, and make them again. This will destroy any uncommited changes.
+
+        :return:
+        """
+        if getattr(self, "cursor", None) is not None:
+            self.cursor.close()
+            self.connection.close()
+
+        self.connection = psycopg2.connect(self.connection_uri)
+        self.cursor = self.connection.cursor()
 
     def device_get(self, device_name=None):
         """
@@ -57,7 +103,6 @@ class PostgresStore(DataStore):
         else:
             # Nothing changed
             return None
-
 
     def device_logical_delete(self, device_name):
         """
