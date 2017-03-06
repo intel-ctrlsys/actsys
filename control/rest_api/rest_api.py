@@ -12,34 +12,20 @@ from ..cli.command_invoker import CommandInvoker
 
 class ControlRestApi(object):
     """ Class that creates a rest application to execute user commands. """
-    def __init__(self, flags=None, dfx_data=None, host=None, port=None):
-        if flags and isinstance(flags, dict):
-            self.__set_flags_from_dict__(flags)
-        else:
-            self.__set_flags_to__(False)
-        self.__set_dfx_vars_from_dict__(dfx_data)
-        self.host = host
-        self.port = port
+    def __init__(self, **kwargs):
+        self.__set_flags_from_kwargs__(kwargs)
         self.cmd_invoker = None if self.dfx else CommandInvoker()
         self.flask_app = Flask(__name__)
         self.rest_api = Api(self.flask_app)
         self.__load_config__()
         self.__add_resources__()
 
-    def __set_flags_to__(self, value):
-        self.dfx = value
-        self.debug = value
-
-    def __set_flags_from_dict__(self, flags):
-        self.dfx = flags.get('dfx', False)
-        self.debug = flags.get('debug', False)
-
-    def __set_dfx_vars_from_dict__(self, dfx_data):
-        if not dfx_data or not isinstance(dfx_data, dict) or \
-            dfx_data.get("resource_mgr") is None:
-            self.dfx_resource_mgr = self.dfx
-        else:
-            self.dfx_resource_mgr = dfx_data.get("resource_mgr")
+    def __set_flags_from_kwargs__(self, kwargs):
+        self.dfx = kwargs.get('dfx', False)
+        self.debug = kwargs.get('debug', False)
+        self.dfx_resource_mgr = kwargs.get('dfx_resource_mgr', self.dfx)
+        self.host = kwargs.get('host')
+        self.port = kwargs.get('port')
 
     def __load_config__(self):
         self.flask_app.config.from_object(__name__)
