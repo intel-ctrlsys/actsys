@@ -9,13 +9,13 @@ import unittest
 from mock import patch, MagicMock
 from ..services import ServicesCommand
 from ....plugin.manager import PluginManager
-from ....datastore import DataStoreLogger
+from datastore import DataStoreLogger
 
 
 class TestServicesCommand(unittest.TestCase):
     """Test case for the ServicesCheckCommand class."""
 
-    @patch("control.datastore.DataStoreLogger", spec=DataStoreLogger)
+    @patch("datastore.DataStoreLogger", spec=DataStoreLogger)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
     def setUp(self, mock_plugin_manager, mock_logger):
         self.setup_mock_config()

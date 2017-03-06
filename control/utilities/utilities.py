@@ -7,13 +7,14 @@
 """
 import subprocess
 import os
-from ..datastore.datastore import get_ctrl_logger
+from datastore.datastore import get_logger
 
 
 class Utilities(object):
     """Class to hold low level system call helpers and mock-able objects."""
     def __init__(self):
-        self.logger = get_ctrl_logger()
+        self.logger = get_logger()
+        pass
 
     def execute_no_capture(self, command):
         """Execute a command list suppressing output and returning the return
@@ -26,7 +27,7 @@ class Utilities(object):
     def execute_with_capture(self, command):
         """Execute a command list capturing output and returning the return
            code, stdout, stderr"""
-        self.logger.debug("Attempting command {}".format(command))
+        self.logger.warning("Attempting command {}".format(command))
         pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = pipe.communicate()
         if pipe.returncode == 0:

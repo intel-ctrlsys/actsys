@@ -8,7 +8,8 @@ Common fixtures for the power commands.
 import unittest
 import os
 import json
-from mock import patch
+from mock import patch, MagicMock
+from datastore import DataStoreLogger
 from ....plugin.manager import PluginManager
 from ....power_control.mock.power_control_mock import PowerControlMock as NodePowerMetadata
 from ....power_control.mock.power_control_mock import PowerControlMock
@@ -85,8 +86,7 @@ class PowerCommandsCommon(unittest.TestCase):
         """pass"""
         pass
 
-    @patch("control.datastore.DataStoreLogger")
-    def setUp(self, mock_ctrl_logger):
+    def setUp(self):
         self.node_name = 'test_node'
         self.persistent_file = os.path.join(os.path.sep, 'tmp', self.node_name + '.state')
         self.manager = PluginManager()
@@ -110,7 +110,7 @@ class PowerCommandsCommon(unittest.TestCase):
             'device_name': self.node_name,
             'configuration': self.configuration,
             'plugin_manager': self.manager,
-            'logger': mock_ctrl_logger,
+            'logger': MagicMock(spec=DataStoreLogger),
             'arguments': self.args
         }
         self.options = {

@@ -14,7 +14,7 @@ import sys
 
 from .command_invoker import CommandInvoker
 from ..commands import CommandResult
-from ..datastore import DataStoreCLI
+from datastore.datastore_cli import DataStoreCLI
 
 
 class ControlArgParser(object):
@@ -195,8 +195,8 @@ class ControlCommandLineInterface(object):
         masterparser = ControlArgParser()
 
         # Following this pattern: http://chase-seibert.github.io/blog/2014/03/21/python-multilevel-argparse.html
-        if sys.argv[1] == 'datastore':
-            datastore_cli = DataStoreCLI.DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(sys.argv[2:])
+        if len(sys.argv) >= 2 and sys.argv[1] == 'datastore':
+            datastore_cli = DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(sys.argv[2:])
             return datastore_cli
 
         cmd_args = masterparser.get_all_args()
@@ -213,7 +213,6 @@ class ControlCommandLineInterface(object):
             command_result = self.set_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'service':
             command_result = self.service_cmd_execute(cmd_args)
-
 
         return self.handle_command_result(command_result)
 

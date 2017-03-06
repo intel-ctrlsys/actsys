@@ -11,7 +11,7 @@ from mock import patch, MagicMock
 from ..command_invoker import CommandInvoker
 from ..control_cli import ControlArgParser, ControlCommandLineInterface
 from ...commands import CommandResult
-from ...datastore.utilities import FileNotFound
+from datastore.utilities import FileNotFound
 
 
 class CommandInvokerTest(TestCase):
@@ -265,7 +265,7 @@ class CommandExeFactoryTest(TestCase):
     def test_get_device_location_not_found(self):
         CommandInvoker.BASE_CLUSTER_CONFIG_NAME = "random_file_resrs.json"
         result = self.command_invoker._get_correct_configuration_file()
-        self.assertEqual(CommandInvoker.BASE_CLUSTER_CONFIG_NAME, result)
+        self.assertEqual(None, result)
 
 
 class ControlCliParserTest(TestCase):
@@ -274,6 +274,7 @@ class ControlCliParserTest(TestCase):
         self.TestParser = ControlArgParser()
         self.original_cluster_config_name = CommandInvoker.BASE_CLUSTER_CONFIG_NAME
         CommandInvoker.BASE_CLUSTER_CONFIG_NAME = "ctrl-config-example.json"
+        CommandInvoker.POSTGRES_ENV_VAR = "NOT_VALID"
         self.command_invoker = CommandInvoker()
         self.command_invoker.logger = MagicMock()
         mock_plugin_manager.create_instance.return_value.execute. \
@@ -459,9 +460,9 @@ class ControlCliParserTest(TestCase):
         sub_command = "remove"
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.resource_remove(device_name, sub_command)
-        self.assertEqual(retval.return_code, 0)
+        self.assertEqual(retval.return_code, 1)
 
-    def test_invalid_device_name(self):
+    def test_invalid_device_name2(self):
         device_name = "non-existant-node-1,compute-30"
         sub_command = "remove"
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = [

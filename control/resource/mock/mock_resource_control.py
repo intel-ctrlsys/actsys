@@ -9,7 +9,7 @@ import os
 import json
 from ...plugin import DeclarePlugin
 from ..resource_control import ResourceControl
-from ...datastore.filestore import FileStore
+from datastore.filestore import FileStore
 
 
 @DeclarePlugin('mock', 1000)

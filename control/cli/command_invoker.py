@@ -11,13 +11,13 @@ import os
 import re
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
-from ..datastore import DataStoreBuilder
+from datastore import DataStoreBuilder
 
 
 class CommandInvoker(object):
     """This class contains all the functions exposed to cli code"""
 
-    BASE_CLUSTER_CONFIG_NAME = "ctrl-config.json"
+    BASE_CLUSTER_CONFIG_NAME = "ctrl-config2.json"
     POSTGRES_ENV_VAR = "CTRL_POSTGRES_CONNECTION_STRING"
     FILE_LOCATION_ENV_VAR = "CTRL_CONFIG_FILE"
     POSTGRES_CONNECTION_STRING = None
@@ -31,9 +31,11 @@ class CommandInvoker(object):
 
         self.datastore = DataStoreBuilder()
         file_location = self._get_correct_configuration_file()
-        self.datastore.add_file_db(file_location)
+        if file_location is not None:
+            self.datastore.add_file_db(file_location)
         if self.POSTGRES_CONNECTION_STRING is not None:
             self.datastore.add_postgres_db(self.POSTGRES_CONNECTION_STRING)
+
         self.datastore = self.datastore.build()
 
         self.logger = self.datastore.get_logger()
@@ -60,9 +62,9 @@ class CommandInvoker(object):
             return etc
 
         # Failed to resolve, so return the base name... hopefully someone else can resolve it.
-        if self.logger is not None:
-            self.logger.warning("The config file was not found in the current working directory, ~/ or /etc/.")
-        return self.BASE_CLUSTER_CONFIG_NAME
+        # if self.logger is not None:
+        #     self.logger.warning("The config file was not found in the current working directory, ~/ or /etc/.")
+        return None
 
     @classmethod
     def _device_name_check(cls, device_name):
@@ -85,31 +87,6 @@ class CommandInvoker(object):
         return cmd_dictionary
 
     def init_manager(self):
-        # self.manager = PluginManager()
-        # self.manager.register_plugin_class(POn())
-        # self.manager.register_plugin_class(POff())
-        # self.manager.register_plugin_class(PCycle())
-        # self.manager.register_plugin_class(PRAdd())
-        # self.manager.register_plugin_class(PRRemove())
-        # self.manager.register_plugin_class(PNPower())
-        # self.manager.register_plugin_class(PBmc())
-        # self.manager.register_plugin_class(PSsh())
-        # self.manager.register_plugin_class(PMockSsh())
-        # self.manager.register_plugin_class(PMockNPower())
-        # self.manager.register_plugin_class(PMockBmc())
-        # self.manager.register_plugin_class(ServicesStatusPluginMetadata())
-        # self.manager.register_plugin_class(ServicesStartPluginMetadata())
-        # self.manager.register_plugin_class(ServicesStopPluginMetadata())
-        # self.manager.register_plugin_class(RCpluginMeta())
-        # self.manager.register_plugin_class(SlurmPluginMetadata())
-        # self.manager.register_plugin_class(RaritanPluginMetadata())
-        # self.manager.register_plugin_class(IPSPluginMetadata())
-        # self.manager.register_plugin_class(MockPduPluginMetadata())
-        # self.manager.register_plugin_class(MockPluginMetadata())
-        # print (os.path.join(os.path.abspath(os.path.curdir), 'control', 'commands'))
-        # self.manager = PluginManager(os.path.join(os.path.abspath(os.path.curdir), 'control', 'commands'))
-        # self.manager = PluginManager(os.path.abspath(os.path.curdir))
-
         self.manager = PluginManager()
 
         # Commands
@@ -132,26 +109,31 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(ServicesStopCommand)
 
         # BMC Plugins
-        from ..bmc.ipmi_util.ipmi_util import BmcIpmiUtil
+        from ..bmc import BmcIpmiUtil, BmcMock
         self.manager.register_plugin_class(BmcIpmiUtil)
+        self.manager.register_plugin_class(BmcMock)
 
         # os remote access plugins
-        from ..os_remote_access import RemoteSshPlugin, RemoteTelnetPlugin
+        from ..os_remote_access import RemoteSshPlugin, RemoteTelnetPlugin, OsRemoteAccessMock
         self.manager.register_plugin_class(RemoteSshPlugin)
         self.manager.register_plugin_class(RemoteTelnetPlugin)
+        self.manager.register_plugin_class(OsRemoteAccessMock)
 
         # pdu plugins
-        from ..pdu import PduIPS400, PduRaritanPX35180CR
+        from ..pdu import PduIPS400, PduRaritanPX35180CR, PduMock
         self.manager.register_plugin_class(PduIPS400)
         self.manager.register_plugin_class(PduRaritanPX35180CR)
+        self.manager.register_plugin_class(PduMock)
 
         # power control plugins
-        from ..power_control import NodePower
+        from ..power_control import NodePower, PowerControlMock
         self.manager.register_plugin_class(NodePower)
+        self.manager.register_plugin_class(PowerControlMock)
 
         # Resource Manager Plugins
-        from ..resource.slurm.slurm_resource_control import SlurmResource
+        from ..resource import SlurmResource, MockResource
         self.manager.register_plugin_class(SlurmResource)
+        self.manager.register_plugin_class(MockResource)
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
@@ -189,11 +171,11 @@ class CommandInvoker(object):
 
             cmd_dictionary = self.create_dictionary(device, cmd_args)
             cmd_obj = self.manager.create_instance('command', command_map[sub_command], cmd_dictionary)
-            self.logger.journal(cmd_obj)
+            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device)
             command_result = cmd_obj.execute()
 
             command_result.device_name = device
-            self.logger.journal(cmd_obj, command_result)
+            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device, command_result)
 
             results.append(command_result)
 
