@@ -20,9 +20,8 @@ def parse_arguments():
     return dict(dfx=args.dfx, debug=args.debug)
 
 if __name__ == '__main__':
-    FLAGS = parse_arguments()
     try:
-        ControlRestApi(flags=FLAGS).run()
+        ControlRestApi(**parse_arguments()).run()
     except Exception as failure:
         print (failure)
         exit(1)
