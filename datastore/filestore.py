@@ -12,7 +12,7 @@ import os
 
 class FileStore(DataStore):
     """
-    Data Store interface.
+    The filestore retireves
     """
     # TODO: test device_id in inserts
     LOG_FORMAT = "%(asctime)s / %(levelname)s / %(name)s / %(message)s"
@@ -28,6 +28,10 @@ class FileStore(DataStore):
         self._setup_logger()
 
     def _setup_logger(self):
+        """
+        Sets up the logger to log things. If no log location is given a log file is created in ~/datastore.log.
+        :return:
+        """
         has_rotating_file_handler = False
         for handler in self.logger.handlers:
             if isinstance(handler, RotatingFileHandler):
@@ -38,7 +42,11 @@ class FileStore(DataStore):
 
             log_file_path = self.configuration_get("log_file_path")
             if log_file_path is None:
-                log_file_path = os.path.expanduser('~/ctrl.log')
+                log_file_path = os.path.expanduser('~/datastore.log')
+                self.configuration_upsert("log_file_path", log_file_path)
+                if not os.path.isfile(log_file_path):
+                    log_file = open(log_file_path, "w")
+                    log_file.close()
 
             log_file_max_bytes = self.configuration_get("log_file_max_bytes")
             if log_file_max_bytes is None:
@@ -218,13 +226,13 @@ class FileStore(DataStore):
             if profile_name == profile.get("profile_name"):
                 profiles[index] = profile_info
                 self.save_file()
-                self._print_if_ok("profile_delete result: Success, updated")
+                self.logger.info("DataStore.profile_delete result: Success, updated")
                 return profile_name
 
         # Insert
         profiles.append(profile_info)
         self.save_file()
-        self._print_if_ok("profile_delete result: Success, inserted")
+        self.logger.info("DataStore.profile_delete result: Success, inserted")
         return profile_name
 
     def profile_delete(self, profile_name):
@@ -238,7 +246,7 @@ class FileStore(DataStore):
             if profile.get("profile_name") == profile_name:
                 profiles.pop(index)
                 self.save_file()
-                self._print_if_ok("profile_delete result: Success")
+                self.logger.info("DataStore.profile_delete result: Success")
                 return profile_name
 
         return None
@@ -250,7 +258,7 @@ class FileStore(DataStore):
         super(FileStore, self).log_get(device_name, limit)
         log_file = self.configuration_get("log_file_path")
         lines = DataStoreUtilities.tail_file(log_file, limit, self.log_formatter)
-        self._print_if_ok("log_get result: {}".format(lines))
+        self.logger.info("DataStore.log_get result: Returned {} lines".format(len(lines)))
         return lines
 
     @staticmethod
@@ -290,7 +298,7 @@ class FileStore(DataStore):
 
         log_file = self.configuration_get("log_file_path")
         lines = DataStoreUtilities.tail_file(log_file, limit, self.log_formatter, time_filter)
-        self._print_if_ok("log_get result: {}".format(lines))
+        self.logger.info("DataStore.log_get result: Returned {} lines".format(len(lines)))
         return lines
 
     def log_add(self, level, msg, device_name=None, process=None):
@@ -315,7 +323,7 @@ class FileStore(DataStore):
         super(FileStore, self).configuration_get(key)
         result = self.parsed_file.get(self.CONFIG_KEY, {})
         result = result.get(key)
-        self._print_if_ok("configuration_get result: {}".format(result))
+        self.logger.info("DataStore.configuration_get result: {}".format(result))
         return result
 
     def configuration_upsert(self, key, value):
@@ -328,7 +336,7 @@ class FileStore(DataStore):
             self.parsed_file[self.CONFIG_KEY] = {}
 
         self.parsed_file[self.CONFIG_KEY][key] = value
-        self._print_if_ok("configuration_upsert result: Success")
+        self.logger.info("DataStore.configuration_upsert result: Success")
         self.save_file()
         return key
 
@@ -340,7 +348,7 @@ class FileStore(DataStore):
         if self.parsed_file.get(self.CONFIG_KEY) is None:
             return None
         popped_value = self.parsed_file[self.CONFIG_KEY].pop(key, None)
-        self._print_if_ok("configuration_delete result: Success")
+        self.logger.info("DataStore.configuration_delete result: Success")
         self.save_file()
         if popped_value is None:
             # Nothing was deleted...

@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
+import os
 from .datastore import DataStore, DataStoreException
 from .filestore import FileStore
 from .postgresstore import PostgresStore
@@ -10,8 +11,17 @@ from .multistore import MultiStore
 
 class DataStoreBuilder(object):
     """
-    DataStoreBuilder: The interface to build a datastore that will work for your needs.
+    DataStoreBuilder: The interface to build a DataStore that will work for your needs.
     """
+    FILESTORE_DEFAULT_CONFIG = """{
+  "configuration_variables": {
+  },
+  "device": [
+  ],
+  "profile": [
+  ]
+}"""
+
     def __init__(self):
         self.dbs = list()
         self.print_to_screen = False
@@ -19,10 +29,18 @@ class DataStoreBuilder(object):
 
     def add_file_db(self, location):
         """
-
+        Creates a filestore with the location you have specified. If no location is given, creates it
+        in ~/datastore.json.
         :param location:
         :return:
         """
+        if location is None:
+            location = os.path.join(os.getenv('HOME'), "datastore.json")
+            if not os.path.isfile(location):
+                config_file = open(location, 'w')
+                config_file.write(self.FILESTORE_DEFAULT_CONFIG)
+                config_file.close()
+
         self.dbs.append(FileStore(self.print_to_screen, location))
         return self
 
@@ -65,8 +83,10 @@ class DataStoreBuilder(object):
         """
         if len(self.dbs) > 1:
             return MultiStore(self.print_to_screen, self.dbs)
-        else:
+        elif len(self.dbs) == 1:
             return self.dbs[0]
+        else:
+            raise DataStoreException("Cannot create a DataStore. No databases were selected (i.e file, postgresql).")
 
     @staticmethod
     def get_datastore_from_env_vars(print_to_screen=False, filestore_env_var="datastore_file_location",

@@ -19,10 +19,10 @@ class PostgresLogHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            self.datastore.log_add(record.levelno, record.msg, getattr(record, "device_name", None),
-                               getattr(record, "datastore_process", None))
+            self.datastore.log_add(record.levelno, record.msg, getattr(record, "device_name", None), record.name)
         except psycopg2.InterfaceError:
             self.datastore.connect()
+            self.datastore.log_add(record.levelno, record.msg, getattr(record, "device_name", None), record.name)
 
 
 class PostgresStore(DataStore):
@@ -80,8 +80,11 @@ class PostgresStore(DataStore):
         else:
             args.append(str(device_name))
         self.cursor.callproc("public.get_device_details", args)
-
-        return SqlParser.get_device_from_results(self.cursor.fetchall())
+        result = self.cursor.fetchall()
+        self.logger.debug("DataStore.device_get database result: {}".format(result))
+        devices = SqlParser.get_device_from_results(result)
+        self.logger.info("DataStore.device_get: {}".format(devices))
+        return devices
 
     def device_upsert(self, device_info):
         """
@@ -92,16 +95,18 @@ class PostgresStore(DataStore):
         args = SqlParser.prepare_device_for_query(self._remove_profile_from_device(device_info)[0])
         self.cursor.callproc("public.upsert_device", args)
         result = self.cursor.fetchall()
-        self._print_if_ok("device_upsert result: {}".format(result))
+        self.logger.debug("DataStore.device_upsert database result: {}".format(result))
         if result is None or len(result) != 1 or result[0][0] > 1:
             raise DataStoreException("Upsert query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
 
         if result[0][0] == 1:
             # The affected device_id
+            self.logger.info("DataStore.device_upsert affected device: {}".format(result[0][1]))
             return result[0][1]
         else:
             # Nothing changed
+            self.logger.inf("DataStore.device_upsert affected device: None")
             return None
 
     def device_logical_delete(self, device_name):
@@ -112,15 +117,17 @@ class PostgresStore(DataStore):
         device_name = str(device_name)
         self.cursor.callproc("public.delete_device_logical", [device_name])
         result = self.cursor.fetchall()
-        self._print_if_ok("device_logical_delete result: {}".format(result))
+        self.logger.debug("DataStore.device_logical_delete database result: {}".format(result))
         if result is None or len(result) != 1 or result[0][0] > 1:
             raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if result[0][0] == 1:
             # The affected device_id
+            self.logger.info("DataStore.device_logical_delete deleted device: {}".format(result[0][1]))
             return result[0][1]
         else:
             # Nothing changed
+            self.logger.info("DataStore.device_logical_delete deleted device: {}".format(None))
             return None
 
     def device_fatal_delete(self, device_name):
@@ -131,15 +138,17 @@ class PostgresStore(DataStore):
         device_name = str(device_name)
         self.cursor.callproc("public.delete_device_fatal", [device_name])
         result = self.cursor.fetchall()
-        self._print_if_ok("device_fatal_delete result: {}".format(result))
+        self.logger.debug("DataStore.device_fatal_delete database result: {}".format(result))
         if result is None or  result[0][0] > 1:
             raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if result[0][0] == 1:
             # The affected device_id
+            self.logger.info("DataStore.device_logical_fatal deleted device: {}".format(result[0][1]))
             return result[0][1]
         else:
             # Nothing changed
+            self.logger.info("DataStore.device_logical_fatal deleted device: {}".format(None))
             return None
 
     def profile_get(self, profile_name=None):
@@ -149,8 +158,10 @@ class PostgresStore(DataStore):
         super(PostgresStore, self).profile_get(profile_name)
         self.cursor.callproc("public.get_profile", [profile_name])
         result = self.cursor.fetchall()
-        self._print_if_ok("profile_get result: {}".format(result))
-        return SqlParser.get_profile_from_results(result)
+        self.logger.debug("DataStore.profile_get database result: {}".format(result))
+        profiles = SqlParser.get_profile_from_results(result)
+        self.logger.info("DataStore.profile_get: {}".format(profiles))
+        return profiles
 
     def profile_upsert(self, profile_info):
         """
@@ -161,13 +172,15 @@ class PostgresStore(DataStore):
         args = SqlParser.prepare_profile_for_query(profile_info)
         self.cursor.callproc("public.upsert_profile", args)
         result = self.cursor.fetchall()
-        self._print_if_ok("profile_upsert result: {}".format(result))
+        self.logger.debug("DataStore.profile_upsert database result: {}".format(result))
         if result is None or len(result) != 1 or result[0][0] > 1:
             raise DataStoreException("Upsert query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if int(result[0][0]) == 1:
+            self.logger.info("DataStore.profile_upsert affected profile: {}".format(profile_name))
             return profile_name
         else:
+            self.logger.info("DataStore.profile_upsert affected profile: {}".format(None))
             return None
 
     def profile_delete(self, profile_name):
@@ -177,13 +190,15 @@ class PostgresStore(DataStore):
         super(PostgresStore, self).profile_delete(profile_name)
         self.cursor.callproc("public.delete_profile", [profile_name])
         result = self.cursor.fetchall()
-        self._print_if_ok("profile_delete result: {}".format(result))
+        self.logger.debug("DataStore.profile_delete database result: {}".format(result))
         if result is None or len(result) != 1 or result[0][0] > 1:
             raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if result[0][0] == 1:
+            self.logger.info("DataStore.profile_delete affected profile: {}".format(profile_name))
             return profile_name
         else:
+            self.logger.info("DataStore.profile_upsert affected profile: {}".format(None))
             return None
 
     def log_get(self, device_name=None, limit=100):
@@ -194,7 +209,7 @@ class PostgresStore(DataStore):
         self.cursor.callproc("public.get_log", [device_name, limit])
         result = self.cursor.fetchall()
         result = SqlParser.get_log_from_results(result)
-        self._print_if_ok("log_get result: {}".format(result))
+        self.logger.debug("DataStore.log_get: Returned {} rows".format(len(result)))
         return result
 
     def log_get_timeslice(self, begin, end, device_name=None, limit=100):
@@ -205,17 +220,18 @@ class PostgresStore(DataStore):
         self.cursor.callproc("public.get_log_timeslice", [device_name, limit, begin, end])
         result = self.cursor.fetchall()
         result = SqlParser.get_log_from_results(result)
-        self._print_if_ok("log_get_timeslice result: {}".format(result))
+        self.logger.info("DataStore.log_get_timeslice: Returned {} rows".format(len(result)))
         return result
 
     def log_add(self, level, msg, device_name=None, process=None):
         """
         See @DataStore for function description. Only implementation details here.
+
+        No logging should happen inside this function... or it would be a recersive loop.
         """
         super(PostgresStore, self).log_add(level, msg, device_name, process)
-        self.cursor.callproc("public.add_log", [process, None, level, device_name, msg])
+        self.cursor.callproc("public.add_log", [str(process), None, level, str(device_name), str(msg)])
         result = self.cursor.fetchall()
-        self._print_if_ok("add_log result: {}".format(result))
         if result is None or len(result) != 1 or result[0][0] != 1:
             raise DataStoreException("log add query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
@@ -227,10 +243,12 @@ class PostgresStore(DataStore):
         super(PostgresStore, self).configuration_get(key)
         self.cursor.callproc("public.get_configuration_value", [key])
         result = self.cursor.fetchall()
-        self._print_if_ok("configuration_get result: {}".format(result))
+        self.logger.debug("DataStore.configuration_get database result: {}".format(result))
         if result is not None and len(result) > 0:
+            self.logger.info("DataStore.configuration_get: ".format(result[0][0]))
             return result[0][0]
         else:
+            self.logger.info("DataStore.configuration_get: ".format(None))
             return None
 
     def configuration_upsert(self, key, value):
@@ -242,13 +260,15 @@ class PostgresStore(DataStore):
         # Cant use callproc: http://stackoverflow.com/a/28410398/1767377
         self.cursor.callproc("public.upsert_configuration_value", [str(key), str(value)])
         result = self.cursor.fetchall()
-        self._print_if_ok("configuration_upsert result: {}".format(result))
+        self.logger.debug("DataStore.configuration_upsert database result: {}".format(result))
         if result is None or len(result) != 1 or result[0][0] > 1:
             raise DataStoreException("Upsert query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if result[0][0] == 1:
+            self.logger.info("DataStore.configuration_delete updated key {}".format(key))
             return key
         else:
+            self.logger.info("DataStore.configuration_delete updated key {}".format(None))
             return None
 
     def configuration_delete(self, key):
@@ -258,13 +278,15 @@ class PostgresStore(DataStore):
         super(PostgresStore, self).configuration_delete(key)
         self.cursor.callproc("public.delete_configuration_value", [str(key)])
         result = self.cursor.fetchall()
-        self._print_if_ok("configuration_delete result: {}".format(result))
+        self.logger.debug("DataStore.configuration_delete database result: {}".format(result))
         if result is None or len(result) > 1 or result[0][0] > 1:
             raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if result[0][0] == 1:
+            self.logger.info("DataStore.configuration_delete deleted key {}".format(key))
             return key
         else:
+            self.logger.info("DataStore.configuration_delete deleted key {}".format(None))
             return None
 
     # CANNED QUERIES
@@ -275,18 +297,8 @@ class PostgresStore(DataStore):
         # super(PostgresStore, self).get_pdu()
         self.cursor.execute("SELECT * FROM public.get_device_details(%s) WHERE device_type = %s;", [device_name, device_type])
         result = self.cursor.fetchall()
-        self._print_if_ok("get_pdu result: {}".format(result))
+        self.logger.debug("DataStore.get_device_by_type database result: {}".format(result))
         return SqlParser.get_device_from_results(result)
-
-    def get_profile_devices(self, profile_name):
-        """
-        See @DataStore for function description. Only implementation details here.
-        """
-        # super(PostgresStore, self).get_profile_devices(profile_name)
-        self.cursor.callproc("public.get_profile_devices", [profile_name])
-        result = self.cursor.fetchall()
-        self._print_if_ok("get_profile_devices result: {}".format(result))
-        return result
 
 
 class SqlParser(object):

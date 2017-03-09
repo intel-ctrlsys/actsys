@@ -4,8 +4,8 @@
 #
 from __future__ import print_function
 import logging
+from logging import StreamHandler
 from abc import ABCMeta, abstractmethod
-from .utilities import DataStoreUtilities
 
 
 class DataStore(object):
@@ -13,13 +13,17 @@ class DataStore(object):
     Data Store interface.
     """
     __metaclass__ = ABCMeta
+    LOG_FORMAT = "%(asctime)s / %(levelname)s / %(name)s / %(device_name)s / %(message)s"
     LOG_LEVEL = logging.DEBUG
-    LOG_LEVEL_JOURNAL = 35
-    JOURNAL = 35
+    LOG_LEVEL_JOURNAL = 15
+    JOURNAL = 15
 
     def __init__(self, print_to_screen):
         self.print_to_screen = print_to_screen
         self.logger = get_logger()
+
+        if self.print_to_screen is True:
+            add_stream_logger(self.logger)
 
     def get_device(self, device_name):
         """
@@ -48,7 +52,7 @@ class DataStore(object):
          If conflicts ocour, the first found is returned.
         :return: A List of devices
         """
-        self._print_if_ok("device_get: {}".format(device_name))
+        self.logger.debug("DataStore.device_get called", device_name=device_name)
         return list()
 
     def device_list_filter(self, filters):
@@ -61,9 +65,9 @@ class DataStore(object):
         :param filters: dict of key value pairs that a device must match.
         :return: A list
         """
-        self._print_if_ok("device_list: Attempting to print all devices that have "
-                          "the following attributes: {}".format(filters))
         devices = self.device_get()
+        self.logger.debug("device_list: Attempting to print all devices that have "
+                          "the following attributes: {}".format(filters))
 
         filtered_devices = list()
         passed_filters = True
@@ -76,7 +80,6 @@ class DataStore(object):
 
         return filtered_devices
 
-
     @abstractmethod
     def device_upsert(self, device_info):
         """
@@ -86,7 +89,7 @@ class DataStore(object):
         :return: the affected device_id
         :raise DataStoreException when device_type is not set in the device_info param
         """
-        self._print_if_ok("device_upsert: {}".format(device_info))
+        self.logger.debug("DataStore.device_upsert called: {}".format(device_info))
 
         if device_info.get("device_type") is None:
             raise DataStoreException("device_type is a required key/value in the device_info field")
@@ -100,7 +103,7 @@ class DataStore(object):
         :param device_name: As explained in DataStore.device_get()
         :return: device_id of the affected device or None
         """
-        self._print_if_ok("device_logical_delete: {}".format(device_name))
+        self.logger.debug("DataStore.device_logical_delete called", device_name=device_name)
 
     @abstractmethod
     def device_fatal_delete(self, device_name):
@@ -109,7 +112,7 @@ class DataStore(object):
         :param device_name: As explained in DataStore.device_get()
         :return: device_id of the affected device or None
         """
-        self._print_if_ok("device_fatal_delete: {}".format(device_name))
+        self.logger.debug("DataStore.device_fatal_delete called", device_name=device_name)
 
     @abstractmethod
     def profile_get(self, profile_name=None):
@@ -118,7 +121,7 @@ class DataStore(object):
         :param profile_name: unique id and reference name of this profile
         :return: A List of profiles
         """
-        self._print_if_ok("profile_get: {}".format(profile_name))
+        self.logger.debug("DataStore.profile_get called: {}".format(profile_name))
         return list()
 
     @abstractmethod
@@ -131,7 +134,7 @@ class DataStore(object):
         :return: profile_name
         :raise DataStoreException if profile_name is not set in profile info.
         """
-        self._print_if_ok("profile_upsert: {}".format(profile_info))
+        self.logger.debug("DataStore.profile_upsert called: {}".format(profile_info))
         if profile_info.get("profile_name") is None:
             raise DataStoreException("Cannot upsert, profile_name must be specified")
         return profile_info.get("profile_name")
@@ -145,7 +148,7 @@ class DataStore(object):
         :return: profile_name
         :raise DataStoreException if the profile cannot be delete because it is in use by devices.
         """
-        self._print_if_ok("profile_delete: {}".format(profile_name))
+        self.logger.debug("DataStore.profile_delete called: {}".format(profile_name))
         devices_using_profile = self.get_profile_devices(profile_name)
         if len(devices_using_profile) != 0:
             raise DataStoreException("The profile '{}' cannot be deleted because it is in use by the following devices:"
@@ -162,7 +165,7 @@ class DataStore(object):
         :param limit: how many logs are returned?
         :return: A list of Logs
         """
-        self._print_if_ok("log_get: {}".format(device_name))
+        self.logger.debug("DataStore.log_get called", device_name=device_name)
 
     @abstractmethod
     def log_get_timeslice(self, begin, end, device_name=None, limit=100):
@@ -174,7 +177,7 @@ class DataStore(object):
         :param limit: how many logs to return
         :return: A list of logs
         """
-        self._print_if_ok("log_get_timeslice: {} - {}-{}".format(device_name, begin, end))
+        self.logger.debug("DataStore.log_get_timeslice: Between {} and {}".format(begin, end), device_name=device_name)
 
     @abstractmethod
     def log_add(self, level, msg, device_name=None, process=None):
@@ -189,7 +192,6 @@ class DataStore(object):
         :raise DataStore Expection if the level is not a valid log level as sepecified in
             Datastore.get_log_levels()
         """
-        self._print_if_ok("log_add: [{}][{}] {} - {}".format(level, process, device_name, msg))
         if level not in self.get_log_levels():
             raise DataStoreException("Invalid log level specified. Please use the appropriate level as determined"
                                      "in Datastore.get_log_levels()")
@@ -201,7 +203,7 @@ class DataStore(object):
         :param key: str
         :return: value: str or None if the key is not found
         """
-        self._print_if_ok("configuration_get: {}".format(key))
+        self.logger.debug("DataStore.configuration_get called: {}".format(key))
 
     @abstractmethod
     def configuration_upsert(self, key, value):
@@ -211,7 +213,7 @@ class DataStore(object):
         :param value: str
         :return: key
         """
-        self._print_if_ok("configuration_upsert: {} / {}".format(key, value))
+        self.logger.debug("DataStore.configuration_upsert called: {} / {}".format(key, value))
 
     @abstractmethod
     def configuration_delete(self, key):
@@ -220,7 +222,7 @@ class DataStore(object):
         :param key: str
         :return: value: str or None if nothing was deleted.
         """
-        self._print_if_ok("configuration_delete: {}".format(key))
+        self.logger.debug("DataStore.configuration_delete called: {}".format(key))
 
     # UTIL FUNCTIONS
     def get_device_types(self):
@@ -245,16 +247,27 @@ class DataStore(object):
             logging.NOTSET
         ]
 
-    def _print_if_ok(self, msg):
-        if self.print_to_screen:
-            print(msg)
-
     def get_logger(self):
         """
         The same as running DataStoreLogger(DataStore)
         :return: An instance of DataStoreLogger
         """
         return get_logger()
+
+    def set_log_level(self, logging_level):
+        """
+        Set the level of the datastore and all of the handlers to the passed in level
+        :param logging_level:
+        :return:
+        :raise: DataStoreExcpetion, if the passed in level is not in Datastore.get_log_levels()
+        """
+        if logging_level not in self.get_log_levels():
+            raise DataStoreException("Cannot set the log level to something that is not in DataStore.get_log_levels()")
+
+        DataStore.LOG_LEVEL = logging_level
+
+        for handler in self.logger.handlers:
+            handler.setLevel(logging_level)
 
     def _remove_profile_from_device(self, device_list):
         if device_list is None:
@@ -368,7 +381,7 @@ class DataStoreLogger(logging.getLoggerClass()):
         super(DataStoreLogger, self).__init__(name, level)
         logging.addLevelName(DataStore.LOG_LEVEL_JOURNAL, "JOURNAL")
 
-    def critical(self, log_msg, device_name=None, process=None, *args, **kwargs):
+    def critical(self, log_msg, device_name=None, *args, **kwargs):
         """A serious problem, indication that the program itself may be unable
            to continue."""
         if isinstance(log_msg, list):
@@ -377,10 +390,9 @@ class DataStoreLogger(logging.getLoggerClass()):
         else:
             super(DataStoreLogger, self).critical(log_msg, extra={
                 "device_name": device_name,
-                "datastore_process": process
             }, *args, **kwargs)
 
-    def error(self, log_msg, device_name=None, process=None, *args, **kwargs):
+    def error(self, log_msg, device_name=None, *args, **kwargs):
         """Due to a more serious problem, the software has not been able to
            perform some function."""
         if isinstance(log_msg, list):
@@ -389,7 +401,6 @@ class DataStoreLogger(logging.getLoggerClass()):
         else:
             super(DataStoreLogger, self).error(log_msg, extra={
                 "device_name": device_name,
-                "datastore_process": process
             }, *args, **kwargs)
 
     def journal(self, command_name, command_args=None, device_name=None, command_result=None, *args, **kwargs):
@@ -405,7 +416,7 @@ class DataStoreLogger(logging.getLoggerClass()):
             "device_name": device_name
         },  *args, **kwargs)
 
-    def warning(self, log_msg, device_name=None, process=None, *args, **kwargs):
+    def warning(self, log_msg, device_name=None, *args, **kwargs):
         """An indication that something unexpected happened, or indicative of
            some problem in the near future. The software is still working as
            expected."""
@@ -415,10 +426,9 @@ class DataStoreLogger(logging.getLoggerClass()):
         else:
             super(DataStoreLogger, self).warning(log_msg, extra={
                 "device_name": device_name,
-                "datastore_process": process
             },  *args, **kwargs)
 
-    def info(self, log_msg, device_name=None, process=None, *args, **kwargs):
+    def info(self, log_msg, device_name=None, *args, **kwargs):
         """Confirmation that things are working as expected."""
         if isinstance(log_msg, list):
             for msg in log_msg:
@@ -426,10 +436,9 @@ class DataStoreLogger(logging.getLoggerClass()):
         else:
             super(DataStoreLogger, self).info(log_msg, extra={
                 "device_name": device_name,
-                "datastore_process": process
             }, *args, **kwargs)
 
-    def debug(self, log_msg, device_name=None, process=None, *args, **kwargs):
+    def debug(self, log_msg, device_name=None, *args, **kwargs):
         """Detailed information, typically of interest only when diagnosing
            problems."""
         if isinstance(log_msg, list):
@@ -438,12 +447,28 @@ class DataStoreLogger(logging.getLoggerClass()):
         else:
             super(DataStoreLogger, self).debug(log_msg, extra={
                 "device_name": device_name,
-                "datastore_process": process
             }, *args, **kwargs)
 
 
 def get_logger():
     logging.setLoggerClass(DataStoreLogger)
-    logger = logging.getLogger('DataStore')
+    logger = logging.getLogger("DataStore")
     logger.setLevel(DataStore.LOG_LEVEL)
     return logger
+
+
+def add_stream_logger(logger=None, log_level=DataStore.LOG_LEVEL, log_format=DataStore.LOG_FORMAT):
+    stream_handler = None
+    for handler in logger.handlers:
+        if isinstance(handler, StreamHandler):
+            stream_handler = handler
+
+    if stream_handler is None:
+        stream_handler = StreamHandler()
+
+    formatter = logging.Formatter(log_format)
+    stream_handler.setLevel(log_level)
+    stream_handler.setFormatter(formatter)
+
+    logger.addHandler(stream_handler)
+

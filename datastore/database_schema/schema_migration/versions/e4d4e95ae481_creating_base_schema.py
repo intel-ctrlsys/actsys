@@ -539,7 +539,7 @@ def upgrade():
                     sa.Column('message', sa.Text(), nullable=False),
                     sa.ForeignKeyConstraint(['device_id'], ['device.device_id'], name='log_process',
                                             match='SIMPLE', ondelete='NO ACTION', onupdate='NO ACTION'),
-                    sa.CheckConstraint('level = ANY (ARRAY[0, 10, 20, 30, 35, 40, 50])', name=op.f('valid_log_levels'))
+                    sa.CheckConstraint('level = ANY (ARRAY[0, 10, 15, 20, 30, 40, 50])', name=op.f('valid_log_levels'))
                     )
 
     creating_functions()
