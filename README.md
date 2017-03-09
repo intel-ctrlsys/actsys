@@ -55,7 +55,7 @@ optional arguments:
                         The default is to only logically delete the item.
 ```
 
-## With the python API
+### With the python API
 
 DataStore can be imported and used like any python API. This allows DataStore to easily be extended or used in external applications. In general the step to do this are:
 
@@ -81,7 +81,39 @@ ds.device_get()
 logger = ds.get_logger()
 logger.journal(cmd_name, cmd_args, device, result)
 logs = ds.log_get()
+```
 
+Or if you want to have a file db instead:
+```
+from datastore import DataStoreBuilder
+
+# Build a datastore instance
+dsb = DataStoreBuilder()
+# If you don't give filestore a location, it will create two files ~/datastore.config
+# and ~/datastore.log
+dsb.add_file_db(None)
+ds = dsb.build()
+
+# Use it
+ds.device_get()
+# ...
+
+logger = ds.get_logger()
+logger.journal(cmd_name, cmd_args, device, result)
+logs = ds.log_get()
+```
+
+### Usage for just logging
+
+If you only want to log to the screen then you can just use the DataStore logger:
+
+```
+from datastore import get_logger, add_stream_logger
+
+# Get a bare bones logger
+logger = get_logger()
+# Add a stream logger (prints to std.err)
+add_stream_logger(logger)
 ```
 
 ## DataStore Log Levels

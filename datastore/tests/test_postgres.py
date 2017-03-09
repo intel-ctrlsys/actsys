@@ -61,10 +61,15 @@ class TestPostgresDB(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def func(self, *args):
+        pass
+
     def set_expected(self, mock_connect, expected):
         self.expected = expected
         mock_connect.return_value.cursor.return_value.fetchall.return_value = expected
         self.postgres = PostgresStore(True, self.CONNECTION_STRING)
+        self.log_add_org = self.postgres.log_add
+        self.postgres.log_add = self.func
 
     def test_get_device(self, mock_connect):
         self.set_expected(mock_connect, [self.TEST_POSTGRES_DEVICE])
@@ -211,14 +216,19 @@ class TestPostgresDB(unittest.TestCase):
             self.postgres.profile_upsert({"port": 24})
 
     def test_profile_delete(self, mock_connect):
+        def fake_devices(profile_name):
+            return []
         self.set_expected(mock_connect, [(1,)])
+        self.postgres.get_profile_devices = fake_devices
         self.postgres.profile_delete('test')
 
         self.set_expected(mock_connect, [(0,)])
+        self.postgres.get_profile_devices = fake_devices
         result = self.postgres.profile_delete('test')
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(20,)])
+        self.postgres.get_profile_devices = fake_devices
         with self.assertRaises(DataStoreException):
             self.postgres.profile_delete('test')
 
@@ -239,6 +249,7 @@ class TestPostgresDB(unittest.TestCase):
     def test_log_add(self, mock_connect):
         import logging
         self.set_expected(mock_connect, [(1,)])
+        self.postgres.log_add = self.log_add_org
         postgres = self.postgres
         # Run these and check for execptions
         postgres.log_add(logging.NOTSET, 'From BAT tests with love.')
@@ -248,11 +259,13 @@ class TestPostgresDB(unittest.TestCase):
         postgres.log_add(logging.ERROR, 'From BAT tests with love.', "test_hostname", "BAT")
         postgres.log_add(logging.CRITICAL, 'From BAT tests with love.', "test_ip_address", "BAT")
 
-        self.set_expected(mock_connect, [(0,)])
+        self.set_expected(mock_connect, [(5,)])
+        self.postgres.log_add = self.log_add_org
         with self.assertRaises(DataStoreException):
             postgres.log_add(logging.CRITICAL, 'From BAT tests with love.', "test_ip_address", "BAT")
 
         self.set_expected(mock_connect, [(1,)])
+        self.postgres.log_add = self.log_add_org
         self.logger = self.postgres.get_logger()
         self.logger.critical('From BAT tests with love')
         self.logger.error('From BAT tests with love')

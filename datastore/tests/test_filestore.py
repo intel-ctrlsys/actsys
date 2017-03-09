@@ -7,12 +7,15 @@ Tests for the FileStore class
 """
 from __future__ import print_function
 import unittest
+import json
+import tempfile
+import os
+import logging
 from ..filestore import FileStore
 from random import randint
 from .. import DataStoreException
 from dateutil import parser as date_parse
-import tempfile
-import os
+from datastore import get_logger
 
 
 class TestFileStore(unittest.TestCase):
@@ -63,21 +66,29 @@ class TestFileStore(unittest.TestCase):
     2016-01-01 10:25:18,042 / DEBUG / DataStore / BATS / 1 / Does this work?
     2016-01-01 10:25:18,042 / WARNING / DataStore / BATS / 2 / Does this work?
     2015-01-01 10:25:18,042 / ERROR / DataStore / BATS / 1 / Does this work?
-    2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?"""
+    2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?
+    """
 
     def setUp(self):
-        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
-        temp_file.write(self.FILE_CONFIG)
-        temp_file.close()
-        self.FILE_STRING = temp_file.name
-
         temp_log_file = tempfile.NamedTemporaryFile("w", delete=False)
         temp_log_file.write(self.LOG_FILE)
         temp_log_file.close()
         self.LOG_FILENAME = temp_log_file.name
 
+        config = json.loads(self.FILE_CONFIG)
+        config["configuration_variables"]["log_file_path"] = self.LOG_FILENAME
+
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.write(json.dumps(config))
+        temp_file.close()
+        self.FILE_STRING = temp_file.name
+
+        logger = get_logger()
+        logger.handlers = []
+
+
         self.fs = FileStore(True, self.FILE_STRING)
-        self.fs.configuration_upsert("log_file_path", self.LOG_FILENAME)
+        # self.fs.configuration_upsert("log_file_path", self.LOG_FILENAME)
         
     def tearDown(self):
         os.remove(self.FILE_STRING)
@@ -186,7 +197,8 @@ class TestFileStore(unittest.TestCase):
         self.assertEqual(2, len(result))
 
     def test_profile_delete(self):
-        self.fs.profile_delete("compute_node")
+        with self.assertRaises(DataStoreException):
+            self.fs.profile_delete("compute_node")
         self.assertEqual(self.fs.profile_get("test"), [])
         self.fs.profile_delete("test")
         self.fs.profile_delete("test")
@@ -209,7 +221,7 @@ class TestFileStore(unittest.TestCase):
         logger.debug("Does this work?", None, "BATS")
         logger.info("Does this work?", "knl-test")
         logger.warning("Does this work?", "knl-test", None)
-        logger.error("Does this work?", process="BATS")
+        logger.error("Does this work?")
         logger.critical("Does this work?", device_name="knl-test")
         self.fs.log_add(logging.NOTSET, "Does this work?", "knl-test", "BATS")
 
@@ -231,7 +243,7 @@ class TestFileStore(unittest.TestCase):
 
     def test_get_logs(self):
         result = self.fs.log_get()
-        self.assertEqual(12, len(result))
+        self.assertEqual(13, len(result))
 
         result = self.fs.log_get_timeslice(date_parse.parse("2014-01-01 10:25:18,042"),
                                            date_parse.parse("2016-12-01 10:25:18,042"))
@@ -278,6 +290,42 @@ class TestFileStore(unittest.TestCase):
 
         result = self.fs.get_profile_devices("Invalid profile")
         self.assertEqual(0, len(result))
+
+    def test_get_device(self):
+        device = self.fs.get_device("not-here")
+        self.assertIsNone(device)
+
+    def test_invalid_log_level(self):
+        with self.assertRaises(DataStoreException):
+            self.fs.log_add(1, "not important msg")
+
+        with self.assertRaises(DataStoreException):
+            self.fs.set_log_level(1)
+
+        try:
+            self.fs.set_log_level(1)
+        except DataStoreException as dse:
+            print(dse)
+
+    def test_set_log_level(self):
+        self.fs.set_log_level(logging.DEBUG)
+        self.assertEqual(self.fs.LOG_LEVEL, logging.DEBUG)
+
+        self.fs.set_log_level(logging.CRITICAL)
+        self.assertEqual(self.fs.LOG_LEVEL, logging.CRITICAL)
+
+    def test_log_list_msgs(self):
+        log_msgs = ["This is a ", "selection of ", "debug msgs"]
+        logger = self.fs.get_logger()
+
+        logger.debug(log_msgs)
+        logger.info(log_msgs)
+        logger.error(log_msgs)
+        logger.warning(log_msgs)
+        logger.critical(log_msgs)
+
+        logs = self.fs.log_get()
+        self.assertEqual(25, len(logs))
 
 
 class TestFileStoreEmptyFile(unittest.TestCase):
@@ -341,30 +389,26 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         self.assertIsNone(result)
 
 @unittest.skip("Tests for future implementation")
-class TestFileStoreEmptyFile2(unittest.TestCase):
-    FILE_STRING = "unknown, to be constructed in setUpClass(cls)"
-    FILE_CONFIG = ""
-
-    @classmethod
-    def setUpClass(cls):
-        # create a file for the class to use
-        import tempfile
-        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
-        temp_file.write(cls.FILE_CONFIG)
-        temp_file.close()
-        cls.FILE_STRING = temp_file.name
+class TestFileStoreWithNoFile(unittest.TestCase):
+    FILE_LOCATION_STRING = "unknown, to be constructed in setUpClass(cls)"
+    FILE_LOG_LOCATION_STRING = ""
 
     @classmethod
     def tearDownClass(cls):
         import os
-        os.remove(cls.FILE_STRING)
+        if os.path.isfile(cls.FILE_LOCATION_STRING):
+            os.remove(cls.FILE_LOCATION_STRING)
+        if os.path.isfile(cls.FILE_LOG_LOCATION_STRING):
+            os.remove(cls.FILE_LOG_LOCATION_STRING)
 
     def setUp(self):
-        print(self.FILE_STRING)
-        self.fs = FileStore(True, self.FILE_STRING)
+        self.fs = FileStore(True, None)
+        self.FILE_LOCATION_STRING = self.fs.location
+        self.FILE_LOG_LOCATION_STRING = os.path.expanduser('~/datastore.log')
+
 
     def test_init(self):
-        FileStore(True, self.FILE_STRING)
+        FileStore(True, None)
 
     def test_empty_gets(self):
         result = self.fs.device_get()

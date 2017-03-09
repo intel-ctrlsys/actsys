@@ -13,6 +13,7 @@ class DataStoreBuilder(object):
     """
     DataStoreBuilder: The interface to build a DataStore that will work for your needs.
     """
+    FILESTORE_DEFUALT_LOCATION = os.path.join(os.getenv('HOME'), "datastore.json")
     FILESTORE_DEFAULT_CONFIG = """{
   "configuration_variables": {
   },
@@ -35,7 +36,7 @@ class DataStoreBuilder(object):
         :return:
         """
         if location is None:
-            location = os.path.join(os.getenv('HOME'), "datastore.json")
+            location = self.FILESTORE_DEFUALT_LOCATION
             if not os.path.isfile(location):
                 config_file = open(location, 'w')
                 config_file.write(self.FILESTORE_DEFAULT_CONFIG)

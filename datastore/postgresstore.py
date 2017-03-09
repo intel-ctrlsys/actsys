@@ -106,7 +106,7 @@ class PostgresStore(DataStore):
             return result[0][1]
         else:
             # Nothing changed
-            self.logger.inf("DataStore.device_upsert affected device: None")
+            self.logger.info("DataStore.device_upsert affected device: None")
             return None
 
     def device_logical_delete(self, device_name):
@@ -232,6 +232,7 @@ class PostgresStore(DataStore):
         super(PostgresStore, self).log_add(level, msg, device_name, process)
         self.cursor.callproc("public.add_log", [str(process), None, level, str(device_name), str(msg)])
         result = self.cursor.fetchall()
+        print(result)
         if result is None or len(result) != 1 or result[0][0] != 1:
             raise DataStoreException("log add query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()

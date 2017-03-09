@@ -108,13 +108,11 @@ class TestMultiStore(unittest.TestCase):
         logger.warning("Does this work?", "knl-31", "BATS")
         logger.error("Does this work?", "knl-33", "BATS")
         logger.critical("Does this work?", "knl-test", "BATS")
-        self.ms.log_add(logging.NOTSET, "Does this work?", "knl-test", "BATS")
         logger.debug("Does this work?", None, "BATS")
         logger.info("Does this work?", "knl-test")
         logger.warning("Does this work?", "knl-test", None)
-        logger.error("Does this work?", process="BATS")
+        logger.error("Does this work?")
         logger.critical("Does this work?", device_name="knl-test")
-        self.ms.log_add(logging.NOTSET, "Does this work?", "knl-test", "BATS")
 
     def test_configuration_get(self):
         self.ms.configuration_get()

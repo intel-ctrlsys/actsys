@@ -29,6 +29,21 @@ class TestDataStoreBuilder(unittest.TestCase):
         self.dsb.add_file_db("config-example.json")
         self.assertTrue(isinstance(self.dsb.dbs[0], FileStore))
 
+        temp_file = tempfile.NamedTemporaryFile("w", delete=True)
+        temp_file.close()
+        self.dsb.FILESTORE_DEFUALT_LOCATION = temp_file.name
+        self.dsb.add_file_db(None)
+        self.assertTrue(os.path.isfile(self.dsb.FILESTORE_DEFUALT_LOCATION))
+        os.remove(self.dsb.FILESTORE_DEFUALT_LOCATION)
+
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.write(self.dsb.FILESTORE_DEFAULT_CONFIG)
+        temp_file.close()
+        self.dsb.FILESTORE_DEFUALT_LOCATION = temp_file.name
+        self.dsb.add_file_db(None)
+        self.assertTrue(os.path.isfile(self.dsb.FILESTORE_DEFUALT_LOCATION))
+        os.remove(self.dsb.FILESTORE_DEFUALT_LOCATION)
+
     @patch("psycopg2.connect")
     def test_add_postgres_db(self, mock_connect):
         self.dsb.add_postgres_db("")
@@ -62,6 +77,10 @@ class TestDataStoreBuilder(unittest.TestCase):
         self.dsb.add_postgres_db("")
         multistore = self.dsb.build()
         self.assertTrue(isinstance(multistore, MultiStore))
+
+    def test_build_no_options(self):
+        with self.assertRaises(DataStoreException):
+            self.dsb.build()
 
     def test_get_datastore_from_env_vars(self):
         with self.assertRaises(DataStoreException):
