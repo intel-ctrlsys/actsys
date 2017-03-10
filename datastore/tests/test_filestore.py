@@ -86,10 +86,8 @@ class TestFileStore(unittest.TestCase):
         logger = get_logger()
         logger.handlers = []
 
-
         self.fs = FileStore(True, self.FILE_STRING)
-        # self.fs.configuration_upsert("log_file_path", self.LOG_FILENAME)
-        
+
     def tearDown(self):
         os.remove(self.FILE_STRING)
 

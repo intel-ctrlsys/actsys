@@ -309,7 +309,6 @@ class DataStoreCLI(object):
                     except ValueError:
                         pass
                 if option_parsed is not None:
-                    print("setting options list")
                     options_dict[t[0]] = option_parsed
                 else:
                     options_dict[t[0]] = t[1]
