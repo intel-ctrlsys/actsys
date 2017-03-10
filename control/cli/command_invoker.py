@@ -9,6 +9,7 @@ to perform user requested operations.
 from __future__ import print_function
 import os
 import re
+import logging
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
 from datastore import DataStoreBuilder
@@ -17,7 +18,7 @@ from datastore import DataStoreBuilder
 class CommandInvoker(object):
     """This class contains all the functions exposed to cli code"""
 
-    BASE_CLUSTER_CONFIG_NAME = "ctrl-config2.json"
+    BASE_CLUSTER_CONFIG_NAME = "ctrl-config.json"
     POSTGRES_ENV_VAR = "CTRL_POSTGRES_CONNECTION_STRING"
     FILE_LOCATION_ENV_VAR = "CTRL_CONFIG_FILE"
     POSTGRES_CONNECTION_STRING = None
@@ -29,14 +30,16 @@ class CommandInvoker(object):
         if os.environ.get(self.POSTGRES_ENV_VAR) is not None:
             self.POSTGRES_CONNECTION_STRING = os.environ.get(self.POSTGRES_ENV_VAR)
 
-        self.datastore = DataStoreBuilder()
+        self.datastore_builder = DataStoreBuilder()
+        self.datastore_builder.set_log_level(logging.DEBUG)
+        self.datastore_builder.set_print_to_screen()
         file_location = self._get_correct_configuration_file()
         if file_location is not None:
-            self.datastore.add_file_db(file_location)
+            self.datastore_builder.add_file_db(file_location)
         if self.POSTGRES_CONNECTION_STRING is not None:
-            self.datastore.add_postgres_db(self.POSTGRES_CONNECTION_STRING)
+            self.datastore_builder.add_postgres_db(self.POSTGRES_CONNECTION_STRING)
 
-        self.datastore = self.datastore.build()
+        self.datastore = self.datastore_builder.build()
 
         self.logger = self.datastore.get_logger()
 
@@ -134,6 +137,12 @@ class CommandInvoker(object):
         from ..resource import SlurmResource, MockResource
         self.manager.register_plugin_class(SlurmResource)
         self.manager.register_plugin_class(MockResource)
+
+        try:
+            from ctrl_plugins import add_plugins_to_manager
+            add_plugins_to_manager(self.manager)
+        except ImportError:
+            pass
 
     def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
         """Common Function to execute the user requested command"""
