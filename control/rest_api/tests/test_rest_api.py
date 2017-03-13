@@ -5,6 +5,7 @@
 """ Module for testing ControlRestApi """
 from unittest import TestCase
 from mock import patch
+import datastore
 from ..rest_api import ControlRestApi
 
 class TestControlRestApi(TestCase):
@@ -14,13 +15,14 @@ class TestControlRestApi(TestCase):
         self.rest_api.flask_app.config['TESTING'] = True
         self.test_app = self.rest_api.flask_app.test_client()
 
-    def test__load_config__(self):
-        """ Test for __load_config__ function """
+    def test_load_config(self):
+        """ Test for _load_config function """
         self.assertTrue(self.rest_api.flask_app.config['TESTING'])
 
-    def test_init__defaults(self):
+    def test__init__defaults(self):
         """ Tests init function with default values """
-        rest_api = ControlRestApi()
+        with patch.object(datastore.DataStoreBuilder, 'build'):
+            rest_api = ControlRestApi()
         self.assertIsNotNone(rest_api)
         self.assertFalse(rest_api.dfx)
         self.assertFalse(rest_api.debug)
@@ -36,7 +38,8 @@ class TestControlRestApi(TestCase):
 
     def test__init__no_dfx_with_dfx_data(self):
         """ Tests init function with global dfx disabled but enabled for resource_mgr """
-        rest_api = ControlRestApi(dfx_resource_mgr=True)
+        with patch.object(datastore.DataStoreBuilder, 'build'):
+            rest_api = ControlRestApi(dfx_resource_mgr=True)
         self.assertIsNotNone(rest_api)
         self.assertFalse(rest_api.dfx)
         self.assertTrue(rest_api.dfx_resource_mgr)
@@ -50,7 +53,8 @@ class TestControlRestApi(TestCase):
 
     def test__init__no_dfx_invalid_dfx_data(self):
         """ Tests init function with global dfx disabled and invalid dfx_data """
-        rest_api = ControlRestApi(foo=True)
+        with patch.object(datastore.DataStoreBuilder, 'build'):
+            rest_api = ControlRestApi(foo=True)
         self.assertIsNotNone(rest_api)
         self.assertFalse(rest_api.dfx)
         self.assertFalse(rest_api.dfx_resource_mgr)
