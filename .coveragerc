@@ -13,3 +13,5 @@ omit=
     /usr/lib/python*/
     /usr/local/lib/python*
     *tests*
+    */datastore/*
+    */ctrl_plugins/*
