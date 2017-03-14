@@ -10,7 +10,7 @@ import tempfile
 import os
 from mock import patch
 from ..provisioner import ProvisionerException, Provisioner
-from ..stub_provisioner import StubProvisioner
+from ..mock_provisioner import MockProvisioner
 
 
 class MockProvisionerBase(object):
