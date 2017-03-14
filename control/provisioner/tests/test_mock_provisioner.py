@@ -143,10 +143,10 @@ class MockProvisionerBase(object):
 class TestMockProvisioner(MockProvisionerBase, unittest.TestCase):
 
     def setUp(self):
-        self.mp = StubProvisioner()
+        self.mp = MockProvisioner()
 
     def test_init(self):
-        StubProvisioner()
+        MockProvisioner()
 
 class TestMockProvisionerWithFile(MockProvisionerBase, unittest.TestCase):
 
@@ -155,7 +155,7 @@ class TestMockProvisionerWithFile(MockProvisionerBase, unittest.TestCase):
         self.file.write("{}")
         self.file.close()
 
-        self.mp = StubProvisioner({"file": self.file.name})
+        self.mp = MockProvisioner({"file": self.file.name})
 
     def tearDown(self):
         os.remove(self.file.name)
