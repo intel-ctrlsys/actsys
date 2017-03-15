@@ -53,6 +53,7 @@ class TestResourceManagerRemove(TestResourceManagerBase):
         expected = {self.result['default'].device_name:dict(return_code=400, status='invalid')}
         self._check_exception(cmgr.exception, 400, 'Could not remove node(s).', expected)
 
+
     def test_create_put_remove_response_failure_bad_param_02(self):
         with self.assertRaises(ResourceManagerException) as cmgr:
             self.rmgr._create_put_remove_response({}, create_dict_from_result(self.result['bad_param']))
@@ -110,12 +111,12 @@ class TestResourceManagerCheck(TestResourceManagerBase):
     def test_check_status_none(self):
         with self.assertRaises(ResourceManagerException) as cmgr:
             self.rmgr._check_status(None)
-        self._check_exception(cmgr.exception, 409, 'Invalid node_regex')
+        self._check_exception(cmgr.exception, 400, 'Invalid node_regex')
 
     def test_check_status_empty(self):
         with self.assertRaises(ResourceManagerException) as cmgr:
             self.rmgr._check_status("")
-        self._check_exception(cmgr.exception, 409, 'Invalid node_regex')
+        self._check_exception(cmgr.exception, 400, 'Invalid node_regex')
 
     def test_check_status_no_cmd_invoker(self):
         with self.assertRaises(ResourceManagerException) as cmgr:
@@ -196,12 +197,12 @@ class TestResourceManagerAdd(TestResourceManagerBase):
     def test_add_nodes_none(self):
         with self.assertRaises(ResourceManagerException) as cmgr:
             self.rmgr._add_nodes(None)
-        self._check_exception(cmgr.exception, 409, "Invalid node_regex.")
+        self._check_exception(cmgr.exception, 400, "Invalid node_regex.")
 
     def test_add_nodes_empty(self):
         with self.assertRaises(ResourceManagerException) as cmgr:
             self.rmgr._add_nodes("")
-        self._check_exception(cmgr.exception, 409, "Invalid node_regex.")
+        self._check_exception(cmgr.exception, 400, "Invalid node_regex.")
 
     def test_add_nodes_no_cmd_invoker(self):
         with self.assertRaises(ResourceManagerException) as cmgr:

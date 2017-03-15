@@ -4,11 +4,11 @@
 #
 """ Module to handle Resource Manager related requests """
 from flask_restful import Resource
-from flask import abort, jsonify, make_response, request
+from flask import jsonify, make_response, request
 from mock import create_autospec
 
 from ...cli.command_invoker import CommandInvoker
-from ..utils.utils import handle_command_results, print_msg
+from ..utils.utils import handle_command_results, print_msg, Usage
 from ...commands.command import CommandResult
 
 
@@ -25,6 +25,7 @@ class ResourceManager(Resource):
         self.return_errors = dict(bad_param=[-1, 1, 5],
                                   plugin_not_installed=[-2],
                                  )
+        self.usage = ResourceManagerUsage()
 
     def _setup_mocks(self, dfx_data):
         if not dfx_data:
@@ -52,18 +53,19 @@ class ResourceManager(Resource):
         if subcommand == 'remove':
             if self.dfx:
                 return jsonify(self._mock_remove_nodes(node_regex))
-            return _handle_subcommand(node_regex, self._remove_nodes,
-                                      self._create_put_remove_response)
+            return self._handle_subcommand(subcommand, node_regex, self._remove_nodes,
+                                           self._create_put_remove_response)
         if subcommand == 'add':
             if self.dfx:
                 return jsonify(self._mock_add_nodes(node_regex))
-            return _handle_subcommand(node_regex, self._add_nodes,
-                                      self._create_put_add_response)
+            return self._handle_subcommand(subcommand, node_regex, self._add_nodes,
+                                           self._create_put_add_response)
 
-        abort(400, 'Invalid subcommand: {0}'.format(subcommand))
+        return _create_response(400, 'Invalid subcommand: {0}'.format(subcommand),
+                                dict(usage=self.usage.get_resource_usage_msg()))
 
     def _check_status(self, node_regex):
-        _raise_if_is_empty(node_regex, "Invalid node_regex.")
+        _raise_if_is_empty(node_regex, "Invalid node_regex.", 400)
         self._raise_if_no_cmd_invoker()
         return self.cmd_invoker.resource_check(node_regex)
 
@@ -72,7 +74,7 @@ class ResourceManager(Resource):
         return self.cmd_invoker.resource_remove(node_regex)
 
     def _add_nodes(self, node_regex):
-        _raise_if_is_empty(node_regex, "Invalid node_regex.")
+        _raise_if_is_empty(node_regex, "Invalid node_regex.", 400)
         self._raise_if_no_cmd_invoker()
         return self.cmd_invoker.resource_add(node_regex)
 
@@ -142,12 +144,21 @@ class ResourceManager(Resource):
                 raise ResourceManagerException(424, 'Resource Manager plugin is not installed.')
 
 
-def _handle_subcommand(node_regex, subcommand_fn, response_fn):
-    try:
-        success, fail = handle_command_results(subcommand_fn(node_regex))
-        return jsonify(response_fn(success, fail))
-    except ResourceManagerException as rme:
-        return _create_response_from_exception(rme)
+    def _handle_subcommand(self, subcommand, node_regex, subcommand_fn, response_fn):
+        try:
+            success, fail = handle_command_results(subcommand_fn(node_regex))
+            return jsonify(response_fn(success, fail))
+        except ResourceManagerException as rme:
+            self._add_usage_message(subcommand, rme)
+            return _create_response_from_exception(rme)
+
+    def _add_usage_message(self, subcommand, exception):
+        if exception.error_code == 400:
+            if exception.response is None:
+                exception.response = dict(usage=self.usage.get_subcommand_usage_msg(subcommand))
+            if isinstance(exception.response, dict):
+                exception.response['usage'] = self.usage.get_subcommand_usage_msg(subcommand)
+
 
 def _raise_if_is_single_failure(response, message=""):
     """ Raise ResourceManagerException if there's only one failure. """
@@ -155,19 +166,19 @@ def _raise_if_is_single_failure(response, message=""):
         item = response.itervalues().next()
         raise ResourceManagerException(item['return_code'], message, response)
 
-def _raise_all_failed(response, message=""):
+def _raise_all_failed(response, message="", error_code=404):
     """ Raise ResourceManagerException, as all the commands failed. """
-    raise ResourceManagerException(404, message, response)
+    raise ResourceManagerException(error_code, message, response)
 
-def _raise_if_is_none(value, message=""):
+def _raise_if_is_none(value, message="", error_code=409):
     """ Raise ResourceManagerException if the parameter is None. """
     if value is None:
-        raise ResourceManagerException(409, message)
+        raise ResourceManagerException(error_code, message)
 
-def _raise_if_is_empty(param, message=""):
+def _raise_if_is_empty(param, message="", error_code=409):
     """ Raise ResourceManagerException if the parameter is None or empty. """
     if not param:
-        raise ResourceManagerException(409, message)
+        raise ResourceManagerException(error_code, message)
 
 def _raise_if_all_are_invalid(node_status_dict):
     """ Raise ResourceManagerException if all the nodes in node_status_dict
@@ -183,10 +194,13 @@ def _raise_if_invalid(node_status_dict):
 
 def _create_response_from_exception(exception):
     """ Creates Flask response from a ResourceManagerException """
-    if exception.response is None:
-        return make_response(exception.message, exception.error_code)
-    exception.response['message'] = exception.message
-    return make_response(jsonify(exception.response), exception.error_code)
+    return _create_response(exception.error_code, exception.message, exception.response)
+
+def _create_response(error_code, message="", data=None):
+    if not data:
+        return make_response(message, error_code)
+    data['message'] = message
+    return make_response(jsonify(data), error_code)
 
 def _parse_node_status(result):
     """ Parses the node status from a CommandResult """
@@ -224,3 +238,60 @@ class ResourceManagerException(Exception):
         self.error_code = error_code
         self.message = message
         self.response = response
+
+
+class ResourceManagerUsage(Usage):
+    """ Class to manage usage messages for the ResourceManager """
+
+    def __init__(self):
+        super(ResourceManagerUsage, self).__init__()
+        self._add = '/add'
+        self._check = '/check'
+        self._remove = '/remove'
+        self._put = 'PUT'
+        self._get = 'GET'
+        self._subcommand = self._literals['subcommand']
+        self._subcommand_desc = "\t<subcommand> could be 'add', 'remove' or 'check' options.\n"
+        self._set_default_values()
+
+    def _set_default_values(self):
+        self._literals['command'] = '/resource'
+        self._literals['command_desc'] = ''
+        self._literals['args'] = self._literals['node_regex']
+        self._literals['args_desc'] = self._literals['node_regex_desc']
+
+    def _create_subcommand_usage_msg(self, subcommand, http_method, subcommand_desc=''):
+        self._literals['subcommand'] = subcommand
+        self._literals['http_method'] = http_method+'\n\t'
+        self._literals['subcommand_desc'] = subcommand_desc
+        return self.get_usage_msg()
+
+    def _get_add_usage_msg(self):
+        """ Return usage message for 'add' subcommand"""
+        self._literals['description'] = "\n Add nodes to the resource manager.\n"
+        return self._create_subcommand_usage_msg(self._add, self._put)
+
+    def _get_remove_usage_msg(self):
+        """ Return usage message for 'remove' subcommand"""
+        self._literals['description'] = "\n Remove nodes from the resource manager.\n"
+        return self._create_subcommand_usage_msg(self._remove, self._put)
+
+    def _get_check_usage_msg(self):
+        """ Return usage message for 'check' subcommand"""
+        self._literals['description'] = "\n Check resource manager nodes's status.\n"
+        return self._create_subcommand_usage_msg(self._check, self._get)
+
+    def get_resource_usage_msg(self):
+        """ Return usage message for resource command. """
+        self._literals['description'] = "\n Resource Manager commands.\n"
+        return self._create_subcommand_usage_msg(self._subcommand, self._get+'|'+self._put, self._subcommand_desc)
+
+    def get_subcommand_usage_msg(self, subcommand=None):
+        """ Return usage message for the given subcommand """
+        if subcommand == 'remove':
+            return self._get_remove_usage_msg()
+        if subcommand == 'add':
+            return self._get_add_usage_msg()
+        if subcommand == 'check':
+            return self._get_check_usage_msg()
+        return self.get_resource_usage_msg()

@@ -8,7 +8,7 @@ from unittest import TestCase
 from copy import deepcopy
 from mock import patch, call
 from ..utils import handle_command_results, print_msg, \
-                    append_to_list_in_dictionary
+                    append_to_list_in_dictionary, Usage
 from ....commands import CommandResult
 
 def mock_print_and_test(class_name, msg, exp_class_name, exp_msg):
@@ -153,3 +153,26 @@ class TestUtils(TestCase):
         success, fail = handle_command_results(results)
         self.assertFalse(fail)
         self.assertEqual(self.base_success_dic, success)
+
+    def test_utils_get_usage_msg(self):
+        """ Tests the get_usage_msg from Usage class """
+        usage = Usage()
+        expected = (usage._literals['title']+
+                    usage._literals['description']+
+                    usage._literals['usage']+
+                    usage._literals['http_method_supported']+
+                    usage._literals['http_method']+
+                    usage._literals['url']+usage._literals['command']+
+                    usage._literals['subcommand']+
+                    usage._literals['args_start']+
+                    usage._literals['args']+
+                    usage._literals['where']+
+                    usage._literals['server_desc']+
+                    usage._literals['port_desc']+
+                    usage._literals['command_desc']+
+                    usage._literals['subcommand_desc']+
+                    usage._literals['args_desc']
+                   )
+        ret = usage.get_usage_msg()
+        self.assertEqual(expected, ret)
+        print (ret)

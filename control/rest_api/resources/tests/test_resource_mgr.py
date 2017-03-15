@@ -8,9 +8,56 @@ from flask_restful import Api
 from unittest import TestCase
 from mock import MagicMock, patch, call
 from flask import Flask, json
-from ..resource_mgr import ResourceManager
+from ..resource_mgr import ResourceManager, ResourceManagerUsage, ResourceManagerException
 from ....cli import CommandInvoker
 from ....commands import CommandResult
+
+class TestResourceManagerUsage(TestCase):
+    """ Class to test ResourceManagerUsage """
+
+    def setUp(self):
+        self.usage = ResourceManagerUsage()
+
+    def _create_expected_str(self):
+        return (self.usage._literals['title']+
+                self.usage._literals['description']+
+                self.usage._literals['usage']+
+                self.usage._literals['http_method_supported']+
+                self.usage._literals['http_method']+
+                self.usage._literals['url']+
+                self.usage._literals['command']+
+                self.usage._literals['subcommand']+
+                self.usage._literals['args_start']+
+                self.usage._literals['args']+
+                self.usage._literals['where']+
+                self.usage._literals['server_desc']+
+                self.usage._literals['port_desc']+
+                self.usage._literals['command_desc']+
+                self.usage._literals['subcommand_desc']+
+                self.usage._literals['args_desc']
+               )
+
+    def _check_usage_msg(self, msg):
+        self.assertEqual(self._create_expected_str(), msg)
+        print (msg)
+
+    def test_get_resource_usage_msg(self):
+        self._check_usage_msg(self.usage.get_resource_usage_msg())
+        self._check_usage_msg(self.usage.get_subcommand_usage_msg())
+
+    def test_get_add_usage_msg(self):
+        self._check_usage_msg(self.usage._get_add_usage_msg())
+        self._check_usage_msg(self.usage.get_subcommand_usage_msg('add'))
+
+    def test_get_remove_usage_msg(self):
+        self._check_usage_msg(self.usage._get_remove_usage_msg())
+        self._check_usage_msg(self.usage.get_subcommand_usage_msg('remove'))
+
+    def test_get_check_usage_msg(self):
+        self._check_usage_msg(self.usage._get_check_usage_msg())
+        self._check_usage_msg(self.usage.get_subcommand_usage_msg('check'))
+
+
 
 class TestResourceManagerBase(TestCase):
     """ Base Class for Resource Manager Testing """
@@ -128,6 +175,17 @@ class TestResourceManager(TestResourceManagerBase):
                                                        port=5))
         self._test_mock_functions(rmgr, self.node_regex['single'], 5)
 
+    def test_add_usage_message_response_none(self):
+        exception = ResourceManagerException(400)
+        self.rmgr._add_usage_message('add', exception)
+        self.assertIsNotNone(exception.response)
+        self.assertIn('usage', exception.response)
+
+
+    def test_add_usage_message_response_no_dict(self):
+        exception = ResourceManagerException(400, "bar", "foo")
+        self.rmgr._add_usage_message('add', exception)
+        self.assertEqual('foo', exception.response)
 
 class TestResourceManagerFlask(TestResourceManagerBase):
     """ Class for testing ResourceManager class using Flask """
@@ -151,29 +209,34 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         args = self.node_regex['prefix']
         ret = self.test_app.put(self.base_url + args)
         self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
 
     def test_put_no_subcommand_no_args(self):
         """ Test put function with dfx disabled """
         ret = self.test_app.put(self.base_url)
         self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
 
     def test_put_no_subcommand_empty_node_regex(self):
         """ Test put function with dfx disabled """
         args = self.node_regex['prefix'] + '""'
         ret = self.test_app.put(self.base_url + args)
         self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
 
     def test_put_no_subcommand_with_args(self):
         """ Test put function with dfx disabled """
         args = self.node_regex['prefix'] + self.node_regex['invalid']
         ret = self.test_app.put(self.base_url + args)
         self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
 
     def test_put_invalid_subcommand_with_args(self):
         """ Test put function with dfx disabled """
         args = self.node_regex['prefix'] + self.node_regex['invalid']
         ret = self.test_app.put(self.url['invalid'] + args)
         self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
 
     def test_put_remove_plugin_not_installed(self):
         """ Test put function with dfx disabled """
@@ -197,6 +260,7 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         args = self.node_regex['prefix'] + self.node_regex['invalid']
         ret = self.test_app.put(self.url['remove'] + args)
         self._check_response(ret, 400, 'Could not remove node(s).')
+        self._check_response(ret, 400, 'Usage')
 
     def test_put_add_plugin_not_installed(self):
         """ Test put function with dfx disabled """
@@ -220,6 +284,7 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         args = self.node_regex['prefix'] + self.node_regex['invalid']
         ret = self.test_app.put(self.url['add'] + args)
         self._check_response(ret, 400, 'Could not add node(s).')
+        self._check_response(ret, 400, 'Usage')
 
 
 def _mock_print_and_test(rmgr, msg, should_print):
