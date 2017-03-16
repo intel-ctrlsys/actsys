@@ -8,12 +8,16 @@ from flask import jsonify, make_response, request
 from mock import create_autospec
 
 from ...cli.command_invoker import CommandInvoker
-from ..utils.utils import handle_command_results, print_msg, Usage
+from ..utils.utils import split_command_results, print_msg, Usage
 from ...commands.command import CommandResult
 
+RETURN_ERRORS = {'bad_param':[-1, 1, 5],
+                 'plugin_not_installed':[-2],
+                }
 
 class ResourceManager(Resource):
     """ Resource Manager Resource Class """
+
     def __init__(self, cmd_invoker=None, debug=False, dfx=False,
                  dfx_data=None):
         super(ResourceManager, self).__init__()
@@ -22,9 +26,6 @@ class ResourceManager(Resource):
         self.dfx = dfx
         if self.dfx:
             self._setup_mocks(dfx_data)
-        self.return_errors = dict(bad_param=[-1, 1, 5],
-                                  plugin_not_installed=[-2],
-                                 )
         self.usage = ResourceManagerUsage()
 
     def _setup_mocks(self, dfx_data):
@@ -44,25 +45,66 @@ class ResourceManager(Resource):
         if self.debug:
             print_msg(ResourceManager.__name__, message)
 
+
+    def get(self, subcommand=None):
+        """ Method to handle HTTP GET Requests """
+
+        node_regex = request.args.get('node_regex', '')
+        self._debug_msg('subcommand: {} node_regex: {}'.format(subcommand, node_regex))
+
+        if subcommand in ['add', 'remove']:
+            return self._invalid_method_response('GET', subcommand)
+
+        get_function = getattr(self, '_get_{}_subcommand'.format(subcommand), None)
+
+        if get_function:
+            return get_function(subcommand, node_regex)
+
+        return _create_response(400, 'Invalid subcommand: {0}'.format(subcommand),
+                                dict(usage=self.usage.get_resource_usage_msg()))
+
+
+    def _get_check_subcommand(self, subcommand, node_regex):
+        if self.dfx:
+            return jsonify(self._mock_check_status(node_regex))
+        return self._handle_subcommand(subcommand, node_regex, self._check_status,
+                                       _create_http_check_response)
+
+
     def put(self, subcommand=None):
         """ Method to handle HTTP PUT Requests """
 
         node_regex = request.args.get('node_regex', '')
         self._debug_msg('subcommand: {} node_regex: {}'.format(subcommand, node_regex))
 
-        if subcommand == 'remove':
-            if self.dfx:
-                return jsonify(self._mock_remove_nodes(node_regex))
-            return self._handle_subcommand(subcommand, node_regex, self._remove_nodes,
-                                           self._create_put_remove_response)
-        if subcommand == 'add':
-            if self.dfx:
-                return jsonify(self._mock_add_nodes(node_regex))
-            return self._handle_subcommand(subcommand, node_regex, self._add_nodes,
-                                           self._create_put_add_response)
+        if subcommand in ['check']:
+            return self._invalid_method_response('PUT', subcommand)
+
+        put_function = getattr(self, '_put_{}_subcommand'.format(subcommand), None)
+
+        if put_function:
+            return put_function(subcommand, node_regex)
 
         return _create_response(400, 'Invalid subcommand: {0}'.format(subcommand),
                                 dict(usage=self.usage.get_resource_usage_msg()))
+
+    def _put_remove_subcommand(self, subcommand, node_regex):
+        if self.dfx:
+            return jsonify(self._mock_remove_nodes(node_regex))
+        return self._handle_subcommand(subcommand, node_regex, self._remove_nodes,
+                                       self._create_http_remove_response)
+
+
+    def _put_add_subcommand(self, subcommand, node_regex):
+        if self.dfx:
+            return jsonify(self._mock_add_nodes(node_regex))
+        return self._handle_subcommand(subcommand, node_regex, self._add_nodes,
+                                       self._create_http_add_response)
+
+
+    def _invalid_method_response(self, method, subcommand):
+        return _create_response(405, method + ' method not allowed for ' + subcommand + ' option.',
+                                dict(usage=self.usage.get_subcommand_usage_msg(subcommand)))
 
     def _check_status(self, node_regex):
         _raise_if_is_empty(node_regex, "Invalid node_regex.", 400)
@@ -78,21 +120,13 @@ class ResourceManager(Resource):
         self._raise_if_no_cmd_invoker()
         return self.cmd_invoker.resource_add(node_regex)
 
-    def _create_put_check_response(self, results):
-        _raise_if_is_none(results, 'Could not parse command results.')
-        self._raise_if_plugin_not_installed(results)
-        node_status_dict = get_nodes_status(results)
-        _raise_if_all_are_invalid(node_status_dict)
-        _raise_if_invalid(node_status_dict)
-        return node_status_dict
+    def _create_http_remove_response(self, successes, failures):
+        return self._create_http_response_('remove', successes, failures)
 
-    def _create_put_remove_response(self, successes, failures):
-        return self._create_put_response_('remove', successes, failures)
+    def _create_http_add_response(self, successes, failures):
+        return self._create_http_response_('add', successes, failures)
 
-    def _create_put_add_response(self, successes, failures):
-        return self._create_put_response_('add', successes, failures)
-
-    def _create_put_response_(self, subcommand, successes, failures):
+    def _create_http_response_(self, subcommand, successes, failures):
         _raise_if_is_none(successes, 'Could not parse command results.')
         _raise_if_is_none(failures, 'Could not parse command results.')
         response = dict()
@@ -106,11 +140,9 @@ class ResourceManager(Resource):
             _raise_all_failed(response, 'Could not ' + subcommand + ' node(s).')
         raise ResourceManagerException(207, 'Could not ' + subcommand + ' some nodes.', response)
 
-
-
     def _add_failure(self, response, node, fail):
-        self._raise_if_plugin_not_installed(fail)
-        if fail.return_code in self.return_errors['bad_param']:
+        _raise_if_plugin_not_installed(fail)
+        if fail.return_code in RETURN_ERRORS['bad_param']:
             response[node] = dict(return_code=400, status='invalid', error="Invalid node_regex.")
         else:
             node_status = get_nodes_status(self._check_status(node))
@@ -135,18 +167,11 @@ class ResourceManager(Resource):
         if not self.cmd_invoker:
             raise ResourceManagerException(409, 'No CommandInvoker available.')
 
-    def _raise_if_plugin_not_installed(self, results):
-        """ Raise ResourceManagerException if the resource manager plugin nis not installed """
-        if not isinstance(results, list):
-            results = [results]
-        for result in results:
-            if result.return_code in self.return_errors['plugin_not_installed']:
-                raise ResourceManagerException(424, 'Resource Manager plugin is not installed.')
-
-
     def _handle_subcommand(self, subcommand, node_regex, subcommand_fn, response_fn):
         try:
-            success, fail = handle_command_results(subcommand_fn(node_regex))
+            if subcommand == 'check':
+                return jsonify(response_fn(subcommand_fn(node_regex)))
+            success, fail = split_command_results(subcommand_fn(node_regex))
             return jsonify(response_fn(success, fail))
         except ResourceManagerException as rme:
             self._add_usage_message(subcommand, rme)
@@ -159,6 +184,14 @@ class ResourceManager(Resource):
             if isinstance(exception.response, dict):
                 exception.response['usage'] = self.usage.get_subcommand_usage_msg(subcommand)
 
+
+def _raise_if_plugin_not_installed(results):
+    """ Raise ResourceManagerException if the resource manager plugin nis not installed """
+    if not isinstance(results, list):
+        results = [results]
+    for result in results:
+        if result.return_code in RETURN_ERRORS['plugin_not_installed']:
+            raise ResourceManagerException(424, 'Resource Manager plugin is not installed.')
 
 def _raise_if_is_single_failure(response, message=""):
     """ Raise ResourceManagerException if there's only one failure. """
@@ -191,6 +224,14 @@ def _raise_if_invalid(node_status_dict):
         has 'invalid' as its status """
     if node_status_dict.values().count('invalid') != 0:
         raise ResourceManagerException(207, 'Could not get some node(s) status.', node_status_dict)
+
+def _create_http_check_response(results):
+    _raise_if_is_none(results, 'Could not parse command results.')
+    _raise_if_plugin_not_installed(results)
+    node_status_dict = get_nodes_status(results)
+    _raise_if_all_are_invalid(node_status_dict)
+    _raise_if_invalid(node_status_dict)
+    return node_status_dict
 
 def _create_response_from_exception(exception):
     """ Creates Flask response from a ResourceManagerException """
@@ -251,7 +292,7 @@ class ResourceManagerUsage(Usage):
         self._put = 'PUT'
         self._get = 'GET'
         self._subcommand = self._literals['subcommand']
-        self._subcommand_desc = "\t<subcommand> could be 'add', 'remove' or 'check' options.\n"
+        self._subcommand_desc = "\t<subcommand> could be 'add' (PUT), 'remove' (PUT) or 'check' (GET) options.\n"
         self._set_default_values()
 
     def _set_default_values(self):

@@ -24,7 +24,7 @@ def append_to_list_in_dictionary(dictionary, result):
         dictionary[result.device_name].append(result)
     return 0
 
-def handle_command_results(results):
+def split_command_results(results):
     """ Receives a list of CommandResult objects and split it into two dictionaries:
         success - for all the successful results ordered by device_name.
         fail - for all the failing results ordered by device_name. """
