@@ -67,7 +67,7 @@ class TestPostgresDB(unittest.TestCase):
     def set_expected(self, mock_connect, expected):
         self.expected = expected
         mock_connect.return_value.cursor.return_value.fetchall.return_value = expected
-        self.postgres = PostgresStore(True, self.CONNECTION_STRING)
+        self.postgres = PostgresStore(self.CONNECTION_STRING, None)
         self.log_add_org = self.postgres.log_add
         self.postgres.log_add = self.func
 
@@ -252,7 +252,6 @@ class TestPostgresDB(unittest.TestCase):
         self.postgres.log_add = self.log_add_org
         postgres = self.postgres
         # Run these and check for execptions
-        postgres.log_add(logging.NOTSET, 'From BAT tests with love.')
         postgres.log_add(logging.DEBUG, 'From BAT tests with love.', None, "BAT")
         postgres.log_add(logging.INFO, 'From BAT tests with love.', "test_hostname")
         postgres.log_add(logging.WARNING, 'From BAT tests with love.', "test_ip_address")

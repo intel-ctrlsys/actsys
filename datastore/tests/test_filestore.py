@@ -15,7 +15,7 @@ from ..filestore import FileStore
 from random import randint
 from .. import DataStoreException
 from dateutil import parser as date_parse
-from datastore import get_logger
+from datastore import get_logger, DataStore
 
 
 class TestFileStore(unittest.TestCase):
@@ -67,7 +67,7 @@ class TestFileStore(unittest.TestCase):
     2016-01-01 10:25:18,042 / WARNING / DataStore / BATS / 2 / Does this work?
     2015-01-01 10:25:18,042 / ERROR / DataStore / BATS / 1 / Does this work?
     2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?
-    """
+"""
 
     def setUp(self):
         temp_log_file = tempfile.NamedTemporaryFile("w", delete=False)
@@ -85,14 +85,16 @@ class TestFileStore(unittest.TestCase):
 
         logger = get_logger()
         logger.handlers = []
+        DataStore.LOG_LEVEL = logging.DEBUG
 
-        self.fs = FileStore(True, self.FILE_STRING)
+        self.fs = FileStore(self.FILE_STRING, None)
 
     def tearDown(self):
         os.remove(self.FILE_STRING)
 
     def test_file_init(self):
-        FileStore(True, self.FILE_STRING)
+        FileStore(self.FILE_STRING, None)
+        FileStore(self.FILE_STRING, logging.CRITICAL)
 
     def test_device_get(self):
         devices = self.fs.device_get()
@@ -215,13 +217,11 @@ class TestFileStore(unittest.TestCase):
         logger.warning("Does this work?", "knl-31", "BATS")
         logger.error("Does this work?", "knl-33", "BATS")
         logger.critical("Does this work?", "knl-test", "BATS")
-        self.fs.log_add(logging.NOTSET, "Does this work?", "knl-test", "BATS")
         logger.debug("Does this work?", None, "BATS")
         logger.info("Does this work?", "knl-test")
         logger.warning("Does this work?", "knl-test", None)
         logger.error("Does this work?")
         logger.critical("Does this work?", device_name="knl-test")
-        self.fs.log_add(logging.NOTSET, "Does this work?", "knl-test", "BATS")
 
     def test_log_get(self):
         result = self.fs.log_get(limit=2)
@@ -241,7 +241,7 @@ class TestFileStore(unittest.TestCase):
 
     def test_get_logs(self):
         result = self.fs.log_get()
-        self.assertEqual(13, len(result))
+        self.assertEqual(15, len(result))
 
         result = self.fs.log_get_timeslice(date_parse.parse("2014-01-01 10:25:18,042"),
                                            date_parse.parse("2016-12-01 10:25:18,042"))
@@ -262,9 +262,9 @@ class TestFileStore(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_logger_setup(self):
-        self.fs._setup_logger()
+        self.fs._setup_logger(None)
         self.fs.logger.handlers = list()
-        self.fs._setup_logger()
+        self.fs._setup_logger(logging.WARNING)
 
     def test_device_upsert_id(self):
         self.fs.device_upsert({"device_type": "test_dev_type_test", "hostname": "test_hostname3"})
@@ -323,7 +323,7 @@ class TestFileStore(unittest.TestCase):
         logger.critical(log_msgs)
 
         logs = self.fs.log_get()
-        self.assertEqual(25, len(logs))
+        self.assertEqual(30, len(logs))
 
 
 class TestFileStoreEmptyFile(unittest.TestCase):
@@ -345,11 +345,10 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         os.remove(cls.FILE_STRING)
 
     def setUp(self):
-        print(self.FILE_STRING)
-        self.fs = FileStore(True, self.FILE_STRING)
+        self.fs = FileStore(self.FILE_STRING, None)
 
     def test_init(self):
-        FileStore(True, self.FILE_STRING)
+        FileStore(self.FILE_STRING, None)
 
     def test_empty_gets(self):
         result = self.fs.device_get()
@@ -473,7 +472,7 @@ class TestFileStoreInvalidLogs(unittest.TestCase):
         temp_log_file.write(cls.LOG_FILE)
         temp_log_file.close()
         cls.LOG_FILENAME = temp_log_file.name
-        FileStore(False, cls.FILE_STRING).configuration_upsert("log_file_path", cls.LOG_FILENAME)
+        FileStore(cls.FILE_STRING, None).configuration_upsert("log_file_path", cls.LOG_FILENAME)
 
     @classmethod
     def tearDownClass(cls):
@@ -482,7 +481,7 @@ class TestFileStoreInvalidLogs(unittest.TestCase):
         os.remove(cls.LOG_FILENAME)
 
     def setUp(self):
-        self.fs = FileStore(True, self.FILE_STRING)
+        self.fs = FileStore(self.FILE_STRING, None)
 
     def test_get_logs(self):
         with self.assertRaises(RuntimeError):

@@ -55,18 +55,51 @@ class TestDataStoreBuilder(unittest.TestCase):
         self.dsb.add_postgres_db("")
         self.dsb.set_print_to_screen(True)
         self.assertTrue(self.dsb.print_to_screen)
-        self.assertTrue(self.dsb.dbs[0].print_to_screen)
 
     @patch("psycopg2.connect")
-    def test_set_log_level(self, mock_connect):
+    def test_set_default_log_level(self, mock_connect):
         import logging
+        from datastore import get_logger
+        from logging.handlers import RotatingFileHandler
+        from datastore.postgresstore import PostgresLogHandler
 
-        self.dsb.add_file_db("config-example.json")
+        self.dsb.add_file_db("config-example.json", logging.CRITICAL)
+        self.dsb.add_postgres_db("", logging.WARN)
+        self.dsb.set_default_log_level(logging.INFO)
+        self.assertEqual(DataStore.LOG_LEVEL, logging.INFO)
+        logger = get_logger()
+        fdbh = None
+        pdbh = None
+        for handler in logger.handlers:
+            if isinstance(handler, RotatingFileHandler):
+                fdbh = handler
+            if isinstance(handler, PostgresLogHandler):
+                pdbh = handler
+        self.assertEqual(fdbh.level, logging.CRITICAL)
+        self.assertEqual(pdbh.level, logging.WARNING)
+
+    @patch("psycopg2.connect")
+    def test_set_default_log_level2(self, mock_connect):
+        import logging
+        from datastore import get_logger
+        from logging.handlers import RotatingFileHandler
+        from datastore.postgresstore import PostgresLogHandler
+
+        self.dsb.set_default_log_level(logging.FATAL)
+        self.assertEqual(DataStore.LOG_LEVEL, logging.FATAL)
+        self.dsb.add_file_db("config-example.json", None)
         self.dsb.add_postgres_db("")
-        self.dsb.set_log_level(logging.INFO)
 
-        self.assertEqual(self.dsb.log_level, logging.INFO)
-        self.assertEqual(self.dsb.dbs[0].log_level, logging.INFO)
+        logger = get_logger()
+        fdbh = None
+        pdbh = None
+        for handler in logger.handlers:
+            if isinstance(handler, RotatingFileHandler):
+                fdbh = handler
+            if isinstance(handler, PostgresLogHandler):
+                pdbh = handler
+        self.assertEqual(fdbh.level, logging.FATAL)
+        self.assertEqual(pdbh.level, logging.FATAL)
 
     @patch("psycopg2.connect")
     def test_build(self, mock_connect):

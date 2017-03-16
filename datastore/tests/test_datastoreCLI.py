@@ -17,11 +17,9 @@ from random import randint
 
 
 class TestDataStoreCLI(unittest.TestCase):
-
     def setUp(self):
         self.mockDS = Mock(spec=DataStore)
         self.dscli = DataStoreCLI(self.mockDS)
-
 
     def test_datastoreCLI_init(self):
         result = DataStoreCLI(self.mockDS)
@@ -43,8 +41,8 @@ class TestDataStoreCLI(unittest.TestCase):
         self.mockDS.device_list_filter.return_value = [{'device_type': 'node', 'debug_ip': '127.0.0.111'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'get', 'debug_ip=127.0.0.111'])
-            self.assertEqual(output.getvalue(), '--- None ---\ndebug_ip             : 127.0.0.111\ndevice_type          : node\n')
-
+            self.assertEqual(output.getvalue(),
+                             '--- None ---\ndebug_ip             : 127.0.0.111\ndevice_type          : node\n')
 
     def test_device_get_no_match(self):
         # print('execute_devices')
@@ -55,7 +53,7 @@ class TestDataStoreCLI(unittest.TestCase):
     def test_device_set_no_existing_device(self):
         # print('execute_devices')
         self.mockDS.device_get.return_value = []
-        result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1'])
+        result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'device_type=noe'])
         self.assertEqual(result, 0)
 
     def test_device_neg(self):
@@ -65,13 +63,18 @@ class TestDataStoreCLI(unittest.TestCase):
         self.assertEqual(result, 1)
 
     def test_device_upsert(self):
-        self.mockDS.device_get.return_value = [{'hostname': 'node1'}]
+        self.mockDS.device_get.return_value = [{'hostname': 'node1', 'device_type': 'node'}]
         result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'ip_address=127.0.0.1'])
+        self.assertEqual(result, 0)
+
+        self.mockDS.device_get.return_value = [{'hostname': 'node1', 'device_type': 'node'}]
+        result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'ip_address=UNDEF'])
         self.assertEqual(result, 0)
 
         self.mockDS.device_get.return_value = [{'hostname': 'node1'}]
         result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'ip_address=UNDEF'])
-        self.assertEqual(result, 0)
+        self.assertEqual(1, result)
+
 
     def test_device_delete(self):
         self.mockDS.device_get.return_value = [{'hostname': 'node1'}]
@@ -184,6 +187,56 @@ class TestDataStoreCLI(unittest.TestCase):
         self.mockDS.log_get_timeslice.return_value = [{'foo': 'foovalue'}]
         result = self.dscli.parse_and_run(['log', 'get'])
         self.assertEqual(result, 0)
+
+
+class TestsDataStoreCLIOptions(unittest.TestCase):
+    def test_no_options(self):
+        result = DataStoreCLI.parse_options(None)
+        self.assertEqual(result, dict())
+
+        result = DataStoreCLI.parse_options([])
+        self.assertEqual(result, dict())
+
+    def test_valid_strings(self):
+        result = DataStoreCLI.parse_options(['foo=bar', 'b=c', 'hold=on'])
+        self.assertEqual(result, {'foo': 'bar', 'b': 'c', 'hold': 'on'})
+
+        result = DataStoreCLI.parse_options(['asdfghjkl=qwertyuiop'])
+        self.assertEqual(result, {'asdfghjkl': 'qwertyuiop'})
+
+    def test_valid_lists(self):
+        result = DataStoreCLI.parse_options(["mylist=[foo,bar,baz]", "join=me"])
+        self.assertEqual(result, {"mylist": ['foo', 'bar', 'baz'], "join": "me"})
+
+        result = DataStoreCLI.parse_options(["mylist=[foo,  bar, baz]", "join=me"])
+        self.assertEqual(result, {"mylist": ['foo', 'bar', 'baz'], "join": "me"})
+
+        result = DataStoreCLI.parse_options(["mylist=[ foo,bar,baz ]", "join=me"])
+        self.assertEqual(result, {"mylist": ['foo', 'bar', 'baz'], "join": "me"})
+
+        result = DataStoreCLI.parse_options(["mylist=[ 1, bar ]", "join=me"])
+        self.assertEqual(result, {"mylist": [1, 'bar'], "join": "me"})
+
+        result = DataStoreCLI.parse_options(["mylist=[foo, 1]", "join=me"])
+        self.assertEqual(result, {"mylist": ['foo', 1], "join": "me"})
+
+    def test_no_empty_options(self):
+        with self.assertRaises(SystemExit):
+            result = DataStoreCLI.parse_options(["empty=", "not=allowed"])
+        with self.assertRaises(SystemExit):
+            result = DataStoreCLI.parse_options(["=bar", "not=allowed"])
+
+        with self.assertRaises(SystemExit):
+            result = DataStoreCLI.parse_options(["not=allowed", "foo"])
+        with self.assertRaises(SystemExit):
+            result = DataStoreCLI.parse_options(["bar", "not=allowed"])
+
+    def test_integers(self):
+        result = DataStoreCLI.parse_options(["arg=1", "5=2"])
+        self.assertEqual(result, {"arg": 1, 5: 2})
+
+        result = DataStoreCLI.parse_options(["1=arg"])
+        self.assertEqual(result, {1: "arg"})
 
 
 if __name__ == '__main__':

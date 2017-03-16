@@ -11,8 +11,8 @@ class MultiStore(DataStore):
     After passing this check the first result is returned.
     """
 
-    def __init__(self, print_to_screen, dbs):
-        super(MultiStore, self).__init__(print_to_screen)
+    def __init__(self, dbs):
+        super(MultiStore, self).__init__()
         self.dbs = dbs
         if len(self.dbs) <= 1:
             raise DataStoreException("The MultiStore is designed to be used with multiple databases. "

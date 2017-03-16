@@ -15,15 +15,18 @@ class DataStore(object):
     __metaclass__ = ABCMeta
     LOG_FORMAT = "%(asctime)s / %(levelname)s / %(name)s / %(device_name)s / %(message)s"
     LOG_LEVEL = logging.DEBUG
+
+    LOG_LEVEL_CRITICAL = logging.CRITICAL
+    LOG_LEVEL_FATAL = LOG_LEVEL_CRITICAL
+    LOG_LEVEL_ERROR = logging.ERROR
+    LOG_LEVEL_WARNING = logging.WARNING
+    LOG_LEVEL_WARN = LOG_LEVEL_WARNING
+    LOG_LEVEL_INFO = logging.INFO
     LOG_LEVEL_JOURNAL = 15
-    JOURNAL = 15
+    LOG_LEVEL_DEBUG = logging.DEBUG
 
-    def __init__(self, print_to_screen):
-        self.print_to_screen = print_to_screen
+    def __init__(self):
         self.logger = get_logger()
-
-        if self.print_to_screen is True:
-            add_stream_logger(self.logger)
 
     def get_device(self, device_name):
         """
@@ -94,6 +97,13 @@ class DataStore(object):
         if device_info.get("device_type") is None:
             raise DataStoreException("device_type is a required key/value in the device_info field")
 
+        profile_name = device_info.get("profile_name")
+        if profile_name is not None:
+            profile_names = self.profile_names_get()
+            if profile_name not in profile_names:
+                raise DataStoreException("Cannot set device with profile '{}', because that profile "
+                                         "does not exist.".format(profile_name))
+
     @abstractmethod
     def device_logical_delete(self, device_name):
         """
@@ -123,6 +133,10 @@ class DataStore(object):
         """
         self.logger.debug("DataStore.profile_get called: {}".format(profile_name))
         return list()
+
+    def profile_names_get(self):
+        profiles = self.profile_get()
+        return map(lambda x: x.get("profile_name"), profiles)
 
     @abstractmethod
     def profile_upsert(self, profile_info):
@@ -236,15 +250,15 @@ class DataStore(object):
 
         return types
 
-    def get_log_levels(self):
+    @classmethod
+    def get_log_levels(cls):
         return [
-            logging.CRITICAL,
-            logging.ERROR,
-            self.LOG_LEVEL_JOURNAL,
-            logging.WARN,
-            logging.INFO,
-            logging.DEBUG,
-            logging.NOTSET
+            cls.LOG_LEVEL_CRITICAL,
+            cls.LOG_LEVEL_ERROR,
+            cls.LOG_LEVEL_WARNING,
+            cls.LOG_LEVEL_INFO,
+            cls.LOG_LEVEL_JOURNAL,
+            cls.LOG_LEVEL_DEBUG
         ]
 
     def get_logger(self):

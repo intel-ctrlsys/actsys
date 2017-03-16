@@ -3,7 +3,7 @@
 # Copyright (c) 2017 Intel Corp.
 #
 import os
-from .datastore import DataStore, DataStoreException
+from .datastore import DataStore, DataStoreException, get_logger, add_stream_logger
 from .filestore import FileStore
 from .postgresstore import PostgresStore
 from .multistore import MultiStore
@@ -26,15 +26,19 @@ class DataStoreBuilder(object):
     def __init__(self):
         self.dbs = list()
         self.print_to_screen = False
-        self.log_level = None
+        self.screen_log_level = DataStore.LOG_LEVEL
 
-    def add_file_db(self, location):
+    def add_file_db(self, location, log_level=None):
         """
         Creates a filestore with the location you have specified. If no location is given, creates it
         in ~/datastore.json.
         :param location:
+        :param log_level: The level in which you want logging done at.
         :return:
         """
+        if log_level is None:
+            log_level = DataStore.LOG_LEVEL
+
         if location is None:
             location = self.FILESTORE_DEFUALT_LOCATION
             if not os.path.isfile(location):
@@ -42,38 +46,41 @@ class DataStoreBuilder(object):
                 config_file.write(self.FILESTORE_DEFAULT_CONFIG)
                 config_file.close()
 
-        self.dbs.append(FileStore(self.print_to_screen, location))
+        self.dbs.append(FileStore(location, log_level))
         return self
 
-    def add_postgres_db(self, connection_uri):
+    def add_postgres_db(self, connection_uri, log_level=None):
         """
 
         :param connection_uri:
+        :param log_level: The level in which you want logging done at.
         :return:
         """
-        self.dbs.append(PostgresStore(self.print_to_screen, connection_uri))
+        if log_level is None:
+            log_level = DataStore.LOG_LEVEL
+        self.dbs.append(PostgresStore(connection_uri, log_level))
         return self
 
-    def set_print_to_screen(self, print_to_screen=True):
+    def set_print_to_screen(self, print_to_screen=True, log_level=None):
         """
 
-        :param print_to_screen:
+        :param print_to_screen: If this should happen or not.
+        :param log_level: The level in which you want logging done at.
         :return:
         """
-        for db in self.dbs:
-            db.print_to_screen = print_to_screen
+        if log_level is None:
+            log_level = DataStore.LOG_LEVEL
+
         self.print_to_screen = print_to_screen
+        self.screen_log_level = log_level
         return self
 
-    def set_log_level(self, log_level):
+    def set_default_log_level(self, log_level):
         """
-
-        :param log_level:
+        Set the default log level for loggers/databases created. This will NOT affect already created databases!
+        :param log_level: The level in which you want logging done at.
         :return:
         """
-        for db in self.dbs:
-            db.log_level = log_level
-        self.log_level = log_level
         DataStore.LOG_LEVEL = log_level
         return self
 
@@ -82,8 +89,11 @@ class DataStoreBuilder(object):
 
         :return:
         """
+        if self.print_to_screen:
+            add_stream_logger(get_logger(), self.screen_log_level)
+
         if len(self.dbs) > 1:
-            return MultiStore(self.print_to_screen, self.dbs)
+            return MultiStore(self.dbs)
         elif len(self.dbs) == 1:
             return self.dbs[0]
         else:

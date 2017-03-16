@@ -9,7 +9,9 @@ This module creates the command line parser and executes the user commands.
 from __future__ import print_function
 import argparse
 import json
+import re
 from dateutil.parser import parse as date_parse
+from . import DataStoreException
 
 
 class DataStoreCLI(object):
@@ -100,7 +102,12 @@ class DataStoreCLI(object):
             args = self.root_parser.parse_args()
         else:
             args = self.root_parser.parse_args(args)
-        self.retval = args.func(args)
+        try:
+            self.retval = args.func(args)
+        except DataStoreException as dse:
+            self.root_parser.print_usage()
+            print(dse)
+            return 1
         return self.retval
 
     def device_execute(self, parsed_args):
@@ -148,6 +155,11 @@ class DataStoreCLI(object):
                 else:
                     existing_device[option] = value
 
+            if existing_device.get("device_type") is None:
+                self.device_parser.print_usage()
+                print("Please specify a device_type. (i.e device_type=node)")
+                return 1
+
             self.ds.device_upsert(existing_device)
             print("Successfully updated '{}'".format(device_name))
             return 0
@@ -175,10 +187,8 @@ class DataStoreCLI(object):
             return 0
 
         profile_name = options.get("profile_name")
-        # options["profile_name"] = profile_name
-        # options.pop(None, None)
-        # print("1.2 --{}--".format(profile_name))
         if profile_name is None:
+            self.profile_parser.print_usage()
             print("Please specify a profile_name")
             return 1
 
@@ -278,12 +288,10 @@ class DataStoreCLI(object):
             end_date = date_parse(parsed_args.end)
             result = self.ds.log_get_timeslice(begin_date, end_date, parsed_args.device_name, parsed_args.limit)
             self.print_devices(result)
-            print("Retrieved Logs")
             return 0
         else:
             result = self.ds.log_get(parsed_args.device_name, parsed_args.limit)
             self.print_devices(result)
-            print("Retrieved Logs")
             return 0
 
     @staticmethod
@@ -294,24 +302,50 @@ class DataStoreCLI(object):
         :return:
         """
         # TODO: Handle lists
-        # TODO: determine ints and other things.
+        # TODO: determine ints and other things.\
         options_dict = dict()
         if options is None:
             return options_dict
         for option in options:
             t = option.split("=")
+
             # Accepts options like 'foo=bar'
-            if len(t) == 2:
-                option_parsed = None
-                if type(t[1]) == str:
-                    try:
-                        option_parsed = json.loads("{}".format(t[1]))
-                    except ValueError:
-                        pass
-                if option_parsed is not None:
-                    options_dict[t[0]] = option_parsed
-                else:
-                    options_dict[t[0]] = t[1]
+            if len(t) != 2:
+                print("Option `{}` is not valid. Please specify a value like key=value.".format(option))
+                exit(1)
+
+            key = t[0]
+            value = t[1]
+
+            # None or empty str, is not allowed
+            if key is None or key == '' or value is None or value == '':
+                print("Option `{}` is not valid. Please specify a value like key=value.".format(option))
+                exit(1)
+
+            # Check for lists
+            # Test it is a list:
+            if re.search("(^\[.*\]$)", value) is not None:
+                # get the individual items in the list
+                matches = re.findall("([^\[\],]+)", value)
+                value = list()
+                for match in matches:
+                    match = match.strip()
+                    if match is not None and match != '':
+                        print("Found a match", match)
+                        if match.isdigit():
+                            match = int(match)
+                        value.append(match)
+
+
+            # Check for and parse digits
+            if isinstance(key, str) and key.isdigit():
+                key = int(key)
+            if isinstance(value, str) and value.isdigit():
+                value = int(value)
+
+            # Set the option
+            options_dict[key] = value
+
         return options_dict
 
     @staticmethod
@@ -323,6 +357,9 @@ class DataStoreCLI(object):
         """
         if not isinstance(printable, list):
             printable = [printable]
+
+        if len(printable) == 0:
+            print("No item(s) found.")
 
         for item in printable:
             # Pass this list in, with the device types so that the output can be something like:

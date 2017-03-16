@@ -2,12 +2,12 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
-from .datastore import DataStore, DataStoreException
+import os
 import logging
 from logging.handlers import RotatingFileHandler
 from dateutil.parser import parse as date_parse
+from .datastore import DataStore, DataStoreException
 from .utilities import DataStoreUtilities, JsonParser
-import os
 
 
 class FileStore(DataStore):
@@ -20,26 +20,30 @@ class FileStore(DataStore):
     CONFIG_KEY = "configuration_variables"
     PROFILE_KEY = "profile"
 
-    def __init__(self, print_to_screen, location):
-        super(FileStore, self).__init__(print_to_screen)
+    def __init__(self, location, log_level):
+        super(FileStore, self).__init__()
         self.location = location
         # TODO: lock the file: http://stackoverflow.com/a/186464/1767377
         self.parsed_file = JsonParser.read_file(location)
-        self._setup_logger()
+        self._setup_logger(log_level)
 
-    def _setup_logger(self):
+    def _setup_logger(self, log_level):
         """
         Sets up the logger to log things. If no log location is given a log file is created in ~/datastore.log.
         :return:
         """
-        has_rotating_file_handler = False
+        if log_level is None:
+            log_level = DataStore.LOG_LEVEL
+
+        log_rotating_file_handler = None
         for handler in self.logger.handlers:
             if isinstance(handler, RotatingFileHandler):
-                has_rotating_file_handler = True
+                log_rotating_file_handler = handler
+                break
 
-        if has_rotating_file_handler is False:
-            formatter = logging.Formatter(self.LOG_FORMAT)
+        formatter = logging.Formatter(self.LOG_FORMAT)
 
+        if log_rotating_file_handler is None:
             log_file_path = self.configuration_get("log_file_path")
             if log_file_path is None:
                 log_file_path = os.path.expanduser('~/datastore.log')
@@ -56,10 +60,13 @@ class FileStore(DataStore):
                 log_file_path,
                 maxBytes=log_file_max_bytes
             )
-            log_rotating_file_handler.setLevel(self.LOG_LEVEL)
+            log_rotating_file_handler.setLevel(log_level)
             log_rotating_file_handler.setFormatter(formatter)
 
             self.logger.addHandler(log_rotating_file_handler)
+        else:
+            log_rotating_file_handler.setLevel(log_level)
+            log_rotating_file_handler.setFormatter(formatter)
 
     def add_profile_to_device(self, device_list):
         if device_list is None:
@@ -284,7 +291,7 @@ class FileStore(DataStore):
             }
         else:
             raise RuntimeError("The logs in the log file are of an unknown format, cannot continue. "
-                               "Line: {}". format(line))
+                               "Line: {}".format(line))
 
     def log_get_timeslice(self, begin, end, device_name=None, limit=100):
         """

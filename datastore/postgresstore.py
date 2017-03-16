@@ -2,17 +2,15 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
-from .datastore import DataStore, DataStoreException
 import psycopg2
 import json
-from .utilities import DataStoreUtilities
-from uuid import uuid4
 import copy
 import logging
+import datetime
+from .datastore import DataStore, DataStoreException
 
 
 class PostgresLogHandler(logging.Handler):
-
     def __init__(self, datastore):
         super(PostgresLogHandler, self).__init__()
         self.datastore = datastore
@@ -29,32 +27,41 @@ class PostgresStore(DataStore):
     """
     Data Store interface.
     """
-    def __init__(self, print_to_screen, location):
+
+    def __init__(self, location, log_level):
         """
         Creates the object with parameters passed in. Then calles the connect method, and sets up
         the logger for use.
-        :param print_to_screen:
         :param location:
+        :param log_level:
         """
-        super(PostgresStore, self).__init__(print_to_screen)
+        super(PostgresStore, self).__init__()
         self.connection_uri = location
         self.connection = None
         self.cursor = None
         self.connect()
-        self._setup_logger()
+        self._setup_postgres_logger(log_level)
 
     def __del__(self):
         self.cursor.close()
         self.connection.close()
 
-    def _setup_logger(self):
-        has_postgres_logger = False
+    def _setup_postgres_logger(self, log_level):
+        if log_level is None:
+            log_level = DataStore.LOG_LEVEL
+
+        postgres_handler = None
         for handler in self.logger.handlers:
             if isinstance(handler, PostgresLogHandler):
-                has_postgres_logger = True
+                postgres_handler = handler
+                break
 
-        if has_postgres_logger is False:
-            self.logger.addHandler(PostgresLogHandler(self))
+        if postgres_handler is None:
+            postgres_handler = PostgresLogHandler(self)
+            postgres_handler.setLevel(log_level)
+            self.logger.addHandler(postgres_handler)
+        else:
+            postgres_handler.setLevel(log_level)
 
     def connect(self):
         """
@@ -101,8 +108,8 @@ class PostgresStore(DataStore):
         self.connection.commit()
 
         if result[0][0] == 1:
-            # The affected device_id
             self.logger.info("DataStore.device_upsert affected device: {}".format(result[0][1]))
+            # The affected device_id
             return result[0][1]
         else:
             # Nothing changed
@@ -139,7 +146,7 @@ class PostgresStore(DataStore):
         self.cursor.callproc("public.delete_device_fatal", [device_name])
         result = self.cursor.fetchall()
         self.logger.debug("DataStore.device_fatal_delete database result: {}".format(result))
-        if result is None or  result[0][0] > 1:
+        if result is None or result[0][0] > 1:
             raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if result[0][0] == 1:
@@ -230,7 +237,8 @@ class PostgresStore(DataStore):
         No logging should happen inside this function... or it would be a recersive loop.
         """
         super(PostgresStore, self).log_add(level, msg, device_name, process)
-        self.cursor.callproc("public.add_log", [str(process), None, level, str(device_name), str(msg)])
+        self.cursor.callproc("public.add_log",
+                             [str(process), datetime.datetime.utcnow(), level, str(device_name), str(msg)])
         result = self.cursor.fetchall()
         if result is None or len(result) != 1 or result[0][0] != 1:
             raise DataStoreException("log add query affected {} rows, excepted 1".format(result[0][0] if result else 0))
@@ -295,7 +303,8 @@ class PostgresStore(DataStore):
                 See @DataStore for function description. Only implementation details here.
                 """
         # super(PostgresStore, self).get_pdu()
-        self.cursor.execute("SELECT * FROM public.get_device_details(%s) WHERE device_type = %s;", [device_name, device_type])
+        self.cursor.execute("SELECT * FROM public.get_device_details(%s) WHERE device_type = %s;",
+                            [device_name, device_type])
         result = self.cursor.fetchall()
         self.logger.debug("DataStore.get_device_by_type database result: {}".format(result))
         return SqlParser.get_device_from_results(result)
@@ -395,7 +404,6 @@ class SqlParser(object):
         profile_name = profile.pop('profile_name', None)
         return [profile_name, json.dumps(profile)]
 
-
     @staticmethod
     def prepare_device_for_query(device):
         """
@@ -406,15 +414,23 @@ class SqlParser(object):
             object in the returned array.
         :return: [profile_name:string, properties:json_string]
         """
+        def pop_to_string(d, p):
+            """Converts whats given to a string or None"""
+            t = d.pop(p, None)
+            if t is not None:
+                t = str(t)
+            return t
+
         # Handle a dict
         device = copy.deepcopy(device)
         if not isinstance(device, dict):
             raise RuntimeError("Cannot prepare device of unknown type for query, please pass a dict.")
-        device_id = device.pop('device_id', None)
-        device_type = device.pop("device_type", None)
-        hostname = device.pop("hostname", None)
-        ip_address = device.pop("ip_address", None)
-        mac_address = device.pop("mac_address", None)
-        hardware_type = device.pop("hardware_type", None)
-        profile_name = device.pop("profile_name", None)
-        return [device_id, device_type, hostname, ip_address, mac_address, hardware_type, profile_name, json.dumps(device)]
+        device_id = pop_to_string(device, 'device_id')
+        device_type = pop_to_string(device, "device_type")
+        hostname = pop_to_string(device, "hostname")
+        ip_address = pop_to_string(device, "ip_address")
+        mac_address = pop_to_string(device, "mac_address")
+        hardware_type = pop_to_string(device, "hardware_type")
+        profile_name = pop_to_string(device, "profile_name")
+        return [device_id, device_type, hostname, ip_address, mac_address, hardware_type, profile_name,
+                json.dumps(device)]

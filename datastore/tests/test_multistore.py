@@ -19,20 +19,20 @@ class TestMultiStore(unittest.TestCase):
     def setUp(self):
         self.fs = MagicMock(spec=DataStore)
         self.ps = self.fs
-        self.ms = MultiStore(True, [self.fs, self.ps])
+        self.ms = MultiStore([self.fs, self.ps])
 
     def test_init(self):
         with self.assertRaises(DataStoreException):
-            MultiStore(True, [])
+            MultiStore([])
 
         with self.assertRaises(DataStoreException):
-            MultiStore(False, [])
+            MultiStore([])
 
         with self.assertRaises(DataStoreException):
-            MultiStore(True, [self.fs])
+            MultiStore([self.fs])
 
         with self.assertRaises(DataStoreException):
-            MultiStore(False, [self.fs])
+            MultiStore([self.fs])
 
     def test_all_results_equal(self):
         self.ms._all_results_equal(["foo", "foo"])
