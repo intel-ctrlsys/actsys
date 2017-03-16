@@ -31,8 +31,8 @@ class CommandInvoker(object):
             self.POSTGRES_CONNECTION_STRING = os.environ.get(self.POSTGRES_ENV_VAR)
 
         self.datastore_builder = DataStoreBuilder()
-        self.datastore_builder.set_log_level(logging.DEBUG)
-        self.datastore_builder.set_print_to_screen()
+        self.datastore_builder.set_default_log_level(logging.DEBUG)
+        self.datastore_builder.set_print_to_screen(True)
         file_location = self._get_correct_configuration_file()
         if file_location is not None:
             self.datastore_builder.add_file_db(file_location)
