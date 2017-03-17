@@ -6,7 +6,7 @@
 """control.__main__: executed when bootstrap directory is called as script."""
 import os
 import logging
-from . import DataStoreBuilder, DataStoreCLI
+from . import DataStoreBuilder, DataStoreCLI, get_logger
 from sys import exit
 
 def main(args=None):
@@ -18,9 +18,10 @@ def main(args=None):
 
     datastore = None
     dsb = DataStoreBuilder()
+    dsb.set_print_to_screen(True, logging.INFO)
     dsb.add_postgres_db(os.environ.get("PG_DB_URL"), logging.INFO)
-    dsb.set_print_to_screen(True, logging.DEBUG)
     try:
+        get_logger().critical("foo")
         datastore = dsb.build()
         # datastore = DataStoreBuilder.get_datastore_from_env_vars(postgres_env_var="PG_DB_URL")
     except Exception as e:

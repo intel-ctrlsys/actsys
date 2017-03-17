@@ -2,15 +2,21 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
-import psycopg2
+"""
+For handling the DataStore inteerface in postgres
+"""
 import json
 import copy
 import logging
 import datetime
+import psycopg2
 from .datastore import DataStore, DataStoreException
 
 
 class PostgresLogHandler(logging.Handler):
+    """
+    Log handler for prints log statments to the database.
+    """
     def __init__(self, datastore):
         super(PostgresLogHandler, self).__init__()
         self.datastore = datastore
@@ -116,47 +122,41 @@ class PostgresStore(DataStore):
             self.logger.info("DataStore.device_upsert affected device: None")
             return None
 
-    def device_logical_delete(self, device_name):
+    def device_delete(self, device_name):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(PostgresStore, self).device_logical_delete(device_name)
+        super(PostgresStore, self).device_delete(device_name)
         device_name = str(device_name)
-        self.cursor.callproc("public.delete_device_logical", [device_name])
+        self.cursor.callproc("public.delete_device", [device_name])
         result = self.cursor.fetchall()
-        self.logger.debug("DataStore.device_logical_delete database result: {}".format(result))
-        if result is None or len(result) != 1 or result[0][0] > 1:
-            raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
-        self.connection.commit()
-        if result[0][0] == 1:
-            # The affected device_id
-            self.logger.info("DataStore.device_logical_delete deleted device: {}".format(result[0][1]))
-            return result[0][1]
-        else:
-            # Nothing changed
-            self.logger.info("DataStore.device_logical_delete deleted device: {}".format(None))
-            return None
-
-    def device_fatal_delete(self, device_name):
-        """
-        See @DataStore for function description. Only implementation details here.
-        """
-        super(PostgresStore, self).device_fatal_delete(device_name)
-        device_name = str(device_name)
-        self.cursor.callproc("public.delete_device_fatal", [device_name])
-        result = self.cursor.fetchall()
-        self.logger.debug("DataStore.device_fatal_delete database result: {}".format(result))
+        self.logger.debug("DataStore.device_delete database result: {}".format(result))
         if result is None or result[0][0] > 1:
             raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
         self.connection.commit()
         if result[0][0] == 1:
             # The affected device_id
-            self.logger.info("DataStore.device_logical_fatal deleted device: {}".format(result[0][1]))
+            self.logger.info("DataStore.device_delete deleted device: {}".format(result[0][1]))
             return result[0][1]
         else:
             # Nothing changed
-            self.logger.info("DataStore.device_logical_fatal deleted device: {}".format(None))
+            self.logger.info("DataStore.device_delete deleted device: {}".format(None))
             return None
+
+    def device_history_get(self, device_name=None):
+        super(PostgresStore, self).device_get(device_name)
+        args = list()
+        if device_name is None:
+            args.append(None)
+        else:
+            args.append(str(device_name))
+        self.cursor.callproc("public.get_device_history", args)
+        result = self.cursor.fetchall()
+        self.logger.debug("DataStore.device_history_get database result: {}".format(result))
+        devices = SqlParser.get_device_from_results(result)
+        self.logger.info("DataStore.device_history_get: {}".format(devices))
+        return devices
+
 
     def profile_get(self, profile_name=None):
         """
@@ -264,8 +264,6 @@ class PostgresStore(DataStore):
         See @DataStore for function description. Only implementation details here.
         """
         super(PostgresStore, self).configuration_upsert(key, value)
-        args = [str(key), str(value)]
-        # Cant use callproc: http://stackoverflow.com/a/28410398/1767377
         self.cursor.callproc("public.upsert_configuration_value", [str(key), str(value)])
         result = self.cursor.fetchall()
         self.logger.debug("DataStore.configuration_upsert database result: {}".format(result))
@@ -317,6 +315,11 @@ class SqlParser(object):
 
     @staticmethod
     def get_device_from_results(results):
+        """
+        Parse results from SQL
+        :param results:
+        :return:
+        """
         devices = list()
         for result in results:
             device = dict()
@@ -332,6 +335,8 @@ class SqlParser(object):
             if result[6] is not None:
                 device["profile_name"] = result[6]
             # device["profile_properties"] = result[7]
+            if len(result) >= 9:
+                device["sys_period"] = result[8]
 
             if result[2] is not None:
                 for prop_key in result[2]:
@@ -414,12 +419,12 @@ class SqlParser(object):
             object in the returned array.
         :return: [profile_name:string, properties:json_string]
         """
-        def pop_to_string(d, p):
+        def pop_to_string(dvc, param):
             """Converts whats given to a string or None"""
-            t = d.pop(p, None)
-            if t is not None:
-                t = str(t)
-            return t
+            temp = dvc.pop(param, None)
+            if temp is not None:
+                temp = str(temp)
+            return temp
 
         # Handle a dict
         device = copy.deepcopy(device)
@@ -432,5 +437,6 @@ class SqlParser(object):
         mac_address = pop_to_string(device, "mac_address")
         hardware_type = pop_to_string(device, "hardware_type")
         profile_name = pop_to_string(device, "profile_name")
+        device.pop("sys_period", None)
         return [device_id, device_type, hostname, ip_address, mac_address, hardware_type, profile_name,
                 json.dumps(device)]

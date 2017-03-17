@@ -125,55 +125,54 @@ class TestPostgresDB(unittest.TestCase):
         with self.assertRaises(DataStoreException):
             self.postgres.device_upsert({"device_type": "test_device_type", "attr": "is_added"})
 
-    def test_device_logical_delete(self, mock_connect):
+    def test_device_delete(self, mock_connect):
         self.set_expected(mock_connect, [(1, 1)])
-        result = self.postgres.device_logical_delete(1)
+        result = self.postgres.device_delete(1)
         self.assertEqual(1, result)
 
         self.set_expected(mock_connect, [[0, 0]])
-        result = self.postgres.device_logical_delete(1)
+        result = self.postgres.device_delete(1)
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [[3, 3]])
         with self.assertRaises(DataStoreException):
-            result = self.postgres.device_logical_delete(1)
+            result = self.postgres.device_delete(1)
 
         self.set_expected(mock_connect, [(1, 4)])
-        result = self.postgres.device_logical_delete('test')
+        result = self.postgres.device_delete('test')
         self.assertEqual(result, 4)
 
         self.set_expected(mock_connect, [(0, None)])
-        result = self.postgres.device_logical_delete('test')
+        result = self.postgres.device_delete('test')
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(3,)])
         with self.assertRaises(DataStoreException):
-            self.postgres.device_logical_delete('test')
+            self.postgres.device_delete('test')
 
-    def test_device_fatal_delete(self, mock_connect):
         self.set_expected(mock_connect, [[1, 1]])
-        result = self.postgres.device_fatal_delete(1)
+        result = self.postgres.device_delete(1)
         self.assertEqual(1, result)
 
         self.set_expected(mock_connect, [[0, 0]])
-        result = self.postgres.device_fatal_delete(1)
+        result = self.postgres.device_delete(1)
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(3, 3)])
         with self.assertRaises(DataStoreException):
-            result = self.postgres.device_fatal_delete(1)
+            result = self.postgres.device_delete(1)
 
         self.set_expected(mock_connect, [(1, 32)])
-        result = self.postgres.device_fatal_delete('node')
+        result = self.postgres.device_delete('node')
         self.assertEqual(result, 32)
 
         self.set_expected(mock_connect, [(0, None)])
-        result = self.postgres.device_fatal_delete('node')
+        result = self.postgres.device_delete('node')
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(3,)])
         with self.assertRaises(DataStoreException):
-            self.postgres.device_fatal_delete('node')
+            self.postgres.device_delete('node')
 
     def test_profile_get(self, mock_connect):
         # Single item

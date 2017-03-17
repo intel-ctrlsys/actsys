@@ -2,6 +2,9 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
+"""
+Interface and Classes for using the DataStore
+"""
 from __future__ import print_function
 import logging
 from logging import StreamHandler
@@ -105,24 +108,22 @@ class DataStore(object):
                                          "does not exist.".format(profile_name))
 
     @abstractmethod
-    def device_logical_delete(self, device_name):
+    def device_delete(self, device_name):
         """
-        Logically removes a device from the system database. This device will remain in the database, but no longer
-        be reachable via getters and setters. The purpose of this option is to allow data about old devices to
-        persist for history's sake, but not be part of the system.
+        Remove the device. Be very careful.
         :param device_name: As explained in DataStore.device_get()
         :return: device_id of the affected device or None
         """
-        self.logger.debug("DataStore.device_logical_delete called", device_name=device_name)
+        self.logger.debug("DataStore.device_delete called", device_name=device_name)
 
     @abstractmethod
-    def device_fatal_delete(self, device_name):
+    def device_history_get(self, device_name=None):
         """
-        Remove the device, all logs, and SKUS associated with the device. Be very careful.
-        :param device_name: As explained in DataStore.device_get()
-        :return: device_id of the affected device or None
+
+        :param device_name:
+        :return:
         """
-        self.logger.debug("DataStore.device_fatal_delete called", device_name=device_name)
+        self.logger.debug("DataStore.device_history_get called", device_name=device_name)
 
     @abstractmethod
     def profile_get(self, profile_name=None):
@@ -166,7 +167,7 @@ class DataStore(object):
         devices_using_profile = self.get_profile_devices(profile_name)
         if len(devices_using_profile) != 0:
             raise DataStoreException("The profile '{}' cannot be deleted because it is in use by the following devices:"
-                                     "{}". format(profile_name, devices_using_profile))
+                                     "{}".format(profile_name, devices_using_profile))
         return profile_name
 
     @abstractmethod
@@ -377,6 +378,7 @@ class DataStoreException(Exception):
     """
     A staple Exception thrown by the DataStore
     """
+
     def __init__(self, msg):
         super(DataStoreException, self).__init__()
         self.msg = msg
@@ -428,7 +430,7 @@ class DataStoreLogger(logging.getLoggerClass()):
         # self.ds.log_add(self.ds.JOURNAL, msg, device_name, "Journal")
         super(DataStoreLogger, self).log(DataStore.LOG_LEVEL_JOURNAL, msg, extra={
             "device_name": device_name
-        },  *args, **kwargs)
+        }, *args, **kwargs)
 
     def warning(self, log_msg, device_name=None, *args, **kwargs):
         """An indication that something unexpected happened, or indicative of
@@ -440,7 +442,7 @@ class DataStoreLogger(logging.getLoggerClass()):
         else:
             super(DataStoreLogger, self).warning(log_msg, extra={
                 "device_name": device_name,
-            },  *args, **kwargs)
+            }, *args, **kwargs)
 
     def info(self, log_msg, device_name=None, *args, **kwargs):
         """Confirmation that things are working as expected."""
@@ -465,16 +467,34 @@ class DataStoreLogger(logging.getLoggerClass()):
 
 
 def get_logger():
+    """
+    Return the logger used by the DataStore
+    :return:
+    """
     logging.setLoggerClass(DataStoreLogger)
     logger = logging.getLogger("DataStore")
     logger.setLevel(DataStore.LOG_LEVEL)
     return logger
 
 
-def add_stream_logger(logger=None, log_level=DataStore.LOG_LEVEL, log_format=DataStore.LOG_FORMAT):
+def add_stream_logger(logger=None, log_level=None, log_format=None):
+    """
+    Add a Stream logger to print log msg's to the screen (std err).
+    :param logger:
+    :param log_level:
+    :param log_format:
+    :return:
+    """
+    if log_level is None:
+        log_level = DataStore.LOG_LEVEL
+    if log_format is None:
+        log_format = DataStore.LOG_FORMAT
+    if logger is None:
+        logger = get_logger()
+
     stream_handler = None
     for handler in logger.handlers:
-        if isinstance(handler, StreamHandler):
+        if type(handler) == StreamHandler:
             stream_handler = handler
 
     if stream_handler is None:
@@ -485,4 +505,3 @@ def add_stream_logger(logger=None, log_level=DataStore.LOG_LEVEL, log_format=Dat
     stream_handler.setFormatter(formatter)
 
     logger.addHandler(stream_handler)
-

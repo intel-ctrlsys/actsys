@@ -81,9 +81,8 @@ class TestDataStoreCLI(unittest.TestCase):
         result = self.dscli.parse_and_run(['device', 'delete', 'hostname=node'])
         self.assertEqual(result, 0)
 
-    def test_device_fatal_delete(self):
         self.mockDS.device_get.return_value = [{'hostname': 'node'}]
-        result = self.dscli.parse_and_run(['device', 'delete', 'hostname=node', '--fatal'])
+        result = self.dscli.parse_and_run(['device', 'delete', 'hostname=node'])
         self.assertEqual(result, 0)
 
     def test_profiles(self):

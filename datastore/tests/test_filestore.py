@@ -134,26 +134,25 @@ class TestFileStore(unittest.TestCase):
         result["port"] = 153
         self.fs.device_upsert(result)
 
-    def test_device_logical_delete(self):
+    def test_device_delete(self):
         # device_id = self.fs.device_upsert({"hostname": "test", "port": 1234})
-        device_id = self.fs.device_logical_delete("test")
+        device_id = self.fs.device_delete("test")
         if device_id is None:
             # Device Id was None, that means there was no "test" in the devices, add one and try again.
             device_id = self.fs.device_upsert({"device_type": "node", "hostname": "test", "port": 1234})
-            device_id = self.fs.device_logical_delete("test")
+            device_id = self.fs.device_delete("test")
         self.assertEqual(0, len(self.fs.device_get(device_id)))
-        device_id = self.fs.device_logical_delete(device_id)
+        device_id = self.fs.device_delete(device_id)
         self.assertIsNone(device_id)
 
-    def test_device_fatal_delete(self):
-        device_id = self.fs.device_fatal_delete("test")
+        device_id = self.fs.device_delete("test")
         if device_id is None:
             # Device Id was None, that means there was no "test" in the devices, add one and try again.
             device_id = self.fs.device_upsert({"device_type": "node", "hostname": "test", "port": 1234})
-            device_id = self.fs.device_fatal_delete("test")
+            device_id = self.fs.device_delete("test")
 
         self.assertEqual(0, len(self.fs.device_get(device_id)))
-        device_id = self.fs.device_fatal_delete(device_id)
+        device_id = self.fs.device_delete(device_id)
         self.assertIsNone(device_id)
 
     def test_config_get(self):
@@ -262,9 +261,9 @@ class TestFileStore(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_logger_setup(self):
-        self.fs._setup_logger(None)
+        self.fs._setup_file_logger(None)
         self.fs.logger.handlers = list()
-        self.fs._setup_logger(logging.WARNING)
+        self.fs._setup_file_logger(logging.WARNING)
 
     def test_device_upsert_id(self):
         self.fs.device_upsert({"device_type": "test_dev_type_test", "hostname": "test_hostname3"})
@@ -376,9 +375,9 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         self.assertEqual(result, "value")
 
     def test_empty_deletes(self):
-        result = self.fs.device_logical_delete("foo")
+        result = self.fs.device_delete("foo")
         self.assertIsNone(result)
-        result = self.fs.device_fatal_delete("foo")
+        result = self.fs.device_delete("foo")
         self.assertIsNone(result)
         result = self.fs.profile_delete("foo")
         self.assertIsNone(result)

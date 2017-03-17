@@ -51,20 +51,20 @@ class MultiStore(DataStore):
         results = self._call_function("device_upsert", [device_info])
         return results[0]
 
-    def device_logical_delete(self, device_name):
+    def device_delete(self, device_name):
         """
         See @DataStore description
         """
-        super(MultiStore, self).device_logical_delete(device_name)
-        results = self._call_function("device_logical_delete", [device_name])
+        super(MultiStore, self).device_delete(device_name)
+        results = self._call_function("device_delete", [device_name])
         return results[0]
 
-    def device_fatal_delete(self, device_name):
+    def device_history_get(self, device_name=None):
         """
         See @DataStore description
         """
-        super(MultiStore, self).device_fatal_delete(device_name)
-        results = self._call_function("device_fatal_delete", [device_name])
+        super(MultiStore, self).device_history_get(device_name)
+        results = self._call_function("device_history_get", [device_name])
         return results[0]
 
     def profile_get(self, profile_name=None):

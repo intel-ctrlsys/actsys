@@ -30,7 +30,7 @@ class FolderWalker(object):
             'run-coverage.py',
             'run-pylint.py'
         ]
-        if '.git' in directory:
+        if '.git' in directory or 'build' in directory:
             return
         for filename in names:
             if filename.endswith('.py') and \
@@ -41,7 +41,7 @@ class FolderWalker(object):
 
 def main():
     """Script Entry point."""
-    files = FolderWalker.get_files_for_pylint('.')
+    files = FolderWalker.get_files_for_pylint('datastore')
     return Run(files)
 
 

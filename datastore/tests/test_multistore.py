@@ -67,13 +67,12 @@ class TestMultiStore(unittest.TestCase):
 
     def test_device_logical_delete(self):
         self.ms.device_upsert({"device_type": "node", "hostname": "test", "port": 123})
-        self.ms.device_logical_delete("test")
-        self.ms.device_logical_delete("test")
+        self.ms.device_delete("test")
+        self.ms.device_delete("test")
 
-    def test_device_fatal_delete(self):
         self.ms.device_upsert({"device_type": "node", "hostname": "test", "port": 123})
-        self.ms.device_fatal_delete("test")
-        self.ms.device_fatal_delete("test")
+        self.ms.device_delete("test")
+        self.ms.device_delete("test")
 
     def test_profile_get(self):
         self.ms.profile_get()

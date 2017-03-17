@@ -8,7 +8,6 @@ This module creates the command line parser and executes the user commands.
 """
 from __future__ import print_function
 import argparse
-import json
 import re
 from dateutil.parser import parse as date_parse
 from . import DataStoreException
@@ -26,7 +25,7 @@ class DataStoreCLI(object):
         self.retval = 0
         # Check and create command_invoker if its None
         # TODO: pass in datastore, or build it...
-        self.ds = datastore
+        self.datastore = datastore
 
         self.subparsers = self.root_parser.add_subparsers(title='Data Type', description='What datatype to manipulate')
         self.add_device_args()
@@ -43,9 +42,6 @@ class DataStoreCLI(object):
         self.device_parser.add_argument('action', choices=['list', 'get', 'set', 'delete'])
         self.device_parser.add_argument('options', nargs='*',
                                         help='key=value pairs used to assist in selecting and setting attributes')
-        self.device_parser.add_argument('--fatal', '-f', default=False, required=False, action='store_true',
-                                        help='The existance of this flag fatally deletes an item. The default is to'
-                                             'only logically delete the item.')
         self.device_parser.set_defaults(func=self.device_execute)
 
     def add_profile_args(self):
@@ -119,13 +115,13 @@ class DataStoreCLI(object):
         options = self.parse_options(parsed_args.options)
 
         if parsed_args.action == "list":
-            devices = self.ds.device_get()
+            devices = self.datastore.device_get()
             self.print_devices(devices)
             return 0
 
         device_name = options.get("device_id") or options.get("hostname") or options.get("ip_address")
         if parsed_args.action == "get" and device_name is None and options != {}:
-            devices = self.ds.device_list_filter(options)
+            devices = self.datastore.device_list_filter(options)
             self.print_devices(devices)
             return 0
         if device_name is None:
@@ -133,7 +129,7 @@ class DataStoreCLI(object):
             return 1
 
         if parsed_args.action == "get":
-            devices = self.ds.device_get(device_name)
+            devices = self.datastore.device_get(device_name)
             if len(devices) != 1:
                 print("Could not find any device matching {}".format(device_name))
                 return 1
@@ -141,7 +137,7 @@ class DataStoreCLI(object):
             self.print_devices(device)
             return 0
         if parsed_args.action == "set":
-            existing_device = self.ds.device_get(device_name)
+            existing_device = self.datastore.device_get(device_name)
             if len(existing_device) == 1:
                 existing_device = existing_device[0]
             else:
@@ -160,18 +156,16 @@ class DataStoreCLI(object):
                 print("Please specify a device_type. (i.e device_type=node)")
                 return 1
 
-            self.ds.device_upsert(existing_device)
+            self.datastore.device_upsert(existing_device)
             print("Successfully updated '{}'".format(device_name))
             return 0
         if parsed_args.action == "delete":
-            if parsed_args.fatal:
-                self.ds.device_fatal_delete(device_name)
-                print("Successfully deleted {}".format(device_name))
-                return 0
+            retval = self.datastore.device_delete(device_name)
+            if retval is None:
+                print("Device not found. Nothing was deleted.")
             else:
-                self.ds.device_logical_delete(device_name)
-                print("Successfully (logically) deleted {}".format(device_name))
-                return 0
+                print("Successfully deleted {}".format(retval))
+            return 0
 
     def profile_execute(self, parsed_args):
         """
@@ -182,7 +176,7 @@ class DataStoreCLI(object):
         options = self.parse_options(parsed_args.options)
 
         if parsed_args.action == "list":
-            profiles = self.ds.profile_get()
+            profiles = self.datastore.profile_get()
             self.print_devices(profiles)
             return 0
 
@@ -193,7 +187,7 @@ class DataStoreCLI(object):
             return 1
 
         if parsed_args.action == "get":
-            profiles = self.ds.profile_get(profile_name)
+            profiles = self.datastore.profile_get(profile_name)
             if len(profiles) != 1:
                 print("Could not find any profile matching {}".format(profile_name))
                 return 1
@@ -203,7 +197,7 @@ class DataStoreCLI(object):
         if parsed_args.action == "set":
             # Get an existing profile, we set all the passed in options in the profile and
             # delete the ones where value is UNDEF
-            existing_profile = self.ds.profile_get(profile_name)
+            existing_profile = self.datastore.profile_get(profile_name)
             if len(existing_profile) == 1:
                 existing_profile = existing_profile[0]
 
@@ -218,12 +212,15 @@ class DataStoreCLI(object):
                 else:
                     existing_profile[option] = value
 
-            self.ds.profile_upsert(existing_profile)
+            self.datastore.profile_upsert(existing_profile)
             print("Profile '{}' updated".format(profile_name))
             return 0
         if parsed_args.action == "delete":
-            self.ds.profile_delete(profile_name)
-            print("Sucessfully deleted '{}'".format(profile_name))
+            retval = self.datastore.profile_delete(profile_name)
+            if retval is None:
+                print("Profile not found. Nothing was deleted.")
+            else:
+                print("Sucessfully deleted '{}'".format(retval))
             return 0
 
         self.profile_parser.print_usage()
@@ -244,7 +241,7 @@ class DataStoreCLI(object):
                 self.config_parser.print_usage()
                 print("Please specify a key to retrieve from the config")
                 return 1
-            config_value = self.ds.configuration_get(config_key)
+            config_value = self.datastore.configuration_get(config_key)
             if config_value is None:
                 print("Value for key `{}` not found".format(config_key))
                 return 1
@@ -258,7 +255,7 @@ class DataStoreCLI(object):
                 print("Please specify a key and value. (i.e. config key=foo value=bar)")
                 return 1
 
-            set_key = self.ds.configuration_upsert(config_key, config_value)
+            set_key = self.datastore.configuration_upsert(config_key, config_value)
             print("Successfully set {}, to {}".format(set_key, config_value))
             return 0
         if parsed_args.action == "delete":
@@ -268,7 +265,7 @@ class DataStoreCLI(object):
                 print("Please specify a key to retrieve from the config")
                 return 1
 
-            self.ds.configuration_delete(config_key)
+            self.datastore.configuration_delete(config_key)
             print("Deleted")
             return 0
 
@@ -286,11 +283,11 @@ class DataStoreCLI(object):
                 return 0
             begin_date = date_parse(parsed_args.begin)
             end_date = date_parse(parsed_args.end)
-            result = self.ds.log_get_timeslice(begin_date, end_date, parsed_args.device_name, parsed_args.limit)
+            result = self.datastore.log_get_timeslice(begin_date, end_date, parsed_args.device_name, parsed_args.limit)
             self.print_devices(result)
             return 0
         else:
-            result = self.ds.log_get(parsed_args.device_name, parsed_args.limit)
+            result = self.datastore.log_get(parsed_args.device_name, parsed_args.limit)
             self.print_devices(result)
             return 0
 
@@ -298,7 +295,7 @@ class DataStoreCLI(object):
     def parse_options(options):
         """
 
-        :param options:
+        :param options: A list like: ['foo=bar', 'baz=1', 'joe=[do,re,me]']
         :return:
         """
         # TODO: Handle lists
@@ -307,15 +304,15 @@ class DataStoreCLI(object):
         if options is None:
             return options_dict
         for option in options:
-            t = option.split("=")
+            temp = option.split("=")
 
             # Accepts options like 'foo=bar'
-            if len(t) != 2:
+            if len(temp) != 2:
                 print("Option `{}` is not valid. Please specify a value like key=value.".format(option))
                 exit(1)
 
-            key = t[0]
-            value = t[1]
+            key = temp[0]
+            value = temp[1]
 
             # None or empty str, is not allowed
             if key is None or key == '' or value is None or value == '':
@@ -324,9 +321,9 @@ class DataStoreCLI(object):
 
             # Check for lists
             # Test it is a list:
-            if re.search("(^\[.*\]$)", value) is not None:
+            if re.search(r"(^\[.*\]$)", value) is not None:
                 # get the individual items in the list
-                matches = re.findall("([^\[\],]+)", value)
+                matches = re.findall(r"([^\[\],]+)", value)
                 value = list()
                 for match in matches:
                     match = match.strip()

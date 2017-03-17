@@ -25,9 +25,9 @@ class FileStore(DataStore):
         self.location = location
         # TODO: lock the file: http://stackoverflow.com/a/186464/1767377
         self.parsed_file = JsonParser.read_file(location)
-        self._setup_logger(log_level)
+        self._setup_file_logger(log_level)
 
-    def _setup_logger(self, log_level):
+    def _setup_file_logger(self, log_level):
         """
         Sets up the logger to log things. If no log location is given a log file is created in ~/datastore.log.
         :return:
@@ -170,26 +170,11 @@ class FileStore(DataStore):
         self.save_file()
         return device_info.get("device_id")
 
-    def device_logical_delete(self, device_name):
+    def device_delete(self, device_name):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).device_logical_delete(device_name)
-        devices = self.parsed_file.get(self.DEVICE_KEY, [])
-
-        index, device = self._device_find(device_name, devices)
-        if index is not None:
-            devices[index]["deleted"] = True
-            self.save_file()
-            return device.get("device_id")
-        else:
-            return None
-
-    def device_fatal_delete(self, device_name):
-        """
-        See @DataStore for function description. Only implementation details here.
-        """
-        super(FileStore, self).device_fatal_delete(device_name)
+        super(FileStore, self).device_delete(device_name)
         devices = self.parsed_file.get(self.DEVICE_KEY, [])
 
         index, device = self._device_find(device_name, devices, True)
@@ -199,6 +184,12 @@ class FileStore(DataStore):
             return device.get("device_id")
         else:
             return None
+
+    def device_history_get(self, device_name=None):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        raise DataStoreException("Not implemented for FileStore.")
 
     def profile_get(self, profile_name=None):
         """
