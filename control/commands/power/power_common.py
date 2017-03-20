@@ -48,9 +48,10 @@ class CommonPowerCommand(Command):
             if bmc is not None:
                 # TODO: check if bmc access_type is not defined.
                 bmc_plugin = mgr.create_instance('bmc', bmc.get("access_type"))
-                bmc_access = RemoteAccessData(node.bmc.ip_address, node.bmc.port,
-                                              node.bmc.user, node.bmc.password)
+                bmc_access = RemoteAccessData(bmc.get("ip_address"), bmc.get("port"),
+                                              bmc.get("user"), bmc.get("password"))
                 options['bmc'] = (bmc_access, bmc_plugin)
+
         # Device OS
         if node:
             # TODO: Check if node access type is not defined

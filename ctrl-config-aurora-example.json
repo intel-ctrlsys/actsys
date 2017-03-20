@@ -1,0 +1,109 @@
+{
+  "configuration_variables": {
+    "log_file_path": "/tmp/ctrl.log",
+    "log_file_max_bytes": 10485760,
+    "provisioning_agent_software": "Warewulf"
+  },
+  "device": [
+    {
+      "bmc": "compute-29-nc",
+      "device_id": 1,
+      "device_type": "node",
+      "hostname": "compute-29",
+      "ip_address": "192.168.1.29",
+      "port": "1000",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node"
+    },
+    {
+      "bmc": "compute-29-nc",
+      "device_id": 2,
+      "device_type": "node",
+      "hostname": "compute-30",
+      "ip_address": "192.168.1.30",
+      "port": "1001",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node"
+    },
+    {
+      "bmc": "compute-30-nc",
+      "device_id": 3,
+      "device_type": "node",
+      "hostname": "compute-31",
+      "ip_address": "192.168.1.31",
+      "port": "1002",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node"
+    },
+    {
+      "device_id": 5,
+      "device_type": "bmc",
+      "hostname": "compute-29-nc",
+      "ip_address": "192.168.2.29",
+      "rest_server_port": "5000",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "node_controller_default"
+    },
+    {
+      "device_id": 6,
+      "device_type": "bmc",
+      "hostname": "compute-30-nc",
+      "ip_address": "192.168.2.30",
+      "rest_server_port": "5000",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "node_controller_default"
+    }
+  ],
+  "profile": [
+    {
+      "access_type": "ssh",
+      "device_power_control": "bky_power",
+      "image": "centos7.2",
+      "os_boot_timeout_seconds": 300,
+      "os_network_to_halt_time": 5,
+      "os_shutdown_timeout_seconds": 150,
+      "password": "password",
+      "port": 22,
+      "profile_name": "compute_node",
+      "resource_controller": "slurm",
+      "role": [
+        "compute"
+      ],
+      "service_list": [
+        "orcmd",
+        "gmond"
+      ],
+      "type": "node",
+      "user": "user",
+      "wait_time_after_boot_services": 120
+    },
+    {
+      "access_type": "ssh",
+      "bmc_boot_timeout_seconds": 10,
+      "bmc_chassis_off_wait": 3,
+      "image": "centos7.2",
+      "os_boot_timeout_seconds": 300,
+      "os_network_to_halt_time": 5,
+      "os_shutdown_timeout_seconds": 150,
+      "password": "password",
+      "port": 22,
+      "profile_name": "service_node",
+      "role": [
+        "service"
+      ],
+      "service_list": [
+        "orcmsched",
+        "orcmd",
+        "gmond",
+        "gmetad"
+      ],
+      "type": "node",
+      "user": "user",
+      "wait_time_after_boot_services": 120
+    },
+    {
+      "port": 411786,
+      "profile_name": "test"
+    }
+  ]
+}
