@@ -17,6 +17,14 @@ class TestRemoteTelnetPlugin(unittest.TestCase):
     def setUp(self):
         self.access1 = RemoteAccessData('', 0, '', '')
         self.access2 = RemoteAccessData('', 0, 'user', 'pass')
+        self.old_sleep_time = RemoteTelnetPlugin.SLEEP_TIME
+        self.old_timeout = RemoteTelnetPlugin.TIMEOUT
+        RemoteTelnetPlugin.SLEEP_TIME = 0.2
+        RemoteTelnetPlugin.TIMEOUT = 0.1
+
+    def tearDown(self):
+        RemoteTelnetPlugin.SLEEP_TIME = self.old_sleep_time
+        RemoteTelnetPlugin.TIMEOUT = self.old_timeout
 
     def test_test_connection(self):
         with self.assertRaises(NotImplementedError):
