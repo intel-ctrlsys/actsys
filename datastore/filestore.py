@@ -79,7 +79,13 @@ class FileStore(DataStore):
             if profile_name is None:
                 # Nothing to add or change!
                 continue
-            profile = self.profile_get(profile_name)[0]
+            profiles = self.profile_get(profile_name)
+            if len(profiles) < 1:
+                # no valid profile, likely this is caused by an error in the config
+                self.logger.warning("Device {}, has an invalid profile {}. Skipping for now, but thi is likely due to"
+                                    " an invalid configuration.".format(device.get("device_id"), profile_name))
+                continue
+            profile = profiles[0]
             for key in profile:
                 if device.get(key, None) is None:
                     device_list[index][key] = profile.get(key)
