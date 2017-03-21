@@ -11,15 +11,16 @@ import time
 from ..os_remote_access import OsRemoteAccess
 from ...plugin import DeclarePlugin
 
-# timeout parameter (estimated 10s) specifies timeout in seconds
-# for blocking connection attempt operation (default 4 m)
-TIMEOUT = 10
-SLEEP_TIME = TIMEOUT + 1
-
 
 @DeclarePlugin('telnet', 100)
 class RemoteTelnetPlugin(OsRemoteAccess):
     """Telnet remote OS access implementation."""
+
+    # timeout parameter (estimated 10s) specifies timeout in seconds
+    # for blocking connection attempt operation (default 4 m)
+    TIMEOUT = 10
+    SLEEP_TIME = TIMEOUT + 1
+
     def __init__(self, options=None):
         OsRemoteAccess.__init__(self, options)
 
@@ -42,8 +43,8 @@ class RemoteTelnetPlugin(OsRemoteAccess):
     def _establish_connection(cls, remote_access_data):
         """Establish telnet connection"""
         try:
-            time.sleep(SLEEP_TIME)
-            tnet = telnetlib.Telnet(remote_access_data.address, timeout=TIMEOUT)
+            time.sleep(cls.SLEEP_TIME)
+            tnet = telnetlib.Telnet(remote_access_data.address, timeout=cls.TIMEOUT)
         except EnvironmentError:
             # print "Telnet: Error connecting to remote device"
             return None
