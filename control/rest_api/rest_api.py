@@ -32,7 +32,7 @@ class ControlRestApi(object):
 
     def _add_resources(self):
         self.rest_api.add_resource(ResourceManager, \
-            '/resource', '/resource/<string:subcommand>', \
+            '/resource', '/resource/', '/resource/<string:subcommand>', \
             resource_class_kwargs={'cmd_invoker':self.cmd_invoker, \
             'dfx':self.dfx_resource_mgr, 'debug': self.debug})
 

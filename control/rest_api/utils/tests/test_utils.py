@@ -7,7 +7,7 @@
 from unittest import TestCase
 from copy import deepcopy
 from mock import patch, call
-from ..utils import handle_command_results, print_msg, \
+from ..utils import split_command_results, print_msg, \
                     append_to_list_in_dictionary, Usage
 from ....commands import CommandResult
 
@@ -96,61 +96,61 @@ class TestUtils(TestCase):
                                                     self.result_device]}
         self.assertEqual(expected, mydic)
 
-    def test_handle_command_None_results(self):
-        """ Tests the handle_command_results function """
-        success, fail = handle_command_results(None)
+    def test_split_command_None_results(self):
+        """ Tests the split_command_results function """
+        success, fail = split_command_results(None)
         self.assertEqual(success, fail)
         self.assertFalse(success)
 
-    def test_handle_command_empty_results(self):
-        """ Tests the handle_command_results function """
-        success, fail = handle_command_results(list())
+    def test_split_command_empty_results(self):
+        """ Tests the split_command_results function """
+        success, fail = split_command_results(list())
         self.assertEqual(success, fail)
         self.assertFalse(success)
 
-    def test_handle_command_invalid_result(self):
-        """ Tests the handle_command_results function """
-        success, fail = handle_command_results(self.msg)
+    def test_split_command_invalid_result(self):
+        """ Tests the split_command_results function """
+        success, fail = split_command_results(self.msg)
         self.assertEqual(success, fail)
         self.assertFalse(success)
 
-    def test_handle_command_single_result(self):
-        """ Tests the handle_command_results function """
-        success, fail = handle_command_results(self.result)
+    def test_split_command_single_result(self):
+        """ Tests the split_command_results function """
+        success, fail = split_command_results(self.result)
         self.assertFalse(success)
         self.assertEqual(self.base_none_dic, fail)
 
-    def test_handle_command_multiple_results(self):
-        """ Tests the handle_command_results function """
+    def test_split_command_multiple_results(self):
+        """ Tests the split_command_results function """
         results = [self.result, self.result]
-        success, fail = handle_command_results(results)
+        success, fail = split_command_results(results)
         self.assertFalse(success)
         self.assertEqual({self.result.device_name:results}, fail)
 
-    def test_handle_command_single_result_success(self):
-        """ Tests the handle_command_results function """
-        success, fail = handle_command_results(self.result_success)
+    def test_split_command_single_result_success(self):
+        """ Tests the split_command_results function """
+        success, fail = split_command_results(self.result_success)
         self.assertFalse(fail)
         self.assertEqual(self.base_success_dic, success)
 
-    def test_handle_command_multiple_results_success(self):
-        """ Tests the handle_command_results function """
+    def test_split_command_multiple_results_success(self):
+        """ Tests the split_command_results function """
         results = [self.result_success, self.result_success]
-        success, fail = handle_command_results(results)
+        success, fail = split_command_results(results)
         self.assertFalse(fail)
         self.assertEqual({self.result_success.device_name:results}, success)
 
-    def test_handle_command_multiple_results_both(self):
-        """ Tests the handle_command_results function """
+    def test_split_command_multiple_results_both(self):
+        """ Tests the split_command_results function """
         results = [self.result, self.result_success]
-        success, fail = handle_command_results(results)
+        success, fail = split_command_results(results)
         self.assertEqual(self.base_none_dic, fail)
         self.assertEqual(self.base_success_dic, success)
 
-    def test_handle_command_multiple_results_invalid(self):
-        """ Tests the handle_command_results function """
+    def test_split_command_multiple_results_invalid(self):
+        """ Tests the split_command_results function """
         results = [self.msg, self.result_success]
-        success, fail = handle_command_results(results)
+        success, fail = split_command_results(results)
         self.assertFalse(fail)
         self.assertEqual(self.base_success_dic, success)
 

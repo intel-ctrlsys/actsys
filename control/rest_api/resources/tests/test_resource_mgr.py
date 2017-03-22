@@ -196,13 +196,28 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         self.base_url = '/resource'
         self.url = dict(remove=self.base_url+'/remove',
                         add=self.base_url+'/add',
+                        check=self.base_url+'/check',
                         invalid=self.base_url+'/subcommand'
                        )
 
-    def test_get(self):
+    def test_get_no_subcommand_no_args(self):
         """ Test get function """
         ret = self.test_app.get(self.base_url)
-        self._check_response(ret, 405, 'method is not allowed')
+        self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
+
+    def test_put_no_subcommand_no_args(self):
+        """ Test put function with dfx disabled """
+        ret = self.test_app.put(self.base_url)
+        self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
+
+    def test_get_no_subcommand_none_node_regex(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix']
+        ret = self.test_app.get(self.base_url + args)
+        self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
 
     def test_put_no_subcommand_none_node_regex(self):
         """ Test put function with dfx disabled """
@@ -211,9 +226,10 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         self._check_response(ret, 400, 'Invalid subcommand')
         self._check_response(ret, 400, 'Usage')
 
-    def test_put_no_subcommand_no_args(self):
-        """ Test put function with dfx disabled """
-        ret = self.test_app.put(self.base_url)
+    def test_get_no_subcommand_empty_node_regex(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + '""'
+        ret = self.test_app.get(self.base_url + args)
         self._check_response(ret, 400, 'Invalid subcommand')
         self._check_response(ret, 400, 'Usage')
 
@@ -224,10 +240,24 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         self._check_response(ret, 400, 'Invalid subcommand')
         self._check_response(ret, 400, 'Usage')
 
+    def test_get_no_subcommand_with_args(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['invalid']
+        ret = self.test_app.get(self.base_url + args)
+        self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
+
     def test_put_no_subcommand_with_args(self):
         """ Test put function with dfx disabled """
         args = self.node_regex['prefix'] + self.node_regex['invalid']
         ret = self.test_app.put(self.base_url + args)
+        self._check_response(ret, 400, 'Invalid subcommand')
+        self._check_response(ret, 400, 'Usage')
+
+    def test_get_invalid_subcommand_with_args(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['invalid']
+        ret = self.test_app.get(self.url['invalid'] + args)
         self._check_response(ret, 400, 'Invalid subcommand')
         self._check_response(ret, 400, 'Usage')
 
@@ -238,6 +268,13 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         self._check_response(ret, 400, 'Invalid subcommand')
         self._check_response(ret, 400, 'Usage')
 
+    def test_get_check_plugin_not_installed(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        self.cmd_invoker.resource_check.return_value = self.result['plugin_not_installed']
+        ret = self.test_app.get(self.url['check'] + args)
+        self._check_response(ret, 424, 'Resource Manager plugin is not installed')
+
     def test_put_remove_plugin_not_installed(self):
         """ Test put function with dfx disabled """
         args = self.node_regex['prefix'] + self.node_regex['single']
@@ -245,6 +282,20 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         ret = self.test_app.put(self.url['remove'] + args)
         self._check_response(ret, 424, 'Resource Manager plugin is not installed')
 
+    def test_put_add_plugin_not_installed(self):
+        """ Test put function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        self.cmd_invoker.resource_add.return_value = self.result['plugin_not_installed']
+        ret = self.test_app.put(self.url['add'] + args)
+        self._check_response(ret, 424, 'Resource Manager plugin is not installed')
+
+    def test_get_dfx_check_with_args(self):
+        """ Test get function with dfx enabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        ret = self.test_app_dfx.get(self.url['check'] + args)
+        self.assertEqual(200, ret.status_code)
+        self.assertEqual(self.rmgr_dfx._mock_check_status(self.node_regex['single']),
+                         json.loads(ret.get_data()))
 
     def test_put_dfx_remove_with_args(self):
         """ Test put function with dfx enabled """
@@ -254,22 +305,6 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         self.assertEqual(self.rmgr_dfx._mock_remove_nodes(self.node_regex['single']),
                          json.loads(ret.get_data()))
 
-    def test_put_remove_invalid_node_regex(self):
-        """ Test put function with dfx disabled """
-        self.cmd_invoker.resource_remove.return_value = self.result['bad_param']
-        args = self.node_regex['prefix'] + self.node_regex['invalid']
-        ret = self.test_app.put(self.url['remove'] + args)
-        self._check_response(ret, 400, 'Could not remove node(s).')
-        self._check_response(ret, 400, 'Usage')
-
-    def test_put_add_plugin_not_installed(self):
-        """ Test put function with dfx disabled """
-        args = self.node_regex['prefix'] + self.node_regex['single']
-        self.cmd_invoker.resource_add.return_value = self.result['plugin_not_installed']
-        ret = self.test_app.put(self.url['add'] + args)
-        self._check_response(ret, 424, 'Resource Manager plugin is not installed')
-
-
     def test_put_dfx_add_with_args(self):
         """ Test put function with dfx enabled """
         args = self.node_regex['prefix'] + self.node_regex['single']
@@ -278,6 +313,22 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         self.assertEqual(self.rmgr_dfx._mock_add_nodes(self.node_regex['single']),
                          json.loads(ret.get_data()))
 
+    def test_get_check_invalid_node_regex(self):
+        """ Test get function with dfx disabled """
+        self.cmd_invoker.resource_check.return_value = self.result['bad_param']
+        args = self.node_regex['prefix'] + self.node_regex['invalid']
+        ret = self.test_app.get(self.url['check'] + args)
+        self._check_response(ret, 404, 'Could not get node(s) status')
+
+    def test_put_remove_invalid_node_regex(self):
+        """ Test put function with dfx disabled """
+        self.cmd_invoker.resource_remove.return_value = self.result['bad_param']
+        args = self.node_regex['prefix'] + self.node_regex['invalid']
+        ret = self.test_app.put(self.url['remove'] + args)
+        self._check_response(ret, 400, 'Could not remove node(s).')
+        self._check_response(ret, 400, 'Usage')
+
+
     def test_put_add_invalid_node_regex(self):
         """ Test put function with dfx disabled """
         self.cmd_invoker.resource_add.return_value = self.result['bad_param']
@@ -285,6 +336,28 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         ret = self.test_app.put(self.url['add'] + args)
         self._check_response(ret, 400, 'Could not add node(s).')
         self._check_response(ret, 400, 'Usage')
+
+    def test_get_add_invalid_method(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        ret = self.test_app.get(self.url['add'] + args)
+        self._check_response(ret, 405, 'GET method not allowed for add option.')
+        self._check_response(ret, 405, 'Usage')
+
+    def test_get_remove_invalid_method(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        ret = self.test_app.get(self.url['remove'] + args)
+        self._check_response(ret, 405, 'GET method not allowed for remove option.')
+        self._check_response(ret, 405, 'Usage')
+
+    def test_put_check_invalid_method(self):
+        """ Test put function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        ret = self.test_app.put(self.url['check'] + args)
+        self._check_response(ret, 405, 'PUT method not allowed for check option.')
+        self._check_response(ret, 405, 'Usage')
+
 
 
 def _mock_print_and_test(rmgr, msg, should_print):
