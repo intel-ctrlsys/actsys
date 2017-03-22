@@ -17,25 +17,34 @@ class Utilities(object):
         pass
 
     def execute_no_capture(self, command):
-        """Execute a command list suppressing output and returning the return
-           code."""
+        """
+        Execute a command list suppressing output and returning the return
+           code. The call is blocking.
+        :param command: A list of args to execute (i.e. ['ls', '/home'])
+        :return: The return code output by the process completion
+        """
         file_desc = open(os.devnull)
         result = subprocess.call(command, stderr=file_desc, stdout=file_desc)
         file_desc.close()
         return result
 
-    def execute_with_capture(self, command):
-        """Execute a command list capturing output and returning the return
-           code, stdout, stderr"""
+    def execute_subprocess(self, command):
+        """
+        Execute a command list capturing output and returning the return
+           code, stdout, stderr.
+        :param command: A list of args to execute
+        """
         self.logger.warning("Attempting command {}".format(command))
         pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = pipe.communicate()
-        if pipe.returncode == 0:
-            return stdout, stderr
-        else:
-            return None, None
+        return SubprocessOutput(pipe.returncode, stdout, stderr)
 
     def execute_in_shell(self, command):
+        """
+        :param command:
+        :return:
+        """
+        # TODO: This should return A "SubprocessOutput" Object.
         self.logger.debug("Attempting command {}".format(command))
         pipe = subprocess.Popen(command, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, shell=True)
@@ -59,3 +68,11 @@ class Utilities(object):
         else:
             return address.endswith('.1')
         return result == 0
+
+
+class SubprocessOutput(object):
+
+    def __init__(self, return_code, stdout, stderr):
+        self.return_code = return_code
+        self.stdout = stdout
+        self.stderr = stderr

@@ -31,9 +31,9 @@ class SlurmResource(ResourceControl):
         """
         Check the status of the specified node using Slurm command
         """
-        stdout, stderr = self.utilities.execute_with_capture(['sinfo', '-n', node_name])
-        state = self._parse_node_state(stdout)
-        if None == state:
+        subprocess_result = self.utilities.execute_subprocess(['sinfo', '-n', node_name])
+        state = self._parse_node_state(subprocess_result.stdout)
+        if state is None:
             return 1, 'Node ' + node_name + ' not found in SLURM!'
         return 0, state
 
@@ -43,17 +43,12 @@ class SlurmResource(ResourceControl):
         node from cluster resource pool
         """
         reason = "For service"
-        stdout, stderr = self.utilities.execute_with_capture(['scontrol', 'update',
-                                                              'nodename=' + node_name,
-                                                              'state=drain',
-                                                              'reason=' + reason,
-                                                              '-vvvv'])
-        if 'Success' in stderr:
-            message = 'Succeeded in removing node ' + node_name + \
-                      ' from the cluster resource pool!'
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_name,
+                                                              'state=drain', 'reason=' + reason, '-vvvv'])
+        if 'Success' in subprocess_result.stderr:
+            message = 'Succeeded in removing node ' + node_name + ' from the cluster resource pool!'
             return 0, message
-        message = 'Failed in removing node ' + node_name + \
-                  ' from the cluster resource pool!'
+        message = 'Failed in removing node ' + node_name + ' from the cluster resource pool!'
         return 2, message
 
     def _remove_node_alloc(self, node_name):
@@ -111,12 +106,9 @@ class SlurmResource(ResourceControl):
         node back to cluster resource pool
         """
         reason = "Done with service"
-        stdout, stderr = self.utilities.execute_with_capture(['scontrol', 'update',
-                                                              'nodename=' + node_name,
-                                                              'state=undrain',
-                                                              'reason=' + reason,
-                                                              '-vvvv'])
-        if 'Success' in stderr:
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_name,
+                                                              'state=undrain', 'reason=' + reason, '-vvvv'])
+        if 'Success' in subprocess_result.stderr:
             message = 'Succeeded in adding node ' + node_name + \
                       ' back to the cluster resource pool!'
             return 0, message
@@ -138,8 +130,7 @@ class SlurmResource(ResourceControl):
         Handle the situation where a node is in idle state when adding the
         node back to cluster resource pool
         """
-        message = 'The node ' + node_name + ' is already in the cluster ' \
-                  'resource pool!'
+        message = 'The node ' + node_name + ' is already in the cluster resource pool!'
         return 8, message
 
     def _add_node_abnormal_state(self, node_name, state):
@@ -177,11 +168,11 @@ class SlurmResource(ResourceControl):
         Slurm command:
         """
         try:
-            stdout, stderr = self.utilities.execute_with_capture(['sinfo'])
+            subprocess_result = self.utilities.execute_subprocess(['sinfo'])
         except OSError:
             return False
-        if None == stdout:
+        if subprocess_result.stdout is None:
             return False
-        if 'PARTITION' in stdout:
+        if 'PARTITION' in subprocess_result.stdout:
             return True
         return False

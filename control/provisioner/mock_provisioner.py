@@ -9,7 +9,7 @@ from ..plugin import DeclarePlugin
 from .provisioner import Provisioner, ProvisionerException
 import json
 
-@DeclarePlugin('stub', 100)
+@DeclarePlugin('mock', 100)
 class MockProvisioner(Provisioner):
     """
     The MockProvisioner does nothing except return the same values every time.
@@ -39,7 +39,7 @@ class MockProvisioner(Provisioner):
         device[self.DEVICE_ADDED_TO_PROVISIONER_KEY] = True
         return device
 
-    def remove(self, device):
+    def delete(self, device):
         """
         See @Provisioner for interface details. Implementation here.
         """

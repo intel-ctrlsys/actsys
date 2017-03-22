@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Intel Corp.
+# Copyright (c) 2016-2017 Intel Corp.
 #
 """
 This module is called "Command Invoker" which uses APIs from "commands" folder
@@ -147,6 +147,14 @@ class CommandInvoker(object):
         from ..bios import MockNC
         self.manager.register_plugin_class(MockNC)
 
+        from ..commands.provisioner import ProvisionerDeleteCommand, ProvisionerAddCommand, ProvisionerSetCommand
+        self.manager.register_plugin_class(ProvisionerAddCommand)
+        self.manager.register_plugin_class(ProvisionerDeleteCommand)
+        self.manager.register_plugin_class(ProvisionerSetCommand)
+
+        from ..provisioner import MockProvisioner
+        self.manager.register_plugin_class(MockProvisioner)
+
         try:
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)
@@ -174,7 +182,10 @@ class CommandInvoker(object):
                        'service_start': 'service_start',
                        'service_stop': 'service_stop',
                        'bios_update': 'bios_update',
-                       'bios_version': 'bios_version'
+                       'bios_version': 'bios_version',
+                       'provisioner_add': 'provisioner_add',
+                       'provisioner_delete': 'provisioner_delete',
+                       'provisioner_set': 'provisioner_set'
                        }
         device_list = CommandInvoker._device_name_check(device_name)
         if not isinstance(device_list, list):
@@ -261,3 +272,11 @@ class CommandInvoker(object):
         """Get BIOS version on node"""
         return self.common_cmd_invoker(device_name, "bios_version", cmd_args)
 
+    def provision_add(self, device_name, cmd_args=None):
+        return self.common_cmd_invoker(device_name, "provisioner_add", cmd_args)
+
+    def provision_delete(self, device_name, cmd_args=None):
+        return self.common_cmd_invoker(device_name, "provisioner_delete", cmd_args)
+
+    def provision_set(self, device_name, cmd_args=None):
+        return self.common_cmd_invoker(device_name, "provisioner_set", cmd_args)

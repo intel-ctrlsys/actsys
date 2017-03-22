@@ -5,13 +5,12 @@
 """
 Test the IPMI plugin for BMC access/control.
 """
-import os
 import time
 import unittest
+from mock import patch
 from ..ipmi_util import BmcIpmiUtil
 from ....plugin.manager import PluginManager
-from ....utilities.utilities import Utilities
-from ....os_remote_access.ssh.ssh import RemoteSshPlugin
+from ....utilities.utilities import Utilities, SubprocessOutput
 from ....utilities.remote_access_data import RemoteAccessData
 
 
@@ -20,19 +19,6 @@ class MockUtilities(Utilities):
     def __init__(self):
         Utilities.__init__(self)
         self.returned_value = None
-
-    def execute_no_capture(self, command):
-        """Execute a command list suppressing output and returning the return
-           code."""
-        if self.returned_value is None:
-            return 0
-        else:
-            return self.returned_value
-
-    def execute_with_capture(self, command):
-        """Execute a command list capturing output and returning the return
-           code, stdout, stderr"""
-        return self.returned_value, self.returned_value
 
     def ping_check(self, address):
         """Check if a network address has a OS responding to pings."""
@@ -49,7 +35,7 @@ class TestBmcIpmi(unittest.TestCase):
         self.manager = PluginManager()
         self.manager.register_plugin_class(BmcIpmiUtil)
         self.bmc = self.manager.create_instance('bmc', 'ipmi_util')
-        self.bmc.utilities = self.__utilities
+        # self.bmc.utilities = self.__utilities
         self.bmc.mandatory_bmc_wait_seconds = 0
         self.bmc_credentials = RemoteAccessData('127.0.0.2', 0, 'admin',
                                                 'PASSWORD')
@@ -64,40 +50,41 @@ class TestBmcIpmi(unittest.TestCase):
             now = time.time()
             self.bmc.utilities.returned_value = True
 
-    def test_get_chassis_state(self):
-        self.bmc.utilities.returned_value = 'chassis_power = on'
+    @patch.object(Utilities, "execute_subprocess")
+    def test_get_chassis_state(self, mock_esub):
+        mock_esub.return_value = SubprocessOutput(0, 'chassis_power = on', '')
         rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertTrue(rv)
-        self.bmc.utilities.returned_value = 'chassis_power = off'
+        mock_esub.return_value = SubprocessOutput(0, 'chassis_power = off', '')
         rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertFalse(rv)
-        self.bmc.utilities.returned_value = None
+        mock_esub.return_value = SubprocessOutput(1, None, None)
         with self.assertRaises(RuntimeError):
             self.bmc.get_chassis_state(self.bmc_credentials)
-        self.bmc.utilities.returned_value = ''
+        mock_esub.return_value = SubprocessOutput(0, None, None)
+        with self.assertRaises(RuntimeError):
+            self.bmc.get_chassis_state(self.bmc_credentials)
+        self.bmc.utilities.returned_value = SubprocessOutput(1, '', '')
         with self.assertRaises(RuntimeError):
             self.bmc.get_chassis_state(self.bmc_credentials)
 
-    def test_set_chassis_state(self):
-        self.bmc.utilities.returned_value = 0
-        if self.__utilities.ping_check('127.0.0.2'):
-            ssh = RemoteSshPlugin()
-            ssh.utilities = self.__utilities
-            ssh.utilities.returned_value = 0
-            ssh.execute(['shutdown', '-H', 'now'], '127.0.0.2', 22, 'root')
-            self.wait_for_os('127.0.0.2', False)
+    @patch.object(Utilities, "execute_subprocess")
+    @patch.object(Utilities, "execute_no_capture")
+    def test_set_chassis_state(self, mock_enc, mock_esub):
+        mock_enc.return_value = 0
         with self.assertRaises(RuntimeError):
             self.bmc.set_chassis_state(self.bmc_credentials, 'red')
         self.bmc.set_chassis_state(self.bmc_credentials, 'bios')
-        self.bmc.utilities.returned_value = 'chassis_power = on'
+        mock_esub.return_value = SubprocessOutput(0, 'chassis_power = on', '')
         rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertTrue(rv)
-        self.bmc.utilities.returned_value = 0
+        mock_enc.return_value = 0
         self.bmc.set_chassis_state(self.bmc_credentials, 'off')
         self.bmc.set_chassis_state(self.bmc_credentials, 'on')
         self.wait_for_os(self.bmc_credentials.address, True)
 
         self.bmc.tool = 'ls'
+        mock_enc.return_value = 1
         with self.assertRaises(RuntimeError):
             self.bmc.set_chassis_state(self.bmc_credentials, 'off')
 

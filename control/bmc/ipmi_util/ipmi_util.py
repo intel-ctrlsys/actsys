@@ -14,6 +14,7 @@ from ..bmc import Bmc
 @DeclarePlugin('ipmi_util', 100)
 class BmcIpmiUtil(Bmc):
     """Implement Bmc contract using IPMI."""
+
     def __init__(self, options=None):
         Bmc.__init__(self, options)
         self.utilities = Utilities()
@@ -27,12 +28,13 @@ class BmcIpmiUtil(Bmc):
                                             remote_access.username,
                                             remote_access.identifier,
                                             'status')
-        stdout, stderr = self.utilities.execute_with_capture(command)
-        if stdout is None:
+        subprocess_result = self.utilities.execute_subprocess(command)
+        if subprocess_result.return_code != 0 or subprocess_result.stdout is None:
             # TODO: Integrate Logger, and log this failure information
             # TODO: Sometimes the ipmi tool fails, even though it actually succeeds. Root cause this, or double check.
-            raise RuntimeError('Failed to execute "{}"! Command: {} stdout: {} stderr: {}'.format(self.tool, command, stdout, stderr))
-        lines = stdout.split('\n')
+            raise RuntimeError('Failed to execute "{}"! Command: {} stdout: {} stderr: {}'
+                               .format(self.tool, command, subprocess_result.stdout, subprocess_result.stderr))
+        lines = subprocess_result.stdout.split('\n')
         value = None
         for line in lines:
             if line.strip().startswith(self.name_to_find):
