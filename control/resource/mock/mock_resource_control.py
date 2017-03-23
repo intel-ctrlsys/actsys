@@ -10,6 +10,7 @@ import json
 from ...plugin import DeclarePlugin
 from ..resource_control import ResourceControl
 from datastore.filestore import FileStore
+from datastore.datastore import logging
 
 
 @DeclarePlugin('mock', 1000)
@@ -53,15 +54,15 @@ class MockResource(ResourceControl):
     def _write_file(self):
         try:
             configure_manager = FileStore(
-                self._get_correct_configuration_file())
+                self._get_correct_configuration_file(), logging.DEBUG)
         except:
             self.nodes = None
             return
         extractor = configure_manager
-        nodes = extractor.get_devices_by_type('node').keys()
+        nodes_metadata = extractor.get_devices_by_type('node')
         self.nodes = {}
-        for node in nodes:
-            self.nodes[node] = {'state': 'idle'}
+        for node in nodes_metadata:
+            self.nodes[node['hostname']] = {'state': 'idle'}
         self._save_mock_resource_file()
 
     def _load_mock_resource_file(self):

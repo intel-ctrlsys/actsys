@@ -42,6 +42,7 @@ class CommonPowerCommand(Command):
         options = dict()
         options['device_name'] = node.get("device_id")
         options['device_type'] = node.get("device_type")
+        options['bmc_fa_port'] = node.get("bmc_fa_port", None)
         # BMC
         if node and node.get("bmc"):
             bmc = cfg.get_device(node.get("bmc"))
@@ -50,6 +51,7 @@ class CommonPowerCommand(Command):
                 bmc_plugin = mgr.create_instance('bmc', bmc.get("access_type"))
                 bmc_access = RemoteAccessData(bmc.get("ip_address"), bmc.get("port"),
                                               bmc.get("user"), bmc.get("password"))
+                options['rest_server_port'] = bmc.get("rest_server_port", None)
                 options['bmc'] = (bmc_access, bmc_plugin)
 
         # Device OS
@@ -93,8 +95,8 @@ class CommonPowerCommand(Command):
 
         self.logger.debug("Removing {} from the resource pool.".format(self.device_name))
         resource_pool = self.plugin_manager.create_instance('command',
-                                                                    'resource_pool_{}'.format(new_state),
-                                                                    self.command_args)
+                                                            'resource_pool_{}'.format(new_state),
+                                                            self.command_args)
         resource_pool_command_result = resource_pool.execute()
         if resource_pool_command_result.return_code != 0:
             err_msg = "Power command failed due to failed resource {}.".format(new_state)
