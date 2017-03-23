@@ -31,20 +31,18 @@ class DataStore(object):
     def __init__(self):
         self.logger = get_logger()
 
+    @abstractmethod
     def get_device(self, device_name):
         """
-        Here for posterity's sake. Returns the first device found or None.
-        :param device_name:
+        Returns the first device found or None.
+        :param device_name: Either the device_id, hostname or ip_address of the device you are looking for. (In that
+            priority order)
         :return:
         """
-        device = self.device_get(device_name)
-        if len(device) == 1:
-            return device[0]
-        else:
-            return None
+        self.logger.debug("DataStore.get_device called", device_name=device_name)
 
     @abstractmethod
-    def device_get(self, device_name=None):
+    def list_devices(self, filters=None):
         """
         Get the configuration information of the specified device.
 
@@ -58,36 +56,11 @@ class DataStore(object):
          If conflicts ocour, the first found is returned.
         :return: A List of devices
         """
-        self.logger.debug("DataStore.device_get called", device_name=device_name)
+        self.logger.debug("DataStore.list_devices called", filters)
         return list()
 
-    def device_list_filter(self, filters):
-        """
-            Retrieve all devices from self.device_get and filter them out according to the param filters. All entries
-            in filter must be satisfied in order to be included in the filter list. In other words:
-                device_included = device[key] = filter[0][key]
-                                                AND device[key] == filter[1][key]
-                                                ... AND device[key] == filter[n][key]
-        :param filters: dict of key value pairs that a device must match.
-        :return: A list
-        """
-        devices = self.device_get()
-        self.logger.debug("device_list: Attempting to print all devices that have "
-                          "the following attributes: {}".format(filters))
-
-        filtered_devices = list()
-        passed_filters = True
-        for device in devices:
-            passed_filters = True
-            for specified_filter in filters:
-                passed_filters = passed_filters and device.get(specified_filter) == filters.get(specified_filter)
-            if passed_filters:
-                filtered_devices.append(device)
-
-        return filtered_devices
-
     @abstractmethod
-    def device_upsert(self, device_info):
+    def set_device(self, device_info):
         """
         Either updates or creates a device. This device is saved to the DataStore. An update is attempted when device_id
          is passed in via the device_info param. Otherwise, the device is created.
@@ -95,52 +68,62 @@ class DataStore(object):
         :return: the affected device_id
         :raise DataStoreException when device_type is not set in the device_info param
         """
-        self.logger.debug("DataStore.device_upsert called: {}".format(device_info))
+        self.logger.debug("DataStore.set_device called: {}".format(device_info))
 
         if device_info.get("device_type") is None:
             raise DataStoreException("device_type is a required key/value in the device_info field")
 
         profile_name = device_info.get("profile_name")
         if profile_name is not None:
-            profile_names = self.profile_names_get()
+            profile_names = self.get_profile_names()
             if profile_name not in profile_names:
                 raise DataStoreException("Cannot set device with profile '{}', because that profile "
                                          "does not exist.".format(profile_name))
 
     @abstractmethod
-    def device_delete(self, device_name):
+    def delete_device(self, device_name):
         """
         Remove the device. Be very careful.
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :return: device_id of the affected device or None
         """
-        self.logger.debug("DataStore.device_delete called", device_name=device_name)
+        self.logger.debug("DataStore.delete_device called", device_name=device_name)
 
     @abstractmethod
-    def device_history_get(self, device_name=None):
+    def get_device_history(self, device_name=None):
         """
 
         :param device_name:
         :return:
         """
-        self.logger.debug("DataStore.device_history_get called", device_name=device_name)
+        self.logger.debug("DataStore.get_device_history called", device_name=device_name)
 
     @abstractmethod
-    def profile_get(self, profile_name=None):
+    def get_profile(self, profile_name):
+        """
+        Get the first profile foudn that matches the specified profile_name.
+        :param profile_name:  unique id and reference name of this profile
+        :return: A single profile of type dict()
+        """
+        self.logger.debug("DataStore.get_profile called: {}".format(profile_name))
+        pass
+
+    def get_profile_names(self):
+        profiles = self.list_profiles()
+        return map(lambda x: x.get("profile_name"), profiles)
+
+    @abstractmethod
+    def list_profiles(self, filters=None):
         """
         Get profiles. Filtered by profile name, if specified.
         :param profile_name: unique id and reference name of this profile
         :return: A List of profiles
         """
-        self.logger.debug("DataStore.profile_get called: {}".format(profile_name))
+        self.logger.debug("DataStore.list_profiles called: %s", filters)
         return list()
 
-    def profile_names_get(self):
-        profiles = self.profile_get()
-        return map(lambda x: x.get("profile_name"), profiles)
-
     @abstractmethod
-    def profile_upsert(self, profile_info):
+    def set_profile(self, profile_info):
         """
         Either updates or creates a profile. This is saved to the DataStore. An update occurs when the profile_info
         param has a profile_name that already exists.
@@ -149,21 +132,21 @@ class DataStore(object):
         :return: profile_name
         :raise DataStoreException if profile_name is not set in profile info.
         """
-        self.logger.debug("DataStore.profile_upsert called: {}".format(profile_info))
+        self.logger.debug("DataStore.set_profile called: {}".format(profile_info))
         if profile_info.get("profile_name") is None:
             raise DataStoreException("Cannot upsert, profile_name must be specified")
         return profile_info.get("profile_name")
 
     @abstractmethod
-    def profile_delete(self, profile_name):
+    def delete_profile(self, profile_name):
         """
         Attempts to remove a profile. This cannot be done if the profile is in use
         by any other devices.
-        :param profile_name: As explained in profile_get()
+        :param profile_name: As explained in list_profiles()
         :return: profile_name
         :raise DataStoreException if the profile cannot be delete because it is in use by devices.
         """
-        self.logger.debug("DataStore.profile_delete called: {}".format(profile_name))
+        self.logger.debug("DataStore.delete_profile called: {}".format(profile_name))
         devices_using_profile = self.get_profile_devices(profile_name)
         if len(devices_using_profile) != 0:
             raise DataStoreException("The profile '{}' cannot be deleted because it is in use by the following devices:"
@@ -171,38 +154,39 @@ class DataStore(object):
         return profile_name
 
     @abstractmethod
-    def log_get(self, device_name=None, limit=100):
+    def list_logs(self, device_name=None, limit=100):
         """
         If no device_name is specified, returns general logs.
         If device_name is specified, returns device logs.
 
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :param limit: how many logs are returned?
         :return: A list of Logs
         """
-        self.logger.debug("DataStore.log_get called", device_name=device_name)
+        self.logger.debug("DataStore.list_logs called", device_name=device_name)
 
     @abstractmethod
-    def log_get_timeslice(self, begin, end, device_name=None, limit=100):
+    def list_logs_between_timeslice(self, begin, end, device_name=None, limit=100):
         """
 
         :param begin: datetime
         :param end: datetime
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :param limit: how many logs to return
         :return: A list of logs
         """
-        self.logger.debug("DataStore.log_get_timeslice: Between {} and {}".format(begin, end), device_name=device_name)
+        self.logger.debug("DataStore.list_logs_between_timeslice: Between {} and {}".format(begin, end),
+                          device_name=device_name)
 
     @abstractmethod
-    def log_add(self, level, msg, device_name=None, process=None):
+    def add_log(self, level, msg, device_name=None, process=None):
         """
         Add a log to the datastore.
         :param level: Per spec https://docs.python.org/2/library/logging.html#logging-levels
             with the additional log level of JOURNAL
         :param process:
         :param msg:
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :return: None
         :raise DataStore Expection if the level is not a valid log level as sepecified in
             Datastore.get_log_levels()
@@ -212,36 +196,44 @@ class DataStore(object):
                                      "in Datastore.get_log_levels()")
 
     @abstractmethod
-    def configuration_get(self, key):
+    def get_configuration_value(self, key):
         """
         Get the value for a particular key in the configuration
         :param key: str
         :return: value: str or None if the key is not found
         """
-        self.logger.debug("DataStore.configuration_get called: {}".format(key))
+        self.logger.debug("DataStore.get_configuration_value called: {}".format(key))
 
     @abstractmethod
-    def configuration_upsert(self, key, value):
+    def list_configuration(self):
+        """
+
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def set_configuration(self, key, value):
         """
         Insert the new configuration value, update on key conflict
         :param key: str
         :param value: str
         :return: key
         """
-        self.logger.debug("DataStore.configuration_upsert called: {} / {}".format(key, value))
+        self.logger.debug("DataStore.set_configuration called: {} / {}".format(key, value))
 
     @abstractmethod
-    def configuration_delete(self, key):
+    def delete_configuration(self, key):
         """
         Delete the value of a given key
         :param key: str
         :return: value: str or None if nothing was deleted.
         """
-        self.logger.debug("DataStore.configuration_delete called: {}".format(key))
+        self.logger.debug("DataStore.delete_configuration called: {}".format(key))
 
     # UTIL FUNCTIONS
     def get_device_types(self):
-        devices = self.device_get()
+        devices = self.list_devices()
         types = list()
 
         for device in devices:
@@ -295,12 +287,11 @@ class DataStore(object):
             if profile_name is None:
                 continue
 
-            profile = self.profile_get(profile_name)
-            if profile is None or len(profile) != 1:
+            profile = self.get_profile(profile_name)
+            if profile is None:
                 continue
-            profile = profile[0]
 
-            for key in profile:
+            for key in profile.keys():
                 if key == "profile_name":
                     continue
                 device_key_value = device.get(key, None)
@@ -314,7 +305,7 @@ class DataStore(object):
     def get_node(self, device_name=None):
         """
 
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :return: A list (possibly empty) of devices filtered by device_type == 'pdu'
         """
         return self.get_devices_by_type("node", device_name)
@@ -322,7 +313,7 @@ class DataStore(object):
     def get_bmc(self, device_name=None):
         """
 
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :return: A list (possibly empty) of devices filtered by device_type == 'pdu'
         """
         return self.get_devices_by_type("bmc", device_name)
@@ -330,14 +321,14 @@ class DataStore(object):
     def get_pdu(self, device_name=None):
         """
 
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :return: A list (possibly empty) of devices filtered by device_type == 'pdu'
         """
         return self.get_devices_by_type("pdu", device_name)
 
     def get_psu(self, device_name=None):
         """
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :return: A list (possibly empty) of devices filtered by device_type == 'pdu'
         """
         return self.get_devices_by_type("psu", device_name)
@@ -347,10 +338,13 @@ class DataStore(object):
         Filter the list of devices by type. The implementation here pulls all devices then filters, you can probably
         do this faster in the database or something, so feel free to override this method!
         :param device_type:
-        :param device_name: As explained in DataStore.device_get()
+        :param device_name: As explained in DataStore.list_devices()
         :return: A list (possibly empty) of devices filtered by device_type
         """
-        devices = self.device_get(device_name)
+        if device_name is None:
+            devices = self.list_devices()
+        else:
+            devices = [self.get_device(device_name)]
         filtered_devices = list()
         for device in devices:
             if device.get("device_type") == device_type:
@@ -365,7 +359,7 @@ class DataStore(object):
         :param profile_name:
         :return:
         """
-        devices = self.device_get()
+        devices = self.list_devices()
         filtered_devices = list()
         for device in devices:
             if device.get("profile_name") == profile_name:
@@ -427,7 +421,7 @@ class DataStoreLogger(logging.getLoggerClass()):
         else:
             msg = "Command Ended: ({}) Args: ({}) Result: {}".format(command_name, command_args, command_result)
 
-        # self.ds.log_add(self.ds.JOURNAL, msg, device_name, "Journal")
+        # self.ds.add_log(self.ds.JOURNAL, msg, device_name, "Journal")
         super(DataStoreLogger, self).log(DataStore.LOG_LEVEL_JOURNAL, msg, extra={
             "device_name": device_name
         }, *args, **kwargs)

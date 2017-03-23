@@ -12,7 +12,7 @@ author = "Intel Corporation"
 license = "Apache"
 
 setup(name='datastore',
-      version='0.1.2',
+      version='0.2.0',
       description=description,
       author=author,
       license=license,

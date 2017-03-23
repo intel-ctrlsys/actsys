@@ -8,11 +8,11 @@ Object Relational Mapper (ORM)
 from __future__ import print_function
 from distutils.version import StrictVersion
 import os
+import logging
+import datetime
 import alembic
 from alembic.config import Config
 from alembic import command
-import logging
-import datetime
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, create_engine

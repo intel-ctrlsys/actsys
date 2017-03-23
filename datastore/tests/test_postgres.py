@@ -68,8 +68,14 @@ class TestPostgresDB(unittest.TestCase):
         self.expected = expected
         mock_connect.return_value.cursor.return_value.fetchall.return_value = expected
         self.postgres = PostgresStore(self.CONNECTION_STRING, None)
-        self.log_add_org = self.postgres.log_add
-        self.postgres.log_add = self.func
+        self.log_add_org = self.postgres.add_log
+        self.postgres.add_log = self.func
+
+    def test_connect(self, mock_connect):
+        self.set_expected(mock_connect, [])
+        self.postgres.connect()
+        setattr(self.postgres, "cursor", None)
+        self.postgres.connect()
 
     def test_get_device(self, mock_connect):
         self.set_expected(mock_connect, [self.TEST_POSTGRES_DEVICE])
@@ -78,31 +84,30 @@ class TestPostgresDB(unittest.TestCase):
 
     def test_device_get(self, mock_connect):
         self.set_expected(mock_connect, [self.TEST_POSTGRES_DEVICE, self.TEST_POSTGRES_DEVICE])
-        result = self.postgres.device_get()
+        result = self.postgres.list_devices()
 
         self.assertEqual(2, len(result), "Should contain two parsed objects, got {}".format(len(result)))
         self.assertEqual(self.TEST_DEVICE, result[0])
 
         self.set_expected(mock_connect, [self.TEST_POSTGRES_DEVICE])
-        result = self.postgres.device_get(1)
-        self.assertEqual(1, len(result), "Should contain one parsed object, got {}".format(len(result)))
-        self.assertEqual(self.TEST_DEVICE, result[0])
+        result = self.postgres.get_device(1)
+        self.assertEqual(self.TEST_DEVICE, result)
 
         self.set_expected(mock_connect, [])
-        result = self.postgres.device_get()
+        result = self.postgres.list_devices()
         self.assertEqual(0, len(result))
 
-        result = self.postgres.device_get(1)
-        self.assertEqual(0, len(result))
+        result = self.postgres.get_device(1)
+        self.assertIsNone(result)
 
     def test_device_list_filter(self, mock_connect):
         self.set_expected(mock_connect, [self.TEST_POSTGRES_DEVICE, self.TEST_POSTGRES_DEVICE2])
-        result = self.postgres.device_list_filter({"password": "test_pass"})
+        result = self.postgres.list_devices({"password": "test_pass"})
 
         self.assertEqual(1, len(result))
         self.assertEqual(result[0], self.TEST_DEVICE)
 
-        result = self.postgres.device_list_filter({"port": 222})
+        result = self.postgres.list_devices({"port": 222})
 
         self.assertEqual(1, len(result))
         self.assertEqual(result[0], self.TEST_DEVICE2)
@@ -110,160 +115,168 @@ class TestPostgresDB(unittest.TestCase):
     def test_device_upsert(self, mock_connect):
         self.set_expected(mock_connect, [(1, 2)])
         with self.assertRaises(DataStoreException):
-            self.postgres.device_upsert({})
+            self.postgres.set_device({})
         with self.assertRaises(DataStoreException):
-            self.postgres.device_upsert({"device_id": 1})
+            self.postgres.set_device({"device_id": 1})
 
-        result = self.postgres.device_upsert({"device_type": "test_device_type", "attr": "is_added"})
+        result = self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
         self.assertEqual(result, 2)
 
         self.set_expected(mock_connect, [(0, 0)])
-        result = self.postgres.device_upsert({"device_type": "test_device_type", "attr": "is_added"})
+        result = self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(5, 5)])
         with self.assertRaises(DataStoreException):
-            self.postgres.device_upsert({"device_type": "test_device_type", "attr": "is_added"})
+            self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
 
     def test_device_delete(self, mock_connect):
         self.set_expected(mock_connect, [(1, 1)])
-        result = self.postgres.device_delete(1)
+        result = self.postgres.delete_device(1)
         self.assertEqual(1, result)
 
         self.set_expected(mock_connect, [[0, 0]])
-        result = self.postgres.device_delete(1)
+        result = self.postgres.delete_device(1)
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [[3, 3]])
         with self.assertRaises(DataStoreException):
-            result = self.postgres.device_delete(1)
+            result = self.postgres.delete_device(1)
 
         self.set_expected(mock_connect, [(1, 4)])
-        result = self.postgres.device_delete('test')
+        result = self.postgres.delete_device('test')
         self.assertEqual(result, 4)
 
         self.set_expected(mock_connect, [(0, None)])
-        result = self.postgres.device_delete('test')
+        result = self.postgres.delete_device('test')
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(3,)])
         with self.assertRaises(DataStoreException):
-            self.postgres.device_delete('test')
+            self.postgres.delete_device('test')
 
         self.set_expected(mock_connect, [[1, 1]])
-        result = self.postgres.device_delete(1)
+        result = self.postgres.delete_device(1)
         self.assertEqual(1, result)
 
         self.set_expected(mock_connect, [[0, 0]])
-        result = self.postgres.device_delete(1)
+        result = self.postgres.delete_device(1)
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(3, 3)])
         with self.assertRaises(DataStoreException):
-            result = self.postgres.device_delete(1)
+            result = self.postgres.delete_device(1)
 
         self.set_expected(mock_connect, [(1, 32)])
-        result = self.postgres.device_delete('node')
+        result = self.postgres.delete_device('node')
         self.assertEqual(result, 32)
 
         self.set_expected(mock_connect, [(0, None)])
-        result = self.postgres.device_delete('node')
+        result = self.postgres.delete_device('node')
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(3,)])
         with self.assertRaises(DataStoreException):
-            self.postgres.device_delete('node')
+            self.postgres.delete_device('node')
+
+    def test_get_device_history(self, mock_connect):
+        self.set_expected(mock_connect, [self.TEST_POSTGRES_DEVICE])
+        result = self.postgres.get_device_history()
+        self.assertEqual(result, [self.TEST_DEVICE])
+
+        result = self.postgres.get_device_history(self.TEST_DEVICE.get("hostname"))
+        self.assertEqual(result, [self.TEST_DEVICE])
 
     def test_profile_get(self, mock_connect):
         # Single item
         self.set_expected(mock_connect, [self.TEST_POSTGRES_PROFILE])
-        result = self.postgres.profile_get('compute_node')
-        self.assertEqual(self.TEST_PROFILE, result[0])
+        result = self.postgres.get_profile('compute_node')
+        self.assertEqual(self.TEST_PROFILE, result)
 
         self.set_expected(mock_connect, [self.TEST_POSTGRES_PROFILE, self.TEST_POSTGRES_PROFILE])
-        result = self.postgres.profile_get()
+        result = self.postgres.list_profiles()
         self.assertEqual(2, len(result))
 
         self.set_expected(mock_connect, [])
-        result = self.postgres.profile_get()
+        result = self.postgres.list_profiles()
         self.assertEqual(result, [])
 
         self.set_expected(mock_connect, [])
-        result = self.postgres.profile_get('compute_node')
-        self.assertEqual(result, [])
+        result = self.postgres.get_profile('compute_node')
+        self.assertIsNone(result)
 
     def test_profile_upsert(self, mock_connect):
         self.set_expected(mock_connect, [(1,)])
-        self.postgres.profile_upsert({"profile_name": "test", "port": 22})
+        self.postgres.set_profile({"profile_name": "test", "port": 22})
 
         self.set_expected(mock_connect, [('test_name', {"port": 21})])
-        result = self.postgres.profile_get('test_name')
+        result = self.postgres.get_profile('test_name')
 
         self.set_expected(mock_connect, [(1, 1)])
-        result2 = self.postgres.profile_upsert(result[0])
-        self.assertEqual(result2, result[0].get("profile_name"))
+        result2 = self.postgres.set_profile(result)
+        self.assertEqual(result2, result.get("profile_name"))
 
         self.set_expected(mock_connect, [(0, 0)])
-        result = self.postgres.profile_upsert({"profile_name": "test", "port": 23})
+        result = self.postgres.set_profile({"profile_name": "test", "port": 23})
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(55, 55)])
         with self.assertRaises(DataStoreException):
-            self.postgres.profile_upsert({"profile_name": "test", "port": 23})
+            self.postgres.set_profile({"profile_name": "test", "port": 23})
 
         with self.assertRaises(DataStoreException):
-            self.postgres.profile_upsert({"port": 24})
+            self.postgres.set_profile({"port": 24})
 
     def test_profile_delete(self, mock_connect):
         def fake_devices(profile_name):
             return []
         self.set_expected(mock_connect, [(1,)])
         self.postgres.get_profile_devices = fake_devices
-        self.postgres.profile_delete('test')
+        self.postgres.delete_profile('test')
 
         self.set_expected(mock_connect, [(0,)])
         self.postgres.get_profile_devices = fake_devices
-        result = self.postgres.profile_delete('test')
+        result = self.postgres.delete_profile('test')
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [(20,)])
         self.postgres.get_profile_devices = fake_devices
         with self.assertRaises(DataStoreException):
-            self.postgres.profile_delete('test')
+            self.postgres.delete_profile('test')
 
     def test_log_get(self, mock_connect):
         self.set_expected(mock_connect, [('BAT', None, 50, 112, 'From BAT tests with love.'),
                                          ('BAT', None, 50, 112, 'From BAT tests with love.'),
                                          ('BAT', None, 50, 112, 'From BAT tests with love.')])
-        result = self.postgres.log_get()
+        result = self.postgres.list_logs()
         self.assertEqual(3, len(result))
 
     def test_log_get_timeslice(self, mock_connect):
         self.set_expected(mock_connect, [('BAT', datetime.utcnow(), 50, 112, 'From BAT tests with love.'),
                                          ('BAT', datetime.utcnow(), 50, 112, 'From BAT tests with love.'),
                                          ('BAT', datetime.utcnow(), 50, 112, 'From BAT tests with love.')])
-        result = self.postgres.log_get_timeslice(datetime.utcnow(), datetime.utcnow() - timedelta(days=1))
+        result = self.postgres.list_logs_between_timeslice(datetime.utcnow(), datetime.utcnow() - timedelta(days=1))
         self.assertEqual(3, len(result))
 
     def test_log_add(self, mock_connect):
         import logging
         self.set_expected(mock_connect, [(1,)])
-        self.postgres.log_add = self.log_add_org
+        self.postgres.add_log = self.log_add_org
         postgres = self.postgres
         # Run these and check for execptions
-        postgres.log_add(logging.DEBUG, 'From BAT tests with love.', None, "BAT")
-        postgres.log_add(logging.INFO, 'From BAT tests with love.', "test_hostname")
-        postgres.log_add(logging.WARNING, 'From BAT tests with love.', "test_ip_address")
-        postgres.log_add(logging.ERROR, 'From BAT tests with love.', "test_hostname", "BAT")
-        postgres.log_add(logging.CRITICAL, 'From BAT tests with love.', "test_ip_address", "BAT")
+        postgres.add_log(logging.DEBUG, 'From BAT tests with love.', None, "BAT")
+        postgres.add_log(logging.INFO, 'From BAT tests with love.', "test_hostname")
+        postgres.add_log(logging.WARNING, 'From BAT tests with love.', "test_ip_address")
+        postgres.add_log(logging.ERROR, 'From BAT tests with love.', "test_hostname", "BAT")
+        postgres.add_log(logging.CRITICAL, 'From BAT tests with love.', "test_ip_address", "BAT")
 
         self.set_expected(mock_connect, [(5,)])
-        self.postgres.log_add = self.log_add_org
+        self.postgres.add_log = self.log_add_org
         with self.assertRaises(DataStoreException):
-            postgres.log_add(logging.CRITICAL, 'From BAT tests with love.', "test_ip_address", "BAT")
+            postgres.add_log(logging.CRITICAL, 'From BAT tests with love.', "test_ip_address", "BAT")
 
         self.set_expected(mock_connect, [(1,)])
-        self.postgres.log_add = self.log_add_org
+        self.postgres.add_log = self.log_add_org
         self.logger = self.postgres.get_logger()
         self.logger.critical('From BAT tests with love')
         self.logger.error('From BAT tests with love')
@@ -277,34 +290,34 @@ class TestPostgresDB(unittest.TestCase):
 
     def test_config_get(self, mock_connect):
         self.set_expected(mock_connect, [['bar']])
-        result = self.postgres.configuration_get('foo')
+        result = self.postgres.get_configuration_value('foo')
         self.assertEqual(result, 'bar')
 
         self.set_expected(mock_connect, [])
-        result = self.postgres.configuration_get('foo')
+        result = self.postgres.get_configuration_value('foo')
         self.assertIsNone(result)
 
     def test_config_upsert(self, mock_connect):
         self.set_expected(mock_connect, [])
         with self.assertRaises(DataStoreException):
-            self.postgres.configuration_upsert('foo', 'bar')
+            self.postgres.set_configuration('foo', 'bar')
 
         self.set_expected(mock_connect, [[1]])
-        result = self.postgres.configuration_upsert('foo', 'bar')
+        result = self.postgres.set_configuration('foo', 'bar')
         self.assertEqual(result, 'foo')
 
     def test_config_delete(self, mock_connect):
         self.set_expected(mock_connect, [[1]])
-        result = self.postgres.configuration_delete('foo')
+        result = self.postgres.delete_configuration('foo')
         self.assertEqual(result, 'foo')
 
         self.set_expected(mock_connect, [[0]])
-        result = self.postgres.configuration_delete('foo')
+        result = self.postgres.delete_configuration('foo')
         self.assertIsNone(result)
 
         self.set_expected(mock_connect, [[5]])
         with self.assertRaises(DataStoreException):
-            self.postgres.configuration_delete('foo')
+            self.postgres.delete_configuration('foo')
 
     def test_get_node(self, mock_connect):
         self.set_expected(mock_connect, [[1, "node", {"password": "bar"}, "hostname", "ip_address",

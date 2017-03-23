@@ -6,14 +6,16 @@
 Tests for the FileStore class
 """
 from __future__ import print_function
-from mock import MagicMock, Mock, patch
 import unittest
-import io
+import tempfile
+import os
 import StringIO
-import sys
-from ..datastore import DataStore
-from ..datastore_cli import DataStoreCLI
-from random import randint
+import json
+import logging
+from mock import Mock, patch
+from ..datastore import DataStore, get_logger
+from ..datastore_cli import DataStoreCLI, ParseOptionsException
+from ..filestore import FileStore
 
 
 class TestDataStoreCLI(unittest.TestCase):
@@ -26,19 +28,19 @@ class TestDataStoreCLI(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test_device_list(self):
-        self.mockDS.device_get.return_value = [{'hostname': 'node1'}]
+        self.mockDS.list_devices.return_value = [{'hostname': 'node1'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'list'])
             self.assertEqual(output.getvalue(), '--- node1 ---\nhostname             : node1\n')
 
     def test_device_get(self):
         # print('execute_devices')
-        self.mockDS.device_get.return_value = [{'device_type': 'compute node'}]
+        self.mockDS.get_device.return_value = [{'device_type': 'compute node'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'get', 'hostname=node1'])
             self.assertEqual(output.getvalue(), '--- None ---\ndevice_type          : compute node\n')
 
-        self.mockDS.device_list_filter.return_value = [{'device_type': 'node', 'debug_ip': '127.0.0.111'}]
+        self.mockDS.list_devices.return_value = [{'device_type': 'node', 'debug_ip': '127.0.0.111'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'get', 'debug_ip=127.0.0.111'])
             self.assertEqual(output.getvalue(),
@@ -46,144 +48,143 @@ class TestDataStoreCLI(unittest.TestCase):
 
     def test_device_get_no_match(self):
         # print('execute_devices')
-        self.mockDS.device_get.return_value = []
-        result = self.dscli.parse_and_run(['device', 'get', 'hostname=node1'])
-        self.assertEqual(result, 1)
+        self.mockDS.list_devices.return_value = []
+        result = self.dscli.parse_and_run(['device', 'get', 'ham=node1'])
+        self.assertEqual(result, 0)
 
     def test_device_set_no_existing_device(self):
         # print('execute_devices')
-        self.mockDS.device_get.return_value = []
+        self.mockDS.get_device.return_value = None
         result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'device_type=noe'])
         self.assertEqual(result, 0)
 
     def test_device_neg(self):
         # print('execute_devices')
-        self.mockDS.device_get.return_value = [{'hostname': 'node1', 'device_type': 'compute node'}]
+        self.mockDS.list_devices.return_value = [{'hostname': 'node1', 'device_type': 'compute node'}]
         result = self.dscli.parse_and_run(['device', 'get'])
         self.assertEqual(result, 1)
 
     def test_device_upsert(self):
-        self.mockDS.device_get.return_value = [{'hostname': 'node1', 'device_type': 'node'}]
+        self.mockDS.get_device.return_value = {'hostname': 'node1', 'device_type': 'node'}
         result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'ip_address=127.0.0.1'])
         self.assertEqual(result, 0)
 
-        self.mockDS.device_get.return_value = [{'hostname': 'node1', 'device_type': 'node'}]
+        self.mockDS.get_device.return_value = {'hostname': 'node1', 'device_type': 'node'}
         result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'ip_address=UNDEF'])
         self.assertEqual(result, 0)
 
-        self.mockDS.device_get.return_value = [{'hostname': 'node1'}]
+        self.mockDS.get_device.return_value = {'hostname': 'node1'}
         result = self.dscli.parse_and_run(['device', 'set', 'hostname=node1', 'ip_address=UNDEF'])
         self.assertEqual(1, result)
 
-
     def test_device_delete(self):
-        self.mockDS.device_get.return_value = [{'hostname': 'node1'}]
+        self.mockDS.list_devices.return_value = [{'hostname': 'node1'}]
         result = self.dscli.parse_and_run(['device', 'delete', 'hostname=node'])
         self.assertEqual(result, 0)
 
-        self.mockDS.device_get.return_value = [{'hostname': 'node'}]
+        self.mockDS.list_devices.return_value = [{'hostname': 'node'}]
         result = self.dscli.parse_and_run(['device', 'delete', 'hostname=node'])
         self.assertEqual(result, 0)
 
     def test_profiles(self):
-        self.mockDS.profile_get.return_value = [{'profile_name': 'compute node'}]
+        self.mockDS.list_profiles.return_value = [{'profile_name': 'compute node'}]
         result = self.dscli.parse_and_run(['profile', 'list'])
         self.assertEqual(result, 0)
 
     def test_profiles_delete(self):
-        self.mockDS.profile_get.return_value = [{'profile_name': 'compute node'}]
+        self.mockDS.list_profiles.return_value = [{'profile_name': 'compute node'}]
         result = self.dscli.parse_and_run(['profile', 'delete', 'profile_name=compute node'])
         self.assertEqual(result, 0)
 
     def test_profiles_upsert(self):
-        self.mockDS.profile_get.return_value = [{'profile_name': 'compute node'}]
+        self.mockDS.get_profile.return_value = {'profile_name': 'compute node'}
         result = self.dscli.parse_and_run(['profile', 'set', 'profile_name=compute node'])
         self.assertEqual(result, 0)
 
     def test_profile_get_no_match(self):
-        self.mockDS.profile_get.return_value = [{'profile_name': 'compute node'}]
+        self.mockDS.list_profiles.return_value = [{'profile_name': 'compute node'}]
         result = self.dscli.parse_and_run(['profile', 'get', 'profile_name=compute node'])
         self.assertEqual(result, 0)
 
     def test_profile_get_no_match2(self):
-        self.mockDS.profile_get.return_value = []
+        self.mockDS.get_profile.return_value = None
         result = self.dscli.parse_and_run(['profile', 'get', 'profile_name=node'])
         self.assertEqual(result, 1)
 
-    def test_profile_set_no_existing_device(self):
+    def test_profile_set_no_existing_profile(self):
         # print('execute_devices')
-        self.mockDS.profile_get.return_value = []
+        self.mockDS.get_profile.return_value = None
         result = self.dscli.parse_and_run(['profile', 'set', 'profile_name=node'])
         self.assertEqual(result, 0)
 
     def test_profile_neg(self):
         # print('execute_devices')
-        self.mockDS.profile_get.return_value = [{'profile_name': 'compute node'}]
+        self.mockDS.list_profiles.return_value = [{'profile_name': 'compute node'}]
         result = self.dscli.parse_and_run(['profile', 'get'])
         self.assertEqual(result, 1)
 
     def test_configuration_get(self):
         # print('execute_configurations')
-        self.mockDS.configuration_get.return_value = [{'key': 'key1'}]
+        self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['config', 'get', 'key=key1'])
             self.assertEqual(output.getvalue(), "key1 : [{'key': 'key1'}]\n")
 
     def test_configuration_get_no_match(self):
         # print('execute_configurations')
-        self.mockDS.configuration_get.return_value = None
+        self.mockDS.get_configuration_value.return_value = None
         result = self.dscli.parse_and_run(['config', 'get', 'key=key1'])
         self.assertEqual(result, 1)
 
     def test_configuration_set_no_existing_configuration(self):
         # print('execute_configurations')
-        self.mockDS.configuration_get.return_value = []
+        self.mockDS.get_configuration_value.return_value = []
         result = self.dscli.parse_and_run(['config', 'set', 'key=key1'])
         self.assertEqual(result, 1)
 
     def test_configuration_neg(self):
         # print('execute_configurations')
-        self.mockDS.configuration_get.return_value = [{'hostname': 'node1', 'key': 'key1'}]
+        self.mockDS.get_configuration_value.return_value = [{'hostname': 'node1', 'key': 'key1'}]
         result = self.dscli.parse_and_run(['config', 'get'])
         self.assertEqual(result, 1)
 
     def test_configuration_upsert(self):
-        self.mockDS.configuration_get.return_value = [{'key': 'key1'}]
+        self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
         result = self.dscli.parse_and_run(['config', 'set', 'key=key4', 'value=value1'])
         self.assertEqual(result, 0)
 
     def test_configuration_upsert_none(self):
-        self.mockDS.configuration_get.return_value = [{'key': 'key1'}]
+        self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
         result = self.dscli.parse_and_run(['config', 'set'])
         self.assertEqual(result, 1)
 
     def test_configuration_delete(self):
-        self.mockDS.configuration_get.return_value = [{'key': 'key1'}]
+        self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
         result = self.dscli.parse_and_run(['config', 'delete', 'key=key1'])
         self.assertEqual(result, 0)
 
     def test_configuration_delete_none(self):
-        self.mockDS.configuration_get.return_value = [{'key': 'key1'}]
+        self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
         result = self.dscli.parse_and_run(['config', 'delete'])
         self.assertEqual(result, 1)
 
     def test_log_begin_end(self):
-        self.mockDS.log_get_timeslice.return_value = [{'foo': 'foovalue'}]
+        self.mockDS.list_logs_between_timeslice.return_value = [{'foo': 'foovalue'}]
         result = self.dscli.parse_and_run(['log', '--begin', '01/01/2017', '--end', '03/01/2017', 'get'])
         self.assertEqual(result, 0)
 
     def test_log_begin_none(self):
-        self.mockDS.log_get_timeslice.return_value = [{'foo': 'foovalue'}]
+        self.mockDS.list_logs_between_timeslice.return_value = [{'foo': 'foovalue'}]
         result = self.dscli.parse_and_run(['log', '--end', '03/01/2017', 'get'])
         self.assertEqual(result, 0)
 
     def test_log_begin_end_none(self):
-        self.mockDS.log_get_timeslice.return_value = [{'foo': 'foovalue'}]
+        self.mockDS.list_logs_between_timeslice.return_value = [{'foo': 'foovalue'}]
         result = self.dscli.parse_and_run(['log', '--begin', '03/01/2017', 'get'])
         self.assertEqual(result, 0)
 
     def test_log_end_none(self):
-        self.mockDS.log_get_timeslice.return_value = [{'foo': 'foovalue'}]
+        self.mockDS.list_logs_between_timeslice.return_value = [{'foo': 'foovalue'}]
         result = self.dscli.parse_and_run(['log', 'get'])
         self.assertEqual(result, 0)
 
@@ -220,14 +221,14 @@ class TestsDataStoreCLIOptions(unittest.TestCase):
         self.assertEqual(result, {"mylist": ['foo', 1], "join": "me"})
 
     def test_no_empty_options(self):
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(ParseOptionsException):
             result = DataStoreCLI.parse_options(["empty=", "not=allowed"])
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(ParseOptionsException):
             result = DataStoreCLI.parse_options(["=bar", "not=allowed"])
 
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(ParseOptionsException):
             result = DataStoreCLI.parse_options(["not=allowed", "foo"])
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(ParseOptionsException):
             result = DataStoreCLI.parse_options(["bar", "not=allowed"])
 
     def test_integers(self):
@@ -236,6 +237,125 @@ class TestsDataStoreCLIOptions(unittest.TestCase):
 
         result = DataStoreCLI.parse_options(["1=arg"])
         self.assertEqual(result, {1: "arg"})
+
+
+class TestFunctionalReturnCodes(unittest.TestCase):
+    FILE_STRING = "unknown, to be contrusted in setup()"
+    FILE_CONFIG = """{
+  "configuration_variables": {
+    "log_file_path": "/tmp/ctrl.log",
+    "provisioning_agent_software": "warewulf"
+  },
+  "device": [
+   {
+      "device_id": 1,
+      "device_type": "test_dev_type_test",
+      "hostname": "test_hostname",
+      "ip_address": "127.0.0.1",
+      "mac_address": "AA:GG:PP",
+      "profile_name": "compute_node"
+    },
+    {
+      "device_id": 2,
+      "device_type": "test_dev_type_test",
+      "hostname": "test_hostname2",
+      "ip_address": "127.0.0.2",
+      "mac_address": "AA:GG:22",
+      "profile_name": "compute_node",
+      "tests": "are_awesome"
+    }
+  ],
+  "profile": [
+    {
+      "password": "test_pass",
+      "port": 22,
+      "profile_name": "compute_node"
+    }
+  ]
+}"""
+    LOG_FILENAME = "unknown, setup in setUPCLass(cls)"
+    LOG_FILE = """2017-02-22 09:18:54,432 / INFO / DataStore / BATS / None / Does this work?
+2017-01-01 09:18:54,433 / WARNING / DataStore / BATS / None / Does this work?
+2017-01-01 09:18:54,433 / ERROR / DataStore / BATS / None / Does this work?
+2017-01-01 09:18:54,433 / CRITICAL / DataStore / BATS / None / Does this work?
+2017-01-01 09:18:54,434 / INFO / DataStore / None / None / Does this work?
+2017-01-01 09:18:54,434 / WARNING / DataStore / None / None / Does this work?
+2017-01-01 09:18:54,434 / ERROR / DataStore / BATS / None / Does this work?
+2017-01-01 09:18:54,435 / CRITICAL / DataStore / None / None / Does this work?
+2016-01-01 10:25:18,042 / DEBUG / DataStore / BATS / 1 / Does this work?
+2016-01-01 10:25:18,042 / WARNING / DataStore / BATS / 2 / Does this work?
+2015-01-01 10:25:18,042 / ERROR / DataStore / BATS / 1 / Does this work?
+2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?"""
+
+    def setUp(self):
+        temp_log_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_log_file.write(self.LOG_FILE)
+        temp_log_file.close()
+        self.LOG_FILENAME = temp_log_file.name
+
+        config = json.loads(self.FILE_CONFIG)
+        config["configuration_variables"]["log_file_path"] = self.LOG_FILENAME
+
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.write(json.dumps(config))
+        temp_file.close()
+        self.FILE_STRING = temp_file.name
+
+        logger = get_logger()
+        logger.handlers = []
+        DataStore.LOG_LEVEL = logging.DEBUG
+
+        self.fs = FileStore(self.FILE_STRING, None)
+        self.dscli = DataStoreCLI(self.fs)
+
+    def tearDown(self):
+        os.remove(self.FILE_STRING)
+        os.remove(self.LOG_FILENAME)
+
+    def test_return_codes(self):
+        """
+        You'll also get an error for tracebacks!
+        :return:
+        """
+        commands = [
+            {"cmd": ['device', 'list'], "out": 0},
+            {"cmd": ['device', 'get', 'hostname=test_hostname'], "out": 0},
+            {"cmd": ['device', 'set', 'hostname=test_hostname'], "out": 0},
+            {"cmd": ['device', 'set', 'hostname=test_hostname', 'port=23'], "out": 0},
+            {"cmd": ['device', 'set', 'hostname=test_hostname', 'test=foo'], "out": 0},
+            {"cmd": ['device', 'get', 'mac_address=AA:GG:PP'], "out": 0},
+            {"cmd": ['device', 'get', 'mac_address=AA:GG:111'], "out": 0},
+            {"cmd": ['device', 'delete', 'hostname=test_hostname2'], "out": 0},
+            {"cmd": ['device', 'delete', 'hostname=not_valid_name'], "out": 0},
+            {"cmd": ['profile', 'get', 'profile_name=compute_node'], "out": 0},
+            {"cmd": ['profile', 'get'], "out": 1},
+            {"cmd": ['profile', 'get', 'invalid'], "out": 1},
+            {"cmd": ['profile', 'set', 'profile_name=compute_node', 'my=profile_value'], "out": 0},
+            {"cmd": ['profile', 'delete', 'profile_name=compute_node'], "out": 1},
+            {"cmd": ['profile', 'list'], "out": 0},
+            {"cmd": ['profile', 'set', 'profile_name=compute_node2', 'my=profile_value'], "out": 0},
+            {"cmd": ['profile', 'delete', 'profile_name=compute_node2'], "out": 0},
+            {"cmd": ['config', 'get'], "out": 1},
+            {"cmd": ['config', 'get', 'key=log_file_path'], "out": 0},
+            {"cmd": ['config', 'get', 'key=not_found'], "out": 1},
+            {"cmd": ['config', 'set', 'key=log_file_path2'], "out": 1},
+            {"cmd": ['config', 'set', 'key=log_file_path2', 'value=foo'], "out": 0},
+            {"cmd": ['config', 'delete', 'key=log_file_path2'], "out": 0},
+            {"cmd": ['config', 'delete', 'key=log_file_path2'], "out": 0},
+            {"cmd": ['config', 'set', 'key=log_file_path', 'value=foo'], "out": 0},
+            {"cmd": ['config', 'set', 'key=log_file_path', 'value=bar'], "out": 0},
+            {"cmd": ['config', 'set', 'key=log_file_path', 'value=test'], "out": 0},
+            {"cmd": ['config', 'get', 'key=log_file_path'], "out": 0},
+            {"cmd": ['config', 'get', 'log_file_path'], "out": 1},
+            {"cmd": ['device', 'get', 'mac_address=AA:GG:PP'], "out": 0},
+            {"cmd": ['device', 'get', 'mac_address=AA:GG:PP'], "out": 0},
+
+        ]
+
+        for command in commands:
+            result = self.dscli.parse_and_run(command["cmd"])
+            self.assertEqual(result, command["out"], "Failed to execute command '{}'. Actual: {} Expected: {}"
+                             .format(command["cmd"], result, command["out"]))
 
 
 if __name__ == '__main__':

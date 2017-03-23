@@ -33,8 +33,7 @@ class TestFileStore(unittest.TestCase):
           "hostname": "test_hostname",
           "ip_address": "127.0.0.1",
           "mac_address": "AA:GG:PP",
-          "profile_name": "compute_node",
-          "deleted": true
+          "profile_name": "compute_node"
         },
         {
           "device_id": 2,
@@ -97,17 +96,17 @@ class TestFileStore(unittest.TestCase):
         FileStore(self.FILE_STRING, logging.CRITICAL)
 
     def test_device_get(self):
-        devices = self.fs.device_get()
+        devices = self.fs.list_devices()
         print(devices)
-        self.assertEqual(1, len(devices))
+        self.assertEqual(2, len(devices))
 
-        device = self.fs.device_get("test_hostname2")[0]
+        device = self.fs.get_device("test_hostname2")
         self.assertEqual(2, device.get("device_id"))
         
-        device = self.fs.device_get("127.0.0.2")[0]
+        device = self.fs.get_device("127.0.0.2")
         self.assertEqual(2, device.get("device_id"))
 
-        device = self.fs.device_get(2)[0]
+        device = self.fs.get_device(2)
         self.assertEqual(2, device.get("device_id"))
 
         self.assertEqual("test_hostname2", device.get("hostname"))
@@ -116,91 +115,93 @@ class TestFileStore(unittest.TestCase):
         self.assertEqual("test_pass", device.get("password"))
         self.assertEqual("are_awesome", device.get("tests"))
 
-        devices = self.fs.device_get("invalid")
+        devices = self.fs.get_device("not_found_device")
+        self.assertIsNone(devices)
+        devices = self.fs.list_devices({"foo": "not_found_filter"})
         self.assertEqual(0, len(devices))
 
     def test_device_upsert(self):
         num = randint(0, 4500000)
         num1 = randint(0, 4500000)
-        device_id = self.fs.device_upsert({"device_type": "node", "hostname": "test", "port": num})
-        result = self.fs.device_get(device_id)[0]
+        device_id = self.fs.set_device({"device_type": "node", "hostname": "test", "port": num})
+        result = self.fs.get_device(device_id)
         self.assertEqual(result.get("port"), num)
         result["port"] = num1
-        self.fs.device_upsert(result)
-        result = self.fs.device_get(device_id)[0]
+        self.fs.set_device(result)
+        result = self.fs.get_device(device_id)
         self.assertEqual(result.get("port"), num1)
 
-        result = self.fs.device_get("test_hostname2")[0]
+        result = self.fs.get_device("test_hostname2")
         result["port"] = 153
-        self.fs.device_upsert(result)
+        self.fs.set_device(result)
 
     def test_device_delete(self):
-        # device_id = self.fs.device_upsert({"hostname": "test", "port": 1234})
-        device_id = self.fs.device_delete("test")
+        # device_id = self.fs.set_device({"hostname": "test", "port": 1234})
+        device_id = self.fs.delete_device("test")
         if device_id is None:
             # Device Id was None, that means there was no "test" in the devices, add one and try again.
-            device_id = self.fs.device_upsert({"device_type": "node", "hostname": "test", "port": 1234})
-            device_id = self.fs.device_delete("test")
-        self.assertEqual(0, len(self.fs.device_get(device_id)))
-        device_id = self.fs.device_delete(device_id)
+            device_id = self.fs.set_device({"device_type": "node", "hostname": "test", "port": 1234})
+            device_id = self.fs.delete_device("test")
+        self.assertIsNone(self.fs.get_device("test"))
+        device_id = self.fs.delete_device(device_id)
         self.assertIsNone(device_id)
 
-        device_id = self.fs.device_delete("test")
+        device_id = self.fs.delete_device("test")
         if device_id is None:
             # Device Id was None, that means there was no "test" in the devices, add one and try again.
-            device_id = self.fs.device_upsert({"device_type": "node", "hostname": "test", "port": 1234})
-            device_id = self.fs.device_delete("test")
+            device_id = self.fs.set_device({"device_type": "node", "hostname": "test", "port": 1234})
+            device_id = self.fs.delete_device("test")
 
-        self.assertEqual(0, len(self.fs.device_get(device_id)))
-        device_id = self.fs.device_delete(device_id)
+        self.assertIsNone(self.fs.get_device("test"))
+        device_id = self.fs.delete_device(device_id)
         self.assertIsNone(device_id)
 
     def test_config_get(self):
-        self.assertEqual("warewulf", self.fs.configuration_get("provisioning_agent_software"))
+        self.assertEqual("warewulf", self.fs.get_configuration_value("provisioning_agent_software"))
 
     def test_config_upsert(self):
         num = randint(0, 4500000)
         num1 = randint(0, 4500000)
-        self.fs.configuration_upsert("test", num)
-        self.assertEqual(num, self.fs.configuration_get("test"))
-        self.fs.configuration_upsert("test", num1)
-        self.assertEqual(num1, self.fs.configuration_get("test"))
+        self.fs.set_configuration("test", num)
+        self.assertEqual(num, self.fs.get_configuration_value("test"))
+        self.fs.set_configuration("test", num1)
+        self.assertEqual(num1, self.fs.get_configuration_value("test"))
 
     def test_config_delete(self):
         num = randint(0, 4500000)
         num1 = randint(0, 4500000)
-        self.fs.configuration_upsert("test", num)
-        self.fs.configuration_delete("test")
-        self.assertEqual(None, self.fs.configuration_get("test"))
-        self.fs.configuration_upsert("test", num1)
-        self.fs.configuration_delete("test")
-        self.fs.configuration_delete("test")
-        self.fs.configuration_delete("test")
-        self.assertEqual(None, self.fs.configuration_get("test"))
+        self.fs.set_configuration("test", num)
+        self.fs.delete_configuration("test")
+        self.assertEqual(None, self.fs.get_configuration_value("test"))
+        self.fs.set_configuration("test", num1)
+        self.fs.delete_configuration("test")
+        self.fs.delete_configuration("test")
+        self.fs.delete_configuration("test")
+        self.assertEqual(None, self.fs.get_configuration_value("test"))
 
     def test_profile_get(self):
-        result = self.fs.profile_get()
+        result = self.fs.list_profiles()
         self.assertEqual(len(result), 1)
-        result = self.fs.profile_get("compute_node")[0]
+        result = self.fs.get_profile("compute_node")
         self.assertEqual(22, result.get("port"))
 
-        result = self.fs.profile_get("invalid")
-        self.assertEqual(0, len(result))
+        result = self.fs.get_profile("invalid")
+        self.assertIsNone(result)
 
     def test_profile_upsert(self):
         num = randint(0, 4500000)
-        self.fs.profile_upsert({"profile_name": "test", "port": num})
-        result = self.fs.profile_get("test")[0]
+        self.fs.set_profile({"profile_name": "test", "port": num})
+        result = self.fs.get_profile("test")
         self.assertEqual(num, result.get("port"))
-        result = self.fs.profile_get()
+        result = self.fs.list_profiles()
         self.assertEqual(2, len(result))
 
     def test_profile_delete(self):
         with self.assertRaises(DataStoreException):
-            self.fs.profile_delete("compute_node")
-        self.assertEqual(self.fs.profile_get("test"), [])
-        self.fs.profile_delete("test")
-        self.fs.profile_delete("test")
+            self.fs.delete_profile("compute_node")
+        self.assertIsNone(self.fs.get_profile("test"))
+        self.fs.delete_profile("test")
+        self.fs.delete_profile("test")
         # Multiple deletes should not throw errors
 
     def test_log_add(self):
@@ -223,15 +224,15 @@ class TestFileStore(unittest.TestCase):
         logger.critical("Does this work?", device_name="knl-test")
 
     def test_log_get(self):
-        result = self.fs.log_get(limit=2)
+        result = self.fs.list_logs(limit=2)
         print(result[0].get("timestamp"))
         self.assertEqual(2, len(result))
-        result = self.fs.log_get(limit=5)
+        result = self.fs.list_logs(limit=5)
         self.assertEqual(5, len(result))
 
     def test_add_profile_to_device(self):
         self.assertIsNone(self.fs.add_profile_to_device(None))
-        result = self.fs.device_get()[0]
+        result = self.fs.list_devices()[0]
         result2 = self.fs.add_profile_to_device(result)
         self.assertTrue(isinstance(result2, list))
 
@@ -239,25 +240,25 @@ class TestFileStore(unittest.TestCase):
         self.assertIsNone(self.fs._remove_profile_from_device(None))
 
     def test_get_logs(self):
-        result = self.fs.log_get()
+        result = self.fs.list_logs()
         self.assertEqual(15, len(result))
 
-        result = self.fs.log_get_timeslice(date_parse.parse("2014-01-01 10:25:18,042+00"),
-                                           date_parse.parse("2016-12-01 10:25:18,042+00"))
+        result = self.fs.list_logs_between_timeslice(date_parse.parse("2014-01-01 10:25:18,042+00"),
+                                                     date_parse.parse("2016-12-01 10:25:18,042+00"))
         self.assertEqual(3, len(result))
 
     def test_get_deleted(self):
-        index, device = self.fs._device_find(1, self.fs.parsed_file.get(self.fs.DEVICE_KEY), True)
+        index, device = self.fs._device_find(1, self.fs.parsed_file.get(self.fs.DEVICE_KEY))
         self.assertEqual(device.get("device_id"), 1)
 
     def test_get_by_ip(self):
-        index, device = self.fs._device_find("127.0.0.1", self.fs.parsed_file.get(self.fs.DEVICE_KEY), True)
+        index, device = self.fs._device_find("127.0.0.1", self.fs.parsed_file.get(self.fs.DEVICE_KEY))
         self.assertEqual(device.get("device_id"), 1)
-        result = self.fs.device_get("127.0.0.2")
-        self.assertEqual(result[0].get("device_id"), 2)
+        result = self.fs.get_device("127.0.0.2")
+        self.assertEqual(result.get("device_id"), 2)
 
     def test_config(self):
-        result = self.fs.configuration_get("invalid")
+        result = self.fs.get_configuration_value("invalid")
         self.assertIsNone(result)
 
     def test_logger_setup(self):
@@ -266,24 +267,27 @@ class TestFileStore(unittest.TestCase):
         self.fs._setup_file_logger(logging.WARNING)
 
     def test_device_upsert_id(self):
-        self.fs.device_upsert({"device_type": "test_dev_type_test", "hostname": "test_hostname3"})
-        result = self.fs.device_get("test_hostname3")
-        self.assertEqual(3, result[0].get("device_id"))
-        self.fs.device_upsert({"device_type": "test_dev_type_test", "hostname": "test_hostname3", "port": 22, "device_id": 3})
-        result = self.fs.device_get("test_hostname3")
-        self.assertEqual(3, result[0].get("device_id"))
-        self.assertEqual(22, result[0].get("port"))
+        self.fs.set_device({"device_type": "test_dev_type_test", "hostname": "test_hostname3"})
+        result = self.fs.get_device("test_hostname3")
+        self.assertEqual(3, result.get("device_id"))
+        self.fs.set_device({"device_type": "test_dev_type_test", "hostname": "test_hostname3", "port": 22, "device_id": 3})
+        result = self.fs.get_device("test_hostname3")
+        self.assertEqual(3, result.get("device_id"))
+        self.assertEqual(22, result.get("port"))
 
     def test_get_device_by_type(self):
         result = self.fs.get_devices_by_type("test_dev_type_test")
-        self.assertEqual(1, len(result))
+        self.assertEqual(2, len(result))
 
         result = self.fs.get_devices_by_type("test_dev_type_test", "test_hostname")
+        self.assertEqual(1, len(result))
+
+        result = self.fs.get_devices_by_type("Invalid type", "test_hostname")
         self.assertEqual(0, len(result))
 
     def test_get_profile_devices(self):
         result = self.fs.get_profile_devices("compute_node")
-        self.assertEqual(1, len(result))
+        self.assertEqual(2, len(result))
 
         result = self.fs.get_profile_devices("Invalid profile")
         self.assertEqual(0, len(result))
@@ -294,7 +298,7 @@ class TestFileStore(unittest.TestCase):
 
     def test_invalid_log_level(self):
         with self.assertRaises(DataStoreException):
-            self.fs.log_add(1, "not important msg")
+            self.fs.add_log(1, "not important msg")
 
         with self.assertRaises(DataStoreException):
             self.fs.set_log_level(1)
@@ -321,7 +325,7 @@ class TestFileStore(unittest.TestCase):
         logger.warning(log_msgs)
         logger.critical(log_msgs)
 
-        logs = self.fs.log_get()
+        logs = self.fs.list_logs()
         self.assertEqual(30, len(logs))
 
 
@@ -350,38 +354,38 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         FileStore(self.FILE_STRING, None)
 
     def test_empty_gets(self):
-        result = self.fs.device_get()
+        result = self.fs.list_devices()
         self.assertEqual(result, [])
-        result = self.fs.device_get("there_is_nothing_there")
+        result = self.fs.get_device("there_is_nothing_there")
+        self.assertIsNone(result)
+        result = self.fs.list_profiles()
         self.assertEqual(result, [])
-        result = self.fs.profile_get()
-        self.assertEqual(result, [])
-        result = self.fs.profile_get("there_is_nothing_there")
-        self.assertEqual(result, [])
-        result = self.fs.configuration_get("there_is_nothing_there")
+        result = self.fs.get_profile("there_is_nothing_there")
+        self.assertIsNone(result)
+        result = self.fs.get_configuration_value("there_is_nothing_there")
         self.assertEqual(result, None)
 
     def test_empty_upserts(self):
-        self.fs.device_upsert({"device_type": "node", "hostname": "test"})
-        result = self.fs.device_get("test")
-        self.assertEqual(result[0].get("hostname"), "test")
+        self.fs.set_device({"device_type": "node", "hostname": "test"})
+        result = self.fs.get_device("test")
+        self.assertEqual(result.get("hostname"), "test")
 
-        self.fs.profile_upsert({"profile_name": "test", "port": 22})
-        result = self.fs.profile_get("test")
-        self.assertEqual(result[0].get("profile_name"), "test")
+        self.fs.set_profile({"profile_name": "test", "port": 22})
+        result = self.fs.get_profile("test")
+        self.assertEqual(result.get("profile_name"), "test")
 
-        self.fs.configuration_upsert("test", "value")
-        result = self.fs.configuration_get("test")
+        self.fs.set_configuration("test", "value")
+        result = self.fs.get_configuration_value("test")
         self.assertEqual(result, "value")
 
     def test_empty_deletes(self):
-        result = self.fs.device_delete("foo")
+        result = self.fs.delete_device("foo")
         self.assertIsNone(result)
-        result = self.fs.device_delete("foo")
+        result = self.fs.delete_device("foo")
         self.assertIsNone(result)
-        result = self.fs.profile_delete("foo")
+        result = self.fs.delete_profile("foo")
         self.assertIsNone(result)
-        result = self.fs.configuration_delete("foo")
+        result = self.fs.delete_configuration("foo")
         self.assertIsNone(result)
 
 @unittest.skip("Tests for future implementation")
@@ -407,28 +411,28 @@ class TestFileStoreWithNoFile(unittest.TestCase):
         FileStore(True, None)
 
     def test_empty_gets(self):
-        result = self.fs.device_get()
+        result = self.fs.list_devices()
         self.assertEqual(result, [])
-        result = self.fs.device_get("there_is_nothing_there")
+        result = self.fs.get_device("there_is_nothing_there")
+        self.assertIsNone(result)
+        result = self.fs.list_profiles()
         self.assertEqual(result, [])
-        result = self.fs.profile_get()
-        self.assertEqual(result, [])
-        result = self.fs.profile_get("there_is_nothing_there")
-        self.assertEqual(result, [])
-        result = self.fs.configuration_get("there_is_nothing_there")
+        result = self.fs.get_profile("there_is_nothing_there")
+        self.assertIsNone(result)
+        result = self.fs.get_configuration_value("there_is_nothing_there")
         self.assertEqual(result, None)
 
     def test_empty_upserts(self):
-        self.fs.device_upsert({"device_type": "node", "hostname": "test"})
-        result = self.fs.device_get("test")
+        self.fs.set_device({"device_type": "node", "hostname": "test"})
+        result = self.fs.list_devices("test")
         self.assertEqual(result[0].get("hostname"), "test")
 
-        self.fs.profile_upsert({"profile_name": "test", "port": 22})
-        result = self.fs.profile_get("test")
+        self.fs.set_profile({"profile_name": "test", "port": 22})
+        result = self.fs.list_profiles("test")
         self.assertEqual(result[0].get("profile_name"), "test")
 
-        self.fs.configuration_upsert("test", "value")
-        result = self.fs.configuration_get("test")
+        self.fs.set_configuration("test", "value")
+        result = self.fs.get_configuration_value("test")
         self.assertEqual(result, "value")
 
     def test_empty_deletes(self):
@@ -436,9 +440,9 @@ class TestFileStoreWithNoFile(unittest.TestCase):
         self.assertIsNone(result)
         result = self.fs.device_fatal_delete("foo")
         self.assertIsNone(result)
-        result = self.fs.profile_delete("foo")
+        result = self.fs.delete_profile("foo")
         self.assertIsNone(result)
-        result = self.fs.configuration_delete("foo")
+        result = self.fs.delete_configuration("foo")
         self.assertIsNone(result)
 
 
@@ -471,7 +475,7 @@ class TestFileStoreInvalidLogs(unittest.TestCase):
         temp_log_file.write(cls.LOG_FILE)
         temp_log_file.close()
         cls.LOG_FILENAME = temp_log_file.name
-        FileStore(cls.FILE_STRING, None).configuration_upsert("log_file_path", cls.LOG_FILENAME)
+        FileStore(cls.FILE_STRING, None).set_configuration("log_file_path", cls.LOG_FILENAME)
 
     @classmethod
     def tearDownClass(cls):
@@ -484,7 +488,7 @@ class TestFileStoreInvalidLogs(unittest.TestCase):
 
     def test_get_logs(self):
         with self.assertRaises(RuntimeError):
-            result = self.fs.log_get()
+            result = self.fs.list_logs()
 
 
 if __name__ == '__main__':

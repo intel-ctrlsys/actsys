@@ -35,108 +35,133 @@ class MultiStore(DataStore):
         self._all_results_equal(results)
         return results
 
-    def device_get(self, device_name=None):
+    def get_device(self, device_name):
         """
         See @DataStore description
         """
-        super(MultiStore, self).device_get(device_name)
-        results = self._call_function("device_get", [device_name])
+        super(MultiStore, self).get_device(device_name)
+        results = self._call_function("get_device", [device_name])
         return results[0]
 
-    def device_upsert(self, device_info):
+    def list_devices(self, filters=None):
         """
         See @DataStore description
         """
-        super(MultiStore, self).device_upsert(device_info)
-        results = self._call_function("device_upsert", [device_info])
+        super(MultiStore, self).list_devices(filters)
+        results = self._call_function("list_devices", [filters])
         return results[0]
 
-    def device_delete(self, device_name):
+    def set_device(self, device_info):
         """
         See @DataStore description
         """
-        super(MultiStore, self).device_delete(device_name)
-        results = self._call_function("device_delete", [device_name])
+        super(MultiStore, self).set_device(device_info)
+        results = self._call_function("set_device", [device_info])
         return results[0]
 
-    def device_history_get(self, device_name=None):
+    def delete_device(self, device_name):
         """
         See @DataStore description
         """
-        super(MultiStore, self).device_history_get(device_name)
-        results = self._call_function("device_history_get", [device_name])
+        super(MultiStore, self).delete_device(device_name)
+        results = self._call_function("delete_device", [device_name])
         return results[0]
 
-    def profile_get(self, profile_name=None):
+    def get_device_history(self, device_name=None):
         """
         See @DataStore description
         """
-        super(MultiStore, self).profile_get(profile_name)
-        results = self._call_function("profile_get", [profile_name])
+        super(MultiStore, self).get_device_history(device_name)
+        results = self._call_function("get_device_history", [device_name])
         return results[0]
 
-    def profile_upsert(self, profile_info):
+    def get_profile(self, profile_name=None):
         """
         See @DataStore description
         """
-        super(MultiStore, self).profile_upsert(profile_info)
-        results = self._call_function("profile_upsert", [profile_info])
+        super(MultiStore, self).get_profile(profile_name)
+        results = self._call_function("get_profile", [profile_name])
         return results[0]
 
-    def profile_delete(self, profile_name):
+
+    def list_profiles(self, filters=None):
         """
         See @DataStore description
         """
-        super(MultiStore, self).profile_delete(profile_name)
-        results = self._call_function("profile_delete", [profile_name])
+        super(MultiStore, self).list_profiles(filters)
+        results = self._call_function("list_profiles", [filters])
         return results[0]
 
-    def log_get(self, device_name=None, limit=100):
+    def set_profile(self, profile_info):
         """
         See @DataStore description
         """
-        super(MultiStore, self).log_get(device_name, limit)
-        results = self._call_function("log_get", [device_name, limit])
+        super(MultiStore, self).set_profile(profile_info)
+        results = self._call_function("set_profile", [profile_info])
         return results[0]
 
-    def log_get_timeslice(self, begin, end, device_name=None, limit=100):
+    def delete_profile(self, profile_name):
         """
         See @DataStore description
         """
-        super(MultiStore, self).log_get_timeslice(begin, end, device_name, limit)
-        results = self._call_function("log_get_timeslice", [begin, end, device_name, limit])
+        super(MultiStore, self).delete_profile(profile_name)
+        results = self._call_function("delete_profile", [profile_name])
         return results[0]
 
-    def log_add(self, level, msg, device_name=None, process=None):
+    def list_logs(self, device_name=None, limit=100):
         """
         See @DataStore description
         """
-        super(MultiStore, self).log_add(level, process, msg, device_name)
-        results = self._call_function("log_add", [level, msg, device_name, process])
+        super(MultiStore, self).list_logs(device_name, limit)
+        results = self._call_function("list_logs", [device_name, limit])
         return results[0]
 
-    def configuration_get(self, key=None):
+    def list_logs_between_timeslice(self, begin, end, device_name=None, limit=100):
         """
         See @DataStore description
         """
-        super(MultiStore, self).configuration_get(key)
-        results = self._call_function("configuration_get", [key])
+        super(MultiStore, self).list_logs_between_timeslice(begin, end, device_name, limit)
+        results = self._call_function("list_logs_between_timeslice", [begin, end, device_name, limit])
         return results[0]
 
-    def configuration_upsert(self, key, value):
+    def add_log(self, level, msg, device_name=None, process=None):
         """
         See @DataStore description
         """
-        super(MultiStore, self).configuration_upsert(key, value)
-        results = self._call_function("configuration_upsert", [key, value])
+        super(MultiStore, self).add_log(level, process, msg, device_name)
+        results = self._call_function("add_log", [level, msg, device_name, process])
         return results[0]
 
-    def configuration_delete(self, key):
+    def get_configuration_value(self, key=None):
         """
         See @DataStore description
         """
-        super(MultiStore, self).configuration_delete(key)
-        results = self._call_function("configuration_delete", [key])
+        super(MultiStore, self).get_configuration_value(key)
+        results = self._call_function("get_configuration_value", [key])
+        return results[0]
+
+    def list_configuration(self):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).list_configuration()
+        results = self._call_function("list_configuration", [])
+        return results[0]
+
+    def set_configuration(self, key, value):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).set_configuration(key, value)
+        results = self._call_function("set_configuration", [key, value])
+        return results[0]
+
+    def delete_configuration(self, key):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).delete_configuration(key)
+        results = self._call_function("delete_configuration", [key])
         return results[0]
 
     # UTIL FUNCTIONS

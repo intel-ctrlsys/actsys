@@ -45,15 +45,15 @@ class FileStore(DataStore):
         formatter = logging.Formatter(self.LOG_FORMAT)
 
         if log_rotating_file_handler is None:
-            log_file_path = self.configuration_get("log_file_path")
+            log_file_path = self.get_configuration_value("log_file_path")
             if log_file_path is None:
                 log_file_path = os.path.expanduser('~/datastore.log')
-                self.configuration_upsert("log_file_path", log_file_path)
+                self.set_configuration("log_file_path", log_file_path)
                 if not os.path.isfile(log_file_path):
                     log_file = open(log_file_path, "w")
                     log_file.close()
 
-            log_file_max_bytes = self.configuration_get("log_file_max_bytes")
+            log_file_max_bytes = self.get_configuration_value("log_file_max_bytes")
             if log_file_max_bytes is None:
                 log_file_max_bytes = 0
 
@@ -80,13 +80,12 @@ class FileStore(DataStore):
             if profile_name is None:
                 # Nothing to add or change!
                 continue
-            profiles = self.profile_get(profile_name)
-            if len(profiles) < 1:
+            profile = self.get_profile(profile_name)
+            if profile is None:
                 # no valid profile, likely this is caused by an error in the config
-                self.logger.warning("Device {}, has an invalid profile {}. Skipping for now, but thi is likely due to"
+                self.logger.warning("Device {}, has an invalid profile {}. Skipping for now, but this is likely due to"
                                     " an invalid configuration.".format(device.get("device_id"), profile_name))
                 continue
-            profile = profiles[0]
             for key in profile:
                 if device.get(key, None) is None:
                     device_list[index][key] = profile.get(key)
@@ -95,24 +94,24 @@ class FileStore(DataStore):
     def save_file(self):
         JsonParser.write_file(self.location, self.parsed_file)
 
-    def device_get(self, device_name=None):
+    def get_device(self, device_name):
+        devices = self.parsed_file.get(self.DEVICE_KEY, [])
+        index, device = self._device_find(device_name, devices)
+        if device is not None:
+            return self.add_profile_to_device(device)[0]
+        else:
+            return None
+
+    def list_devices(self, filters=None):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).device_get(device_name)
+        super(FileStore, self).list_devices(filters)
         devices = self.parsed_file.get(self.DEVICE_KEY, [])
-        if device_name is None:
-            devices = [device for device in devices if device.get("deleted", False) is False]
-            return self.add_profile_to_device(devices)
-        else:
-            index, device = self._device_find(device_name, devices)
-            if device is not None:
-                return self.add_profile_to_device(device)
-            else:
-                return []
+        return DataStoreUtilities.filter_dict(self.add_profile_to_device(devices), filters)
 
     @staticmethod
-    def _device_find(device_name, devices, find_deleted=False):
+    def _device_find(device_name, devices):
         """
         Given a device name and a list of devices, locates the device in that list.
         :param device_name:
@@ -122,32 +121,23 @@ class FileStore(DataStore):
         # Check for a matching device_id
         for index, device in enumerate(devices):
             if device.get('device_id') == device_name:
-                if find_deleted is True:
-                    return index, device
-                elif device.get("deleted") is not True:
                     return index, device
         # Check for hostname
         for index, device in enumerate(devices):
             if device.get('hostname') == device_name:
-                if find_deleted is True:
-                    return index, device
-                elif device.get("deleted") is not True:
                     return index, device
         # Check for ip
         for index, device in enumerate(devices):
             if device.get('ip_address') == device_name:
-                if find_deleted is True:
-                    return index, device
-                elif device.get("deleted") is not True:
                     return index, device
 
         return None, None
 
-    def device_upsert(self, device_info):
+    def set_device(self, device_info):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).device_upsert(device_info)
+        super(FileStore, self).set_device(device_info)
 
         # Update
         devices = self.parsed_file.get(self.DEVICE_KEY, None)
@@ -177,14 +167,14 @@ class FileStore(DataStore):
         self.save_file()
         return device_info.get("device_id")
 
-    def device_delete(self, device_name):
+    def delete_device(self, device_name):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).device_delete(device_name)
+        super(FileStore, self).delete_device(device_name)
         devices = self.parsed_file.get(self.DEVICE_KEY, [])
 
-        index, device = self._device_find(device_name, devices, True)
+        index, device = self._device_find(device_name, devices)
         if index is not None:
             devices.pop(index)
             self.save_file()
@@ -192,32 +182,36 @@ class FileStore(DataStore):
         else:
             return None
 
-    def device_history_get(self, device_name=None):
+    def get_device_history(self, device_name=None):
         """
         See @DataStore for function description. Only implementation details here.
         """
         raise DataStoreException("Not implemented for FileStore.")
 
-    def profile_get(self, profile_name=None):
+    def get_profile(self, profile_name):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).profile_get(profile_name)
         profiles = self.parsed_file.get(self.PROFILE_KEY, [])
-        if profile_name is None:
-            return profiles
-        else:
-            for profile in profiles:
-                if profile.get("profile_name") == profile_name:
-                    return [profile]
+        for profile in profiles:
+            if profile.get("profile_name") == profile_name:
+                return profile
 
-            return []
+        return None
 
-    def profile_upsert(self, profile_info):
+    def list_profiles(self, filters=None):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).profile_upsert(profile_info)
+        super(FileStore, self).list_profiles(filters)
+        profiles = self.parsed_file.get(self.PROFILE_KEY, [])
+        return DataStoreUtilities.filter_dict(profiles, filters)
+
+    def set_profile(self, profile_info):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(FileStore, self).set_profile(profile_info)
         profile_name = profile_info.get("profile_name")
 
         # Check for and update
@@ -231,39 +225,39 @@ class FileStore(DataStore):
             if profile_name == profile.get("profile_name"):
                 profiles[index] = profile_info
                 self.save_file()
-                self.logger.info("DataStore.profile_delete result: Success, updated")
+                self.logger.info("DataStore.delete_profile result: Success, updated")
                 return profile_name
 
         # Insert
         profiles.append(profile_info)
         self.save_file()
-        self.logger.info("DataStore.profile_delete result: Success, inserted")
+        self.logger.info("DataStore.delete_profile result: Success, inserted")
         return profile_name
 
-    def profile_delete(self, profile_name):
+    def delete_profile(self, profile_name):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).profile_delete(profile_name)
+        super(FileStore, self).delete_profile(profile_name)
         # TODO: check if the profile is in use, if it is, don't delete
         profiles = self.parsed_file.get(self.PROFILE_KEY, [])
         for index, profile in enumerate(profiles):
             if profile.get("profile_name") == profile_name:
                 profiles.pop(index)
                 self.save_file()
-                self.logger.info("DataStore.profile_delete result: Success")
+                self.logger.info("DataStore.delete_profile result: Success")
                 return profile_name
 
         return None
 
-    def log_get(self, device_name=None, limit=100):
+    def list_logs(self, device_name=None, limit=100):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).log_get(device_name, limit)
-        log_file = self.configuration_get("log_file_path")
+        super(FileStore, self).list_logs(device_name, limit)
+        log_file = self.get_configuration_value("log_file_path")
         lines = DataStoreUtilities.tail_file(log_file, limit, self.log_formatter)
-        self.logger.info("DataStore.log_get result: Returned {} lines".format(len(lines)))
+        self.logger.info("DataStore.list_logs result: Returned {} lines".format(len(lines)))
         return lines
 
     @staticmethod
@@ -292,31 +286,31 @@ class FileStore(DataStore):
             raise RuntimeError("The logs in the log file are of an unknown format, cannot continue. "
                                "Line: {}".format(line))
 
-    def log_get_timeslice(self, begin, end, device_name=None, limit=100):
+    def list_logs_between_timeslice(self, begin, end, device_name=None, limit=100):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).log_get_timeslice(begin, end, device_name, limit)
+        super(FileStore, self).list_logs_between_timeslice(begin, end, device_name, limit)
 
         def time_filter(line):
             date = line.get("timestamp")
             return begin < date.replace(tzinfo=UTC) < end
 
-        log_file = self.configuration_get("log_file_path")
+        log_file = self.get_configuration_value("log_file_path")
         lines = DataStoreUtilities.tail_file(log_file, limit, self.log_formatter, time_filter)
-        self.logger.info("DataStore.log_get result: Returned {} lines".format(len(lines)))
+        self.logger.info("DataStore.list_logs result: Returned {} lines".format(len(lines)))
         return lines
 
-    def log_add(self, level, msg, device_name=None, process=None):
+    def add_log(self, level, msg, device_name=None, process=None):
         """
         See @DataStore for function description. Only implementation details here.
 
         Log Add doesn't allow newlines in its implemntation.
         """
-        super(FileStore, self).log_add(level, process, msg, device_name)
+        super(FileStore, self).add_log(level, process, msg, device_name)
         # Get device id from device_name
         device_id = None
-        device = self.device_get(device_name)
+        device = self.list_devices(device_name)
         if len(device) == 1:
             device_id = device[0].get("device_id", None)
 
@@ -324,39 +318,50 @@ class FileStore(DataStore):
         msg = "{} / {} / ".format(process, device_id) + msg.replace(os.linesep, ' ').replace('\n', ' ')
         self.logger.log(level, msg)
 
-    def configuration_get(self, key):
+    def get_configuration_value(self, key):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).configuration_get(key)
+        super(FileStore, self).get_configuration_value(key)
         result = self.parsed_file.get(self.CONFIG_KEY, {})
         result = result.get(key)
-        self.logger.info("DataStore.configuration_get result: {}".format(result))
+        self.logger.info("DataStore.get_configuration_value result: {}".format(result))
         return result
 
-    def configuration_upsert(self, key, value):
+    def list_configuration(self):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).configuration_upsert(key, value)
+        super(FileStore, self).list_configuration()
+        result = list()
+        config = self.parsed_file.get(self.CONFIG_KEY, {})
+        for key in config.keys():
+            result.append({"key": key, "value": config.get(key)})
+        return result
+
+    def set_configuration(self, key, value):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(FileStore, self).set_configuration(key, value)
         # check to make sure there is a configuration_varribles section... so we don't get a key_error
         if self.parsed_file.get(self.CONFIG_KEY) is None:
             self.parsed_file[self.CONFIG_KEY] = {}
 
         self.parsed_file[self.CONFIG_KEY][key] = value
-        self.logger.info("DataStore.configuration_upsert result: Success")
+        self.logger.info("DataStore.set_configuration result: Success")
         self.save_file()
         return key
 
-    def configuration_delete(self, key):
+    def delete_configuration(self, key):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).configuration_delete(key)
+        super(FileStore, self).delete_configuration(key)
         if self.parsed_file.get(self.CONFIG_KEY) is None:
             return None
         popped_value = self.parsed_file[self.CONFIG_KEY].pop(key, None)
-        self.logger.info("DataStore.configuration_delete result: Success")
+        self.logger.info("DataStore.delete_configuration result: Success")
         self.save_file()
         if popped_value is None:
             # Nothing was deleted...

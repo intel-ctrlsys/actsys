@@ -52,52 +52,65 @@ class TestMultiStore(unittest.TestCase):
         self.ms._call_function("test_func", [1, 2, 3])
         self.assertEqual(test_func.call_count, 2)
 
-    def test_device_get(self):
-        self.ms.device_get()
-        self.ms.device_get("not-valid")
-        self.ms.device_get("compute-29")
+    def test_get_device(self):
+        self.ms.get_device("compute-29")
+
+    def test_list_devices(self):
+        self.ms.list_devices()
+        self.ms.list_devices({"hostname": "not-valid"})
+        self.ms.list_devices({"hostname": "compute-29"})
 
     def test_device_upsert(self):
         num = randint(0, 4500000)
         num1 = randint(0, 4500000)
         with self.assertRaises(DataStoreException):
-            self.ms.device_upsert({"hostname": "test", "port": num})
-        self.ms.device_upsert({"device_type": "node", "hostname": "test", "port": num})
-        self.ms.device_upsert({"device_type": "node", "hostname": "test", "port": num1})
+            self.ms.set_device({"hostname": "test", "port": num})
+        self.ms.set_device({"device_type": "node", "hostname": "test", "port": num})
+        self.ms.set_device({"device_type": "node", "hostname": "test", "port": num1})
 
-    def test_device_logical_delete(self):
-        self.ms.device_upsert({"device_type": "node", "hostname": "test", "port": 123})
-        self.ms.device_delete("test")
-        self.ms.device_delete("test")
+    def test_device_delete(self):
+        self.ms.set_device({"device_type": "node", "hostname": "test", "port": 123})
+        self.ms.delete_device("test")
+        self.ms.delete_device("test")
 
-        self.ms.device_upsert({"device_type": "node", "hostname": "test", "port": 123})
-        self.ms.device_delete("test")
-        self.ms.device_delete("test")
+        self.ms.set_device({"device_type": "node", "hostname": "test", "port": 123})
+        self.ms.delete_device("test")
+        self.ms.delete_device("test")
 
-    def test_profile_get(self):
-        self.ms.profile_get()
-        self.ms.profile_get("invalid")
-        self.ms.profile_get("compute-29")
+    def test_get_device_history(self):
+        self.ms.get_device_history()
+        self.ms.get_device_history("compute-29")
+
+    def test_get_profile(self):
+        self.ms.get_profile("invalid")
+        self.ms.get_profile("compute-29")
+
+    def test_list_profiles(self):
+        self.ms.list_profiles()
 
     def test_profile_upsert(self):
         num = randint(0, 4500000)
-        self.ms.profile_upsert({"profile_name": "test", "port": num})
+        self.ms.set_profile({"profile_name": "test", "port": num})
 
     def test_profile_delete(self):
-        self.ms.profile_upsert({"profile_name": "test", "port": 123})
-        self.ms.profile_delete("invalid")
-        self.ms.profile_delete("test")
-        self.ms.profile_delete("test")
+        self.ms.set_profile({"profile_name": "test", "port": 123})
+        self.ms.delete_profile("invalid")
+        self.ms.delete_profile("test")
+        self.ms.delete_profile("test")
 
     def test_log_get(self):
-        self.ms.log_get(limit=2)
-        self.ms.log_get("invalid")
-        self.ms.log_get("compute-29")
+        self.ms.list_logs(limit=2)
+        self.ms.list_logs("invalid")
+        self.ms.list_logs("compute-29")
+
+    def test_add_log(self):
+        self.fs.get_log_levels.return_value = [DataStore.LOG_LEVEL_WARNING]
+        self.ms.add_log(DataStore.LOG_LEVEL_WARNING, "foo")
 
     def test_log_get_timeslice(self):
         from datetime import datetime, timedelta
-        result = self.ms.log_get_timeslice(datetime.utcnow() - timedelta(days=5 * 365),
-                                           datetime.utcnow() - timedelta(days=300))
+        result = self.ms.list_logs_between_timeslice(datetime.utcnow() - timedelta(days=5 * 365),
+                                                     datetime.utcnow() - timedelta(days=300))
 
     def test_log_add(self):
         import logging
@@ -113,21 +126,24 @@ class TestMultiStore(unittest.TestCase):
         logger.error("Does this work?")
         logger.critical("Does this work?", device_name="knl-test")
 
-    def test_configuration_get(self):
-        self.ms.configuration_get()
-        self.ms.configuration_get("invalid")
-        self.ms.configuration_get("provisioning_agent_software")
+    def test_configuration_get_value(self):
+        self.ms.get_configuration_value()
+        self.ms.get_configuration_value("invalid")
+        self.ms.get_configuration_value("provisioning_agent_software")
+
+    def test_list_configuration(self):
+        self.ms.list_configuration()
 
     def test_configuration_upsert(self):
         num = randint(0, 4500000)
-        self.ms.configuration_upsert("test", num)
-        self.fs.configuration_upsert("test", num)
+        self.ms.set_configuration("test", num)
+        self.fs.set_configuration("test", num)
 
     def test_configuration_delete(self):
-        self.ms.configuration_upsert("test", 123)
-        self.ms.configuration_delete("test")
-        self.ms.configuration_delete("test")
-        self.ms.configuration_delete("invalid")
+        self.ms.set_configuration("test", 123)
+        self.ms.delete_configuration("test")
+        self.ms.delete_configuration("test")
+        self.ms.delete_configuration("invalid")
 
     # UTIL FUNCTIONS
     def test_get_device_types(self):

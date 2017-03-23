@@ -101,8 +101,14 @@ class DataStoreBuilder(object):
 
     @staticmethod
     def get_datastore_from_env_vars(print_to_screen=False, filestore_env_var="datastore_file_location",
-                                postgres_env_var="datastore_postgres_uri"):
-        import os
+                                    postgres_env_var="datastore_postgres_uri"):
+        """
+        Build A datastore based on the passed in ENV variables. This has less control, but its simple.
+        :param print_to_screen:
+        :param filestore_env_var:
+        :param postgres_env_var:
+        :return:
+        """
         builder = DataStoreBuilder()
         builder.set_print_to_screen(print_to_screen)
         if os.environ.get(filestore_env_var, None) is not None:

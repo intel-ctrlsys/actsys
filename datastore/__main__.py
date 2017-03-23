@@ -6,8 +6,8 @@
 """control.__main__: executed when bootstrap directory is called as script."""
 import os
 import logging
-from . import DataStoreBuilder, DataStoreCLI, get_logger
 from sys import exit
+from . import DataStoreBuilder, DataStoreCLI, get_logger
 
 def main(args=None):
     """

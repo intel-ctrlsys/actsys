@@ -1,20 +1,5 @@
 {
   "configuration_variables": {
-    "console_output": {
-      "error_level_regex": [
-        "regex"
-      ],
-      "file": [
-        "/var/log/ctrl.console.log'"
-      ],
-      "warning_level_regex": [
-        "regex"
-      ]
-    },
-    "log_file": {
-      "level": "DEBUG",
-      "retention_period": 30
-    },
     "log_file_path": "/tmp/ctrl.log",
     "log_file_max_bytes": 10485760,
     "provisioning_agent_software": "Warewulf"
@@ -27,16 +12,7 @@
       "hostname": "compute-29",
       "ip_address": "192.168.1.29",
       "mac_address": "00:00:00:00:00:00",
-      "profile_name": "compute_node",
-      "sku": [
-        {
-          "device_id": 1,
-          "hardware_type": null,
-          "model_number": null,
-          "sku": "111-asdd-1234-tres",
-          "step": null
-        }
-      ]
+      "profile_name": "compute_node"
     },
     {
       "bmc": "compute-30-bmc",
@@ -45,13 +21,7 @@
       "hostname": "compute-30",
       "ip_address": "192.168.1.30",
       "mac_address": "00:00:00:00:00:00",
-      "profile_name": "compute_node",
-      "sku": [
-        {
-          "hardware_type": "cpu",
-          "sku": "2222-asdd-1234-tres"
-        }
-      ]
+      "profile_name": "compute_node"
     },
     {
       "bmc": "compute-31-bmc",
@@ -60,16 +30,7 @@
       "hostname": "compute-31",
       "ip_address": "192.168.1.31",
       "mac_address": "00:00:00:00:00:00",
-      "profile_name": "compute_node",
-      "sku": [
-        {
-          "device_id": 3,
-          "hardware_type": "FAT32",
-          "model_number": null,
-          "sku": "111-asdd-1234-tres",
-          "step": "cpu"
-        }
-      ]
+      "profile_name": "compute_node"
     },
     {
       "bmc": "compute-32-bmc",
@@ -220,10 +181,6 @@
       "profile_name": "pdu_default",
       "type": "pdu",
       "user": "user"
-    },
-    {
-      "port": 411786,
-      "profile_name": "test"
     }
   ]
 }

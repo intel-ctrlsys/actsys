@@ -11,8 +11,8 @@ class DataStoreUtilities(object):
     def tail_file(filename, lines, formatter=None, log_filter=None):
         num_lines = int(lines)
 
-        with open(filename) as f:
-            content = f.read().splitlines()
+        with open(filename) as opened_file:
+            content = opened_file.read().splitlines()
 
         count = len(content)
         # Handle case when limit is larger than count
@@ -34,6 +34,31 @@ class DataStoreUtilities(object):
 
         lines.reverse()
         return lines
+
+    @staticmethod
+    def filter_dict(list_to_filter, filters):
+        """
+            Retrieve all devices from self.list_devices and filter them out according to the param filters. All entries
+            in filter must be satisfied in order to be included in the filter list. In other words:
+                device_included = device[key] = filter[0][key]
+                                                AND device[key] == filter[1][key]
+                                                ... AND device[key] == filter[n][key]
+        :param filters: dict of key value pairs that a device must match.
+        :return: A list
+        """
+        if filters is None:
+            return list_to_filter
+        filtered_objs = list()
+        passed_filters = True
+        print(list_to_filter, filters)
+        for obj in list_to_filter:
+            passed_filters = True
+            for specified_filter in filters:
+                passed_filters = passed_filters and obj.get(specified_filter) == filters.get(specified_filter)
+            if passed_filters:
+                filtered_objs.append(obj)
+
+        return filtered_objs
 
 
 class JsonParser(object):
@@ -61,8 +86,8 @@ class JsonParser(object):
         try:
             with open(file_path, "w") as json_file:
                 json_file.write(json.dumps(content, sort_keys=True, indent=2, separators=(',', ': ')))
-        except IOError as io:
-            print(io)
+        except IOError as io_error:
+            print(io_error)
             raise FileNotFound(file_path)
         except ValueError:
             raise NonParsableFile(file_path)
