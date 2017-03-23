@@ -242,8 +242,8 @@ class TestFileStore(unittest.TestCase):
         result = self.fs.log_get()
         self.assertEqual(15, len(result))
 
-        result = self.fs.log_get_timeslice(date_parse.parse("2014-01-01 10:25:18,042"),
-                                           date_parse.parse("2016-12-01 10:25:18,042"))
+        result = self.fs.log_get_timeslice(date_parse.parse("2014-01-01 10:25:18,042+00"),
+                                           date_parse.parse("2016-12-01 10:25:18,042+00"))
         self.assertEqual(3, len(result))
 
     def test_get_deleted(self):

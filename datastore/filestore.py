@@ -6,6 +6,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from dateutil.parser import parse as date_parse
+from pytz import UTC
 from .datastore import DataStore, DataStoreException
 from .utilities import DataStoreUtilities, JsonParser
 
@@ -271,7 +272,8 @@ class FileStore(DataStore):
         if len(split) == 4:
             return {
                 # Other parsing options: http://stackoverflow.com/questions/466345/converting-string-into-datetime
-                "timestamp": date_parse(split[0]),
+                #
+                "timestamp": date_parse(split[0] + "+00"),
                 "level": logging.getLevelName(split[1]),
                 "message": split[3],
                 "process": split[2],
@@ -298,7 +300,7 @@ class FileStore(DataStore):
 
         def time_filter(line):
             date = line.get("timestamp")
-            return begin < date < end
+            return begin < date.replace(tzinfo=UTC) < end
 
         log_file = self.configuration_get("log_file_path")
         lines = DataStoreUtilities.tail_file(log_file, limit, self.log_formatter, time_filter)
@@ -308,6 +310,8 @@ class FileStore(DataStore):
     def log_add(self, level, msg, device_name=None, process=None):
         """
         See @DataStore for function description. Only implementation details here.
+
+        Log Add doesn't allow newlines in its implemntation.
         """
         super(FileStore, self).log_add(level, process, msg, device_name)
         # Get device id from device_name
@@ -317,7 +321,7 @@ class FileStore(DataStore):
             device_id = device[0].get("device_id", None)
 
         # log it
-        msg = "{} / {} / ".format(process, device_id) + msg
+        msg = "{} / {} / ".format(process, device_id) + msg.replace(os.linesep, ' ').replace('\n', ' ')
         self.logger.log(level, msg)
 
     def configuration_get(self, key):
