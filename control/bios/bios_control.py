@@ -15,10 +15,10 @@ class BiosControl(object):
     def __init__(self, options=None):
         pass
 
-    def get_version(self, node_name):
+    def get_version(self, node, bmc):
         """Read the bios image info for a compute node"""
         pass
 
-    def bios_update(self, node_name, image):
+    def bios_update(self, node, bmc, image):
         """Update bios on a compute node"""
         pass

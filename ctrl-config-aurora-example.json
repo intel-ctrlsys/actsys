@@ -10,7 +10,7 @@
       "device_id": 1,
       "device_type": "node",
       "hostname": "compute-29",
-      "device_nc_port": 1000,
+      "bmc_fa_port": 1000,
       "ip_address": "192.168.1.29",
       "profile_name": "compute_node"
     },
@@ -20,7 +20,7 @@
       "device_type": "node",
       "hostname": "compute-30",
       "ip_address": "192.168.1.30",
-      "device_nc_port": 1001,
+      "bmc_fa_port": 1001,
       "profile_name": "compute_node"
     },
     {
@@ -29,7 +29,7 @@
       "device_type": "node",
       "hostname": "compute-31",
       "ip_address": "192.168.1.31",
-      "device_nc_port": 1002,
+      "bmc_fa_port": 1002,
       "profile_name": "compute_node"
     },
     {

@@ -14,5 +14,5 @@ class TestBiosControl(unittest.TestCase):
     def test_all_tests(self):
         """All tests."""
         interface = BiosControl()
-        interface.get_version('localhost')
-        interface.bios_update('localhost', 'test.bin')
+        interface.get_version(None, None)
+        interface.bios_update(None, None, 'test.bin')

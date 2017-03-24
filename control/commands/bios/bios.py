@@ -13,11 +13,13 @@ class BiosCommand(Command):
     def __init__(self, args=None):
         Command.__init__(self, args)
         self.device = None
+        self.bmc = None
         self.node_controller = None
 
     def setup(self):
         """Setup for Bios Commands"""
         self.device = self.configuration.get_device(self.device_name)
+        self.bmc = self.configuration.get_device(self.device.get('bmc'))
         device_type = self.device.get("device_type")
         bios_controller = self.device.get("bios_controller")
         if device_type not in ['compute', 'node']:
@@ -25,5 +27,5 @@ class BiosCommand(Command):
         if bios_controller is None:
             return CommandResult(255, "Please provide bios controller type in configuration")
         self.node_controller = self.plugin_manager.create_instance(
-            'bios', bios_controller, {'configuration': self.configuration})
+            'bios', bios_controller, None)
         return None

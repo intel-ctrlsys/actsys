@@ -22,7 +22,7 @@ class BiosVersionCommand(BiosCommand):
         """Execute the command"""
         self.setup()
         try:
-            ret_msg = self.node_controller.get_version(self.device_name)
+            ret_msg = self.node_controller.get_version(self.device, self.bmc)
         except Exception as ex:
             return CommandResult(255, ex.message)
         return CommandResult(0, ret_msg)

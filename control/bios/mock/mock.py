@@ -24,15 +24,17 @@ class MockNC(BiosControl):
         if os.path.exists(self.__persistent_file):
             self._load_bios_file()
 
-    def get_version(self, node_name):
+    def get_version(self, device, bmc):
         """Bios version"""
+        node_name = device.get('device_name')
         if node_name in self.__current_image_list:
             return self.__current_image_list[node_name]
         else:
             return 'No image found on node {0}'.format(node_name)
 
-    def bios_update(self, node_name, image):
+    def bios_update(self, device, bmc, image):
         """Update Bios"""
+        node_name = device.get('device_name')
         self.__current_image_list[node_name] = image
         self._save_bios_file()
         return "Bios for {0} updated with {1}".format(node_name, image)

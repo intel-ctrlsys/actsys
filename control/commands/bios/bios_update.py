@@ -23,7 +23,7 @@ class BiosUpdateCommand(BiosCommand):
         if self.args.image is None:
             return CommandResult(255, "Please provide BIOS image. See usage")
         try:
-            ret_msg = self.node_controller.bios_update(self.device_name, self.args.image)
+            ret_msg = self.node_controller.bios_update(self.device, self.bmc, self.args.image)
         except Exception as ex:
             return CommandResult(255, ex.message)
         return CommandResult(0, ret_msg)
