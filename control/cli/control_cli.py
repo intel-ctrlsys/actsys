@@ -11,10 +11,10 @@ from __future__ import print_function
 
 import argparse
 import sys
-
+from datastore.datastore_cli import DataStoreCLI
 from .command_invoker import CommandInvoker
 from ..commands import CommandResult
-from datastore.datastore_cli import DataStoreCLI
+from .provision_cli import ProvisionCli
 
 
 class ControlArgParser(object):
@@ -83,6 +83,7 @@ class ControlArgParser(object):
                            ['status', 'start', 'stop'], 'Select an action to perform')
 
         self.ctrl_subparser.add_parser('datastore', help='Access and edit items found in the DataStore')
+        self.ctrl_subparser.add_parser('provision', help='Provision nodes and set information about those nodes')
 
         self.add_subparser('bios', 'Update or get version of bios on specified nodes/group of nodes',
                            ['update', 'get-version'], 'Select an action to perform',
@@ -217,6 +218,9 @@ class ControlCommandLineInterface(object):
         if len(sys.argv) >= 2 and sys.argv[1] == 'datastore':
             datastore_cli = DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(sys.argv[2:])
             return datastore_cli
+        if len(sys.argv) >= 2 and sys.argv[1] == 'provision':
+            provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(sys.argv[2:])
+            return self.handle_command_result(provisioner_result)
 
         cmd_args = masterparser.get_all_args()
         command_result = None
@@ -238,6 +242,11 @@ class ControlCommandLineInterface(object):
         return self.handle_command_result(command_result)
 
     def handle_command_result(self, command_result):
+        """
+
+        :param command_result:
+        :return:
+        """
         if isinstance(command_result, list):
             num_failures = 0
             for cr in command_result:

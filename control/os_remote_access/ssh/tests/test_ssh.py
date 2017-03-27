@@ -7,37 +7,11 @@ Test the RemoteSshPlugin.
 """
 import getpass
 import unittest
+from mock import patch
 from ..ssh import RemoteSshPlugin
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
-from ....utilities.utilities import Utilities
-
-
-class MockUtilities(Utilities):
-    """Mock class fake low level system call helpers."""
-    def __init__(self):
-        super(MockUtilities, self).__init__()
-        self.returned_value = None
-
-    def execute_no_capture(self, command):
-        """Execute a command list suppressing output and returning the return
-           code."""
-        if self.returned_value is None:
-            return 0
-        else:
-            return self.returned_value
-
-    def execute_with_capture(self, command):
-        """Execute a command list capturing output and returning the return
-           code, stdout, stderr"""
-        return self.returned_value
-
-    def ping_check(self, address):
-        """Check if a network address has a OS responding to pings."""
-        if self.returned_value is None:
-            return True
-        else:
-            return self.returned_value
+from ....utilities.utilities import Utilities, SubprocessOutput
 
 
 class TestRemoteSshPlugin(unittest.TestCase):
@@ -46,39 +20,57 @@ class TestRemoteSshPlugin(unittest.TestCase):
         manager = PluginManager()
         manager.register_plugin_class(RemoteSshPlugin)
         self.remote = manager.create_instance('os_remote_access', 'ssh')
-        self.remote.utilities = MockUtilities()  # Mocking
         self.access = RemoteAccessData('127.0.0.1', 22, getpass.getuser(), None)
 
-    def test_test_connection(self):
+    @patch.object(Utilities, "execute_no_capture")
+    def test_test_connection(self, mock_enc):
+        mock_enc.return_value = 0
         rv = self.remote.test_connection(self.access)
         self.assertTrue(rv, 'Could not verify ssh with 127.0.0.1!')
 
-    def test_execute_1(self):
+        mock_enc.return_value = 1
+        rv = self.remote.test_connection(self.access)
+        self.assertFalse(rv, 'Could not verify ssh with 127.0.0.1!')
+
+        mock_enc.return_value = 123
+        rv = self.remote.test_connection(self.access)
+        self.assertFalse(rv, 'Could not verify ssh with 127.0.0.1!')
+
+    @patch.object(Utilities, "execute_subprocess")
+    @patch.object(Utilities, "execute_no_capture")
+    def test_execute_1(self, mock_nc, mock_esub):
         """Test the RemoteSshPlugin.execute() method."""
-        rv1, output = self.remote.execute(['whoami'], self.access)
-        self.remote.utilities.returned_value = '', ''
-        rv2, output = self.remote.execute(['whoami'], self.access, capture=True)
-        self.assertEqual(0, rv1)
-        self.assertEqual(0, rv2)
+        mock_nc.return_value = 0
+        result1 = self.remote.execute(['whoami'], self.access)
+        mock_esub.return_value = SubprocessOutput(0, 'John Doe', "He's the best!")
+        result2 = self.remote.execute(['whoami'], self.access, capture=True)
+        self.assertEqual(0, result1.return_code)
+        self.assertIsNone(result1.stdout)
+        self.assertEqual(0, result2.return_code)
+        self.assertEqual('John Doe', result2.stdout)
 
-    def test_execute_2(self):
+    @patch.object(Utilities, "execute_no_capture")
+    def test_execute_2(self, mock_utilities):
         """Test of execute part 2."""
-        self.remote.utilities.returned_value = 0
+        mock_utilities.return_value = 0
         self.access.identifier = 'id'
-        result = self.remote.execute(['whoami'], self.access)[0]
-        self.assertEqual(0, result)
+        result = self.remote.execute(['whoami'], self.access)
+        self.assertEqual(0, result.return_code)
 
-    def test_execute_3(self):
+    @patch.object(Utilities, "execute_subprocess")
+    def test_execute_3(self, mock_esub):
         self.access.port = 22222
-        self.remote.utilities.returned_value = '', ''
+        mock_esub.return_value = SubprocessOutput(0, 'John Doe', "He's the best!")
         result = self.remote.execute(['whoami'], self.access, capture=True)
-        self.assertEqual((0, ''), result)
+        self.assertEqual(0, result.return_code)
+        self.assertEqual('John Doe', result.stdout)
 
-    def test_execute_4(self):
+    @patch.object(Utilities, "execute_subprocess")
+    def test_execute_4(self, mock_esub):
         self.access.port = 22222
-        self.remote.utilities.returned_value = None, None
+        mock_esub.return_value = SubprocessOutput(123, None, None)
         result = self.remote.execute(['whoami'], self.access, capture=True)
-        self.assertEqual((255, None), result)
+        self.assertEqual(123, result.return_code)
 
 
 if __name__ == '__main__':

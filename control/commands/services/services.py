@@ -47,20 +47,20 @@ class ServicesCommand(Command):
             ssh_result = self.ssh.execute(list(self.command), self.remote_access_data, True)
             self.command.pop()
 
-            if ssh_result[0] == self.SSH_CONNECTION_ERROR and result_retries < self.SSH_RETRIES:
+            if ssh_result.return_code == self.SSH_CONNECTION_ERROR and result_retries < self.SSH_RETRIES:
                 self.logger.debug("Failed to connect over SSH, retrying...")
                 service_list.append(service)
                 result_retries += 1
                 continue
-            elif ssh_result[0] != self.SSH_SUCCESS:
+            elif ssh_result.return_code != self.SSH_SUCCESS:
                 result_msg = "Failed: {} - {}".format(self.command[1], service)
-                if ssh_result[1] is not None:
-                    result_msg += "\n {}".format(ssh_result[1])
+                if ssh_result.stdout is not None:
+                    result_msg += "\n {}".format(ssh_result.stdout)
                 result_code = 1
             else:
                 result_msg = "Success: {} - {}".format(self.command[1], service)
 
-            cr = CommandResult(ssh_result[0], result_msg)
+            cr = CommandResult(ssh_result.return_code, result_msg)
             result_string += str(cr) + '\n'
 
         if result_string == '':

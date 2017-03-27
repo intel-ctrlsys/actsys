@@ -6,7 +6,7 @@
 Implements the remote access contract using a mock for remote access to the OS
 on a compute node.
 """
-from ...utilities.utilities import Utilities
+from ...utilities.utilities import Utilities, SubprocessOutput
 from ..os_remote_access import OsRemoteAccess
 from ...plugin import DeclarePlugin
 import json
@@ -19,16 +19,15 @@ class OsRemoteAccessMock(OsRemoteAccess):
     def __init__(self, options=None):
         OsRemoteAccess.__init__(self, options)
         self.__options = options
-        self.utilities = Utilities()
         self.dfx_result_list = []
         self._load_test_results()
 
     def execute(self, cmd, remote_access_data, capture=False, other=None):
         """Execute the remote command"""
         if capture:
-            return 0, ''
+            return SubprocessOutput(0, '', '')
         else:
-            return 0, None
+            return SubprocessOutput(0, None, None)
 
     def test_connection(self, remote_access_data):
         """Execute the remote command"""

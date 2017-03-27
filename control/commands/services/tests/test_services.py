@@ -7,10 +7,10 @@ Test the ServicesCheckCommand Plugin.
 """
 import unittest
 from mock import patch, MagicMock
+from datastore import DataStoreLogger
 from ..services import ServicesCommand
 from ....plugin.manager import PluginManager
-from datastore import DataStoreLogger
-
+from ....utilities import SubprocessOutput
 
 class TestServicesCommand(unittest.TestCase):
     """Test case for the ServicesCheckCommand class."""
@@ -23,7 +23,7 @@ class TestServicesCommand(unittest.TestCase):
         self.node_name = "knl-123"
         self.mock_plugin_manager = mock_plugin_manager
         self.ssh_mock = self.mock_plugin_manager.create_instance.return_value
-        self.ssh_mock.execute.return_value = [0, None]
+        self.ssh_mock.execute.return_value = SubprocessOutput(0, None, None)
 
         self.configuration = {
             'device_name': self.node_name,
@@ -74,15 +74,15 @@ class TestServicesCommand(unittest.TestCase):
     def test_services_failure(self):
         """Failing, failing all the day"""
         self.services.device["service_list"] = ['orcmd']
-        self.ssh_mock.execute.return_value = [1, None]
+        self.ssh_mock.execute.return_value = SubprocessOutput(1, None, None)
 
         self.assertEqual(self.services.execute().message, "1 - Failed: status - orcmd")
 
-        self.ssh_mock.execute.return_value = [1, "Such a service does not exist"]
+        self.ssh_mock.execute.return_value = SubprocessOutput(1, "Such a service does not exist", None)
         self.assertEqual(self.services.execute().message, "1 - Failed: status - orcmd\n Such a service does not exist")
 
     def test_services_unable_to_connect(self):
-        self.ssh_mock.execute.return_value = [255, None]
+        self.ssh_mock.execute.return_value = SubprocessOutput(255, None, None)
         self.services.device["service_list"] = ['orcmd']
 
         self.assertEqual(self.services.execute().message,

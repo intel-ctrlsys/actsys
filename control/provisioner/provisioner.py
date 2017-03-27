@@ -31,7 +31,7 @@ class Provisioner(object):
         pass
 
     @abstractmethod
-    def remove(self, device):
+    def delete(self, device):
         """
         Attempts to remove a device from the provisioner. Does nothing if the device isn't already there.
         :param device:

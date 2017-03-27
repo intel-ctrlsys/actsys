@@ -6,7 +6,7 @@
 Implements the remote access contract using ssh for remote access to the OS on
 a compute node.
 """
-from ...utilities.utilities import Utilities
+from ...utilities.utilities import Utilities, SubprocessOutput
 from ..os_remote_access import OsRemoteAccess
 from ...plugin import DeclarePlugin
 
@@ -32,7 +32,7 @@ class RemoteSshPlugin(OsRemoteAccess):
 
     def test_connection(self, remote_access_data):
         """Test for ssh access."""
-        rv = self._execute_ssh(['echo', '-n', '""'], remote_access_data)[0] == 0
+        rv = self._execute_ssh(['echo', '-n', '""'], remote_access_data).return_code == 0
         return rv
 
     def _build_command(self, command, remote_access_data):
@@ -56,14 +56,10 @@ class RemoteSshPlugin(OsRemoteAccess):
     def _execute_ssh(self, cmdargs, remote_access_data):
         """Execute command on the remote server returning the result"""
         full_command = self._build_command(cmdargs, remote_access_data)
-        return self.utilities.execute_no_capture(full_command), None
+        return SubprocessOutput(self.utilities.execute_no_capture(full_command), None, None)
 
     def _execute_ssh_with_capture(self, command, remote_access_data):
         """Execute command on the remote server returning the result and
            output"""
         full_command = self._build_command(command, remote_access_data)
-        stdout, stderr = self.utilities.execute_with_capture(full_command)
-        if stdout is None:
-            return 255, None
-        else:
-            return 0, stdout
+        return self.utilities.execute_subprocess(full_command)

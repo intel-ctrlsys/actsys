@@ -42,18 +42,18 @@ class MockProvisionerBase(object):
                                               self.TEST_DEVICE2.get("hostname"),
                                               self.TEST_DEVICE3.get("hostname")])
 
-        self.mp.remove(self.TEST_DEVICE2)
+        self.mp.delete(self.TEST_DEVICE2)
         self.assertListEqual(self.mp.list(), [self.TEST_DEVICE1.get("hostname"),
                                               self.TEST_DEVICE3.get("hostname")])
 
-        self.mp.remove(self.TEST_DEVICE2)
+        self.mp.delete(self.TEST_DEVICE2)
         self.assertListEqual(self.mp.list(), [self.TEST_DEVICE1.get("hostname"),
                                               self.TEST_DEVICE3.get("hostname")])
-        self.mp.remove(self.TEST_DEVICE3)
+        self.mp.delete(self.TEST_DEVICE3)
         self.assertListEqual(self.mp.list(), [self.TEST_DEVICE1.get("hostname")])
 
     def test_remove2(self):
-        device = self.mp.remove(self.TEST_DEVICE1)
+        device = self.mp.delete(self.TEST_DEVICE1)
         self.assertEqual(device, self.TEST_DEVICE1)
 
     def test_set_network_interface(self):
@@ -175,7 +175,7 @@ class TestProvisioner(unittest.TestCase):
 
     def test_provisioner(self):
         self.provisioner.add({})
-        self.provisioner.remove({})
+        self.provisioner.delete({})
         self.provisioner.set_network_interface(None, None)
         self.provisioner.set_hardware_address(None, None)
         self.provisioner.set_image(None, None)
