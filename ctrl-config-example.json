@@ -125,6 +125,7 @@
       "password": "password",
       "port": 22,
       "profile_name": "compute_node",
+      "bios_controller": "mock",
       "resource_controller": "slurm",
       "role": [
         "compute"
