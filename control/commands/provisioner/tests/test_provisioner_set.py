@@ -62,11 +62,11 @@ class TestProvisionerSetCommand(unittest.TestCase):
     def test_ipaddr(self):
         self.prov_set.command_args = {"ip_address": "foo"}
         result = self.prov_set.execute()
-        self.provisioner_mock.set_network_interface.assert_called_once_with(self.mock_device, "foo")
+        self.provisioner_mock.set_ip_address.assert_called_once_with(self.mock_device, "foo")
 
         self.prov_set.command_args = {"ip_address": "bar", "net_interface": "io"}
         result = self.prov_set.execute()
-        self.provisioner_mock.set_network_interface.assert_called_with(self.mock_device, "bar", "io")
+        self.provisioner_mock.set_ip_address.assert_called_with(self.mock_device, "bar", "io")
 
     def test_hwaddr(self):
         self.prov_set.command_args = {"hw_address": "foo"}

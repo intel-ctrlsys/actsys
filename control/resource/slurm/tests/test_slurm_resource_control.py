@@ -47,14 +47,14 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_node_not_found(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
                                                          "debug*       up   infinite      0    n/a", '')
         self._remove_from_resource_pool_stub(1, "Node localhost not found in SLURM!")
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_node_success(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
-                                                         "debug*       up   infinite      1    idle localhost\n" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
+                                                         "debug*       up   infinite      1    idle localhost\n"
                                                          "Success", 'Success')
         self._remove_from_resource_pool_stub(0, "Succeeded in removing node "
                                                 "localhost from the cluster "
@@ -62,25 +62,25 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_node_not_found_multiple(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
-                                                         "debug*       up   infinite      0    n/a" \
-                                                         "shared*       up   infinite      0    n/a" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
+                                                         "debug*       up   infinite      0    n/a"
+                                                         "shared*       up   infinite      0    n/a"
                                                          "normal       up   infinite      0    n/a", '')
         self._remove_from_resource_pool_stub(1, "Node localhost not found in SLURM!")
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_node_success_multiple(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
-                                                         "debug*       up   infinite      1    n/a\n" \
-                                                         "normal       up   infinite      1    idle localhost\n" \
-                                                         "shared*       up   infinite      1    n/a\n" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
+                                                         "debug*       up   infinite      1    n/a\n"
+                                                         "normal       up   infinite      1    idle localhost\n"
+                                                         "shared*       up   infinite      1    n/a\n"
                                                          "Success", 'Success')
         self._remove_from_resource_pool_stub(0, "Succeeded in removing node localhost from the cluster "
                                                 "resource pool!")
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_node_failure(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
                                                          "debug*       up   infinite      1    idle localhost", '')
         self._remove_from_resource_pool_stub(2, "Failed in removing node "
                                                 "localhost from the cluster "
@@ -88,7 +88,7 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_node_in_alloc(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
                                                          "debug*       up   infinite      1    alloc localhost", '')
         self._remove_from_resource_pool_stub(3, "Currently, the node localhost "
                                                 "is busy running job, it cannot"
@@ -119,14 +119,14 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_add_node_not_found(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
                                                          "debug*       up   infinite      0    n/a", '')
         self._add_to_resource_pool_stub(1, "Node localhost not found in SLURM!")
 
     @patch.object(Utilities, "execute_subprocess")
     def test_add_node_success(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n" \
-                                                         "debug*       up   infinite      1    drain localhost\n" \
+        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
+                                                         "debug*       up   infinite      1    drain localhost\n"
                                                          "Success", 'Success')
         self._add_to_resource_pool_stub(0, "Succeeded in adding node localhost "
                                            "back to the cluster resource pool!")

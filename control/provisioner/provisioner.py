@@ -40,7 +40,7 @@ class Provisioner(object):
         pass
 
     @abstractmethod
-    def set_network_interface(self, device, ip_address, interface="eth0"):
+    def set_ip_address(self, device, ip_address, interface="eth0"):
         """
         Mutate the device to include this ip_address.
         Save it to the DataStore
@@ -55,7 +55,7 @@ class Provisioner(object):
     @abstractmethod
     def set_hardware_address(self, device, hardware_address, interface="eth0"):
         """
-        Same as Provisioner.set_network_interface
+        Same as Provisioner.set_ip_address
         :param device:
         :param hardware_address:
         :param interface:
@@ -140,9 +140,13 @@ class ProvisionerException(Exception):
     """
     A staple Exception thrown by the Provisioner
     """
-    def __init__(self, msg):
+    def __init__(self, msg, command_output=None):
         super(ProvisionerException, self).__init__()
         self.msg = msg
+        if command_output is not None:
+            self.cmd_stdout = command_output.stdout
+            self.cmd_stderr = command_output.stderr
+            self.cmd_return_code = command_output.return_code
 
     def __str__(self):
         return repr(self.msg)

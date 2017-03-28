@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Intel Corp.
+# Copyright (c) 2016-2017 Intel Corp.
 #
 """
 Plugin to talk to the BMC using IPMI versions 1.5 and 2.0.

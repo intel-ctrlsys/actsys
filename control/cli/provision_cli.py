@@ -55,12 +55,12 @@ class ProvisionCli(object):
         self.set_parser.add_argument('--ip_address', '-i', type=str, required=False,
                                      help="The IP address you want to set. This is set on the interface specified with"
                                           " the --net_interface flag. If no value is given, then no"
-                                          "change takes place. Set this field to UNDEF to remove the currently "
+                                          " change takes place. Set this field to UNDEF to remove the currently "
                                           "specified IP address.")
         self.set_parser.add_argument('--hw_address', '-a', type=str, required=False,
                                      help="The Hardware address of this device. This is set for the interface specified"
                                           " with the --net_interface flag. If no value is given, then no"
-                                          "change takes place. Set this field to UNDEF to remove the currently "
+                                          " change takes place. Set this field to UNDEF to remove the currently "
                                           "specified hardware address.")
         self.set_parser.add_argument('--net_interface', '-d', type=str, required=False,
                                      help="The network interface which you want to set the options on. This applies to"
@@ -69,16 +69,16 @@ class ProvisionCli(object):
         self.set_parser.add_argument('--image', '-m', type=str, required=False,
                                      help="The image you want to set to this node. If no value is given, then no image "
                                           "is set. The image should already be defined and known to the provisioner and"
-                                          "only the image name is specified here.")
+                                          " only the image name is specified here.")
         self.set_parser.add_argument('--bootstrap', '-b', type=str, required=False,
                                      help="The bootstrap to be used by the provisioner. The existance and use of a "
                                           "bootstrap image depends on the provisioner. If no value is given, then no"
-                                          "change takes place. Set this field to UNDEF to remove the currently "
+                                          " change takes place. Set this field to UNDEF to remove the currently "
                                           "specified bootstrap.")
         self.set_parser.add_argument('--files', '-f', type=str, required=False,
                                      help="The files you want to set on this device. This should be a comma seperated "
                                           "list if you are specifying multiple files. If no value is given, then no"
-                                          "change takes place. Set this field to UNDEF to remove all existing files.")
+                                          " change takes place. Set this field to UNDEF to remove all existing files.")
         self.set_parser.add_argument('--kernel_args', '-k', type=str, required=False,
                                      help="The kernel arguments to set on this device. This should be in the same "
                                           "format you want to show up in the kernel arguments. If no value is given, "

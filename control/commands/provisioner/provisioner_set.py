@@ -12,15 +12,14 @@ from ...plugin import DeclarePlugin
 @DeclarePlugin('provisioner_set', 100)
 class ProvisionerSetCommand(Command):
     """
-    Delete a device from the provisioner.
+    Set options for the device in the provisioner
     """
 
     def __init__(self, args=None):
-        """Retrieve dependencies and prepare for power on"""
+        """Retrieve dependencies, prepare to perform command."""
         Command.__init__(self, args)
 
         self.device = self.configuration.get_device(self.device_name)
-        print(self.device)
         if self.device.get("provisioner") is None:
             # TODO: Return a configuration error
             raise RuntimeError("No provisioner is specified in the config. Cannot perform command.")
@@ -33,12 +32,11 @@ class ProvisionerSetCommand(Command):
             return CommandResult(1, 'Failure: cannot perform provisioner actions on this device'
                                     ' type ({})'.format(self.device.get("device_type")))
 
-        print(self.command_args)
         if self.command_args.get("ip_address") is not None:
             args = [self.device, self.command_args.get("ip_address")]
             if self.command_args.get("net_interface") is not None:
                 args.append(self.command_args.get("net_interface"))
-            self.provisioner.set_network_interface(*args)
+            self.provisioner.set_ip_address(*args)
 
         if self.command_args.get("hw_address") is not None:
             args = [self.device, self.command_args.get("hw_address")]

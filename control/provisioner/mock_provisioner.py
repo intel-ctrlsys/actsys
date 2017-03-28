@@ -51,7 +51,7 @@ class MockProvisioner(Provisioner):
         device.pop(self.DEVICE_ADDED_TO_PROVISIONER_KEY, None)
         return device
 
-    def set_network_interface(self, device, ip_address, interface="eth0"):
+    def set_ip_address(self, device, ip_address, interface="eth0"):
         """
         See @Provisioner for interface details. Implementation here.
         """

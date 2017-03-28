@@ -16,10 +16,9 @@ class ProvisionerAddCommand(Command):
     """
 
     def __init__(self, args=None):
-        """Retrieve dependencies and prepare for power on"""
+        """Retrieve dependencies, prepare to perform command."""
         Command.__init__(self, args)
 
-        print("getting device")
         self.device = self.configuration.get_device(self.device_name)
         if self.device.get("provisioner") is None:
             # TODO: Return a configuration error
@@ -33,7 +32,6 @@ class ProvisionerAddCommand(Command):
             return CommandResult(1, 'Failure: cannot perform provisioner actions on this device'
                                     ' type ({})'.format(self.device.get("device_type")))
 
-        print("adding...")
         self.provisioner.add(self.device)
         self.configuration.device_upsert(self.device)
 

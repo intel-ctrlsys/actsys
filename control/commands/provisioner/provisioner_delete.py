@@ -16,7 +16,7 @@ class ProvisionerDeleteCommand(Command):
     """
 
     def __init__(self, args=None):
-        """Retrieve dependencies and prepare for power on"""
+        """Retrieve dependencies, prepare to perform command."""
         Command.__init__(self, args)
 
         self.device = self.configuration.get_device(self.device_name)

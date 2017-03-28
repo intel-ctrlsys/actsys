@@ -58,19 +58,19 @@ class MockProvisionerBase(object):
 
     def test_set_network_interface(self):
         device = {}
-        self.mp.set_network_interface(device, "ipa")
+        self.mp.set_ip_address(device, "ipa")
         self.assertEqual(device.get("ip_address"), "ipa")
 
-        self.mp.set_network_interface(device, "ipa2", "enps606")
+        self.mp.set_ip_address(device, "ipa2", "enps606")
         self.assertEqual(device.get("enps606_ip_address"), "ipa2")
 
-        self.mp.set_network_interface(device, "ipa")
+        self.mp.set_ip_address(device, "ipa")
         self.assertEqual(device.get("ip_address"), "ipa")
 
-        self.mp.set_network_interface(device, None)
+        self.mp.set_ip_address(device, None)
         self.assertIsNone(device.get("ip_address"))
 
-        self.mp.set_network_interface(device, None, "interface2")
+        self.mp.set_ip_address(device, None, "interface2")
         self.assertIsNone(device.get("interface2_ip_address"))
 
     def test_set_hardware_address(self):
@@ -176,7 +176,7 @@ class TestProvisioner(unittest.TestCase):
     def test_provisioner(self):
         self.provisioner.add({})
         self.provisioner.delete({})
-        self.provisioner.set_network_interface(None, None)
+        self.provisioner.set_ip_address(None, None)
         self.provisioner.set_hardware_address(None, None)
         self.provisioner.set_image(None, None)
         self.provisioner.set_bootstrap(None, None)

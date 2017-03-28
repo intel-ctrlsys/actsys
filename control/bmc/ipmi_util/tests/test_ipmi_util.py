@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Intel Corp.
+# Copyright (c) 2016-2107 Intel Corp.
 #
 """
 Test the IPMI plugin for BMC access/control.
@@ -35,7 +35,6 @@ class TestBmcIpmi(unittest.TestCase):
         self.manager = PluginManager()
         self.manager.register_plugin_class(BmcIpmiUtil)
         self.bmc = self.manager.create_instance('bmc', 'ipmi_util')
-        # self.bmc.utilities = self.__utilities
         self.bmc.mandatory_bmc_wait_seconds = 0
         self.bmc_credentials = RemoteAccessData('127.0.0.2', 0, 'admin',
                                                 'PASSWORD')
