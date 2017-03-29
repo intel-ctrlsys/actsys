@@ -310,9 +310,9 @@ class FileStore(DataStore):
         super(FileStore, self).add_log(level, process, msg, device_name)
         # Get device id from device_name
         device_id = None
-        device = self.list_devices(device_name)
-        if len(device) == 1:
-            device_id = device[0].get("device_id", None)
+        device = self.get_device(device_name)
+        if device is not None:
+            device_id = device.get("device_id", None)
 
         # log it
         msg = "{} / {} / ".format(process, device_id) + msg.replace(os.linesep, ' ').replace('\n', ' ')

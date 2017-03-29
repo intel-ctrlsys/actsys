@@ -42,14 +42,14 @@ class TestDataStoreCLI(unittest.TestCase):
 
         self.mockDS.list_devices.return_value = [{'device_type': 'node', 'debug_ip': '127.0.0.111'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
-            result = self.dscli.parse_and_run(['device', 'get', 'debug_ip=127.0.0.111'])
+            result = self.dscli.parse_and_run(['device', 'list', 'debug_ip=127.0.0.111'])
             self.assertEqual(output.getvalue(),
                              '--- None ---\ndebug_ip             : 127.0.0.111\ndevice_type          : node\n')
 
     def test_device_get_no_match(self):
         # print('execute_devices')
         self.mockDS.list_devices.return_value = []
-        result = self.dscli.parse_and_run(['device', 'get', 'ham=node1'])
+        result = self.dscli.parse_and_run(['device', 'list', 'ham=node1'])
         self.assertEqual(result, 0)
 
     def test_device_set_no_existing_device(self):
@@ -238,6 +238,13 @@ class TestsDataStoreCLIOptions(unittest.TestCase):
         result = DataStoreCLI.parse_options(["1=arg"])
         self.assertEqual(result, {1: "arg"})
 
+    def test_equal_in_options(self):
+        result = DataStoreCLI.parse_options(["f=b", "kargs=console=tty0,115280"])
+        self.assertEqual(result, {"f": "b", "kargs": "console=tty0,115280"})
+
+        result = DataStoreCLI.parse_options(["f=b", "kargs=console=tty0,115280 Addl args"])
+        self.assertEqual(result, {"f": "b", "kargs": "console=tty0,115280 Addl args"})
+
 
 class TestFunctionalReturnCodes(unittest.TestCase):
     FILE_STRING = "unknown, to be contrusted in setup()"
@@ -323,8 +330,8 @@ class TestFunctionalReturnCodes(unittest.TestCase):
             {"cmd": ['device', 'set', 'hostname=test_hostname'], "out": 0},
             {"cmd": ['device', 'set', 'hostname=test_hostname', 'port=23'], "out": 0},
             {"cmd": ['device', 'set', 'hostname=test_hostname', 'test=foo'], "out": 0},
-            {"cmd": ['device', 'get', 'mac_address=AA:GG:PP'], "out": 0},
-            {"cmd": ['device', 'get', 'mac_address=AA:GG:111'], "out": 0},
+            {"cmd": ['device', 'list', 'mac_address=AA:GG:PP'], "out": 0},
+            {"cmd": ['device', 'list', 'mac_address=AA:GG:111'], "out": 0},
             {"cmd": ['device', 'delete', 'hostname=test_hostname2'], "out": 0},
             {"cmd": ['device', 'delete', 'hostname=not_valid_name'], "out": 0},
             {"cmd": ['profile', 'get', 'profile_name=compute_node'], "out": 0},
@@ -347,9 +354,8 @@ class TestFunctionalReturnCodes(unittest.TestCase):
             {"cmd": ['config', 'set', 'key=log_file_path', 'value=test'], "out": 0},
             {"cmd": ['config', 'get', 'key=log_file_path'], "out": 0},
             {"cmd": ['config', 'get', 'log_file_path'], "out": 1},
-            {"cmd": ['device', 'get', 'mac_address=AA:GG:PP'], "out": 0},
-            {"cmd": ['device', 'get', 'mac_address=AA:GG:PP'], "out": 0},
-
+            {"cmd": ['device', 'list', 'mac_address=AA:GG:PP'], "out": 0},
+            {"cmd": ['device', 'list', 'mac_address=AA:GG:PP'], "out": 0}
         ]
 
         for command in commands:

@@ -119,15 +119,11 @@ class DataStoreCLI(object):
             return poe.return_code
 
         if parsed_args.action == "list":
-            devices = self.datastore.list_devices()
+            devices = self.datastore.list_devices(options)
             self.print_devices(devices)
             return 0
 
         device_name = options.get("device_id") or options.get("hostname") or options.get("ip_address")
-        if parsed_args.action == "get" and device_name is None and options != {}:
-            devices = self.datastore.list_devices(options)
-            self.print_devices(devices)
-            return 0
         if device_name is None:
             print("Please specify a device")
             return 1
@@ -181,7 +177,7 @@ class DataStoreCLI(object):
             return poe.return_code
 
         if parsed_args.action == "list":
-            profiles = self.datastore.list_profiles()
+            profiles = self.datastore.list_profiles(options)
             self.print_devices(profiles)
             return 0
 
@@ -312,11 +308,14 @@ class DataStoreCLI(object):
             temp = option.split("=")
 
             # Accepts options like 'foo=bar'
-            if len(temp) != 2:
+            if len(temp) < 2:
                 raise ParseOptionsException(1, "Option `{}` is not valid. Please specify a value like key=value.".format(option))
-
-            key = temp[0]
-            value = temp[1]
+            elif len(temp) > 2:
+                key = temp[0]
+                value = "=".join(temp[1:])
+            else:
+                key = temp[0]
+                value = temp[1]
 
             # None or empty str, is not allowed
             if key is None or key == '' or value is None or value == '':
