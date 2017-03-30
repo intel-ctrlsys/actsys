@@ -126,10 +126,6 @@ class MockProvisionerBase(object):
         self.mp.set_files(device, None)
         self.assertIsNone(device.get(self.mp.PROVISIONER_FILE_KEY))
 
-    def test_add_file(self):
-        self.mp.add_file("foo")
-        self.mp.add_file("foo", "bar")
-
     def test_set_kernel_args(self):
         device = {}
         self.mp.set_kernel_args(device, "foo,hi,lo")
@@ -181,7 +177,6 @@ class TestProvisioner(unittest.TestCase):
         self.provisioner.set_image(None, None)
         self.provisioner.set_bootstrap(None, None)
         self.provisioner.set_files(None, None)
-        self.provisioner.add_file(None, None)
         self.provisioner.set_kernel_args(None, None)
         self.provisioner.list()
         self.provisioner.list_images()

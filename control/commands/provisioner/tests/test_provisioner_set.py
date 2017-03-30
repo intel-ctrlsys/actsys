@@ -7,6 +7,7 @@ Test the ProvisionerSet Plugin.
 """
 import unittest
 from mock import patch, MagicMock
+from argparse import Namespace
 from datastore import DataStoreLogger
 from ..provisioner_set import ProvisionerSetCommand
 from ....plugin.manager import PluginManager
@@ -21,7 +22,8 @@ class TestProvisionerSetCommand(unittest.TestCase):
         self.mock_device = {
             "device_type": "node",
             "provisioner": "mock",
-            "device_id": 1
+            "device_id": 1,
+            "hostname": "c1"
         }
         self.configuration_manager = MagicMock()
         self.configuration_manager.get_device.return_value = self.mock_device
@@ -54,49 +56,57 @@ class TestProvisionerSetCommand(unittest.TestCase):
                          'Failure: cannot perform provisioner actions on this device type ({})'.format('Not Compute'))
 
     def test_success(self):
+        self.prov_set.args = self.create_namespace()
         result = self.prov_set.execute()
 
         self.assertEqual(0, result.return_code)
-        self.assertEqual("Successfully set {} to the provisioner".format(1), result.message)
+        self.assertEqual("Successfully set c1 options for the provisioner", result.message)
 
     def test_ipaddr(self):
-        self.prov_set.command_args = {"ip_address": "foo"}
+        self.prov_set.args = self.create_namespace(ip_address="foo")
         result = self.prov_set.execute()
         self.provisioner_mock.set_ip_address.assert_called_once_with(self.mock_device, "foo")
 
-        self.prov_set.command_args = {"ip_address": "bar", "net_interface": "io"}
+        self.prov_set.args = self.create_namespace(ip_address="bar", net_interface="io")
         result = self.prov_set.execute()
         self.provisioner_mock.set_ip_address.assert_called_with(self.mock_device, "bar", "io")
 
     def test_hwaddr(self):
-        self.prov_set.command_args = {"hw_address": "foo"}
+        self.prov_set.args = self.create_namespace(hw_address="foo")
         result = self.prov_set.execute()
         self.provisioner_mock.set_hardware_address.assert_called_once_with(self.mock_device, "foo")
 
-        self.prov_set.command_args = {"hw_address": "bar", "net_interface": "io"}
+        self.prov_set.args = self.create_namespace(hw_address="bar", net_interface="io")
         result = self.prov_set.execute()
         self.provisioner_mock.set_hardware_address.assert_called_with(self.mock_device, "bar", "io")
 
     def test_image(self):
-        self.prov_set.command_args = {"image": "foo"}
+        self.prov_set.args = self.create_namespace(image="foo")
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_image.assert_called_once_with(self.mock_device, "foo")
 
     def test_bootstrap(self):
-        self.prov_set.command_args = {"bootstrap": "foo"}
+        self.prov_set.args = self.create_namespace(bootstrap="foo")
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_bootstrap.assert_called_once_with(self.mock_device, "foo")
 
     def test_files(self):
-        self.prov_set.command_args = {"files": "foo"}
+        self.prov_set.args = self.create_namespace(files="foo")
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_files.assert_called_once_with(self.mock_device, "foo")
 
     def test_kargs(self):
-        self.prov_set.command_args = {"kernel_args": "foo"}
+        self.prov_set.args = self.create_namespace(kernel_args="foo")
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_kernel_args.assert_called_once_with(self.mock_device, "foo")
+
+    def create_namespace(self, **kwargs):
+        necessary_keys = ["ip_address", "net_interface", "hw_address", "image", "bootstrap", "files", "kernel_args"]
+        for key in necessary_keys:
+            if key not in kwargs:
+                kwargs[key] = None
+        return Namespace(**kwargs)

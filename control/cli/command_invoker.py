@@ -152,8 +152,9 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(ProvisionerDeleteCommand)
         self.manager.register_plugin_class(ProvisionerSetCommand)
 
-        from ..provisioner import MockProvisioner
+        from ..provisioner import MockProvisioner, Warewulf
         self.manager.register_plugin_class(MockProvisioner)
+        self.manager.register_plugin_class(Warewulf)
 
         try:
             from ctrl_plugins import add_plugins_to_manager

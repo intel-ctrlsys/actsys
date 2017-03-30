@@ -37,7 +37,8 @@ class TestProvisionerAddCommand(unittest.TestCase):
         self.configuration_manager.get_device.return_value = {
             "device_type": "node",
             "provisioner": "mock",
-            "device_id": 1
+            "device_id": 1,
+            "hostname": "c1"
         }
 
     def test_no_provisioner_in_config(self):
@@ -58,4 +59,4 @@ class TestProvisionerAddCommand(unittest.TestCase):
         result = self.prov_add.execute()
 
         self.assertEqual(0, result.return_code)
-        self.assertEqual("Successfully added {} to the provisioner".format(1), result.message)
+        self.assertEqual("Successfully added c1 to the provisioner", result.message)

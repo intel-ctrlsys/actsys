@@ -33,6 +33,6 @@ class ProvisionerDeleteCommand(Command):
                                     ' type ({})'.format(self.device.get("device_type")))
 
         self.provisioner.delete(self.device)
-        self.configuration.device_upsert(self.device)
+        self.configuration.set_device(self.device)
 
-        return CommandResult(0, "Successfully deleted {} from the provisioner".format(self.device.get("device_id")))
+        return CommandResult(0, "Successfully deleted {} from the provisioner".format(self.device.get("hostname")))

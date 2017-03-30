@@ -33,6 +33,6 @@ class ProvisionerAddCommand(Command):
                                     ' type ({})'.format(self.device.get("device_type")))
 
         self.provisioner.add(self.device)
-        self.configuration.device_upsert(self.device)
+        self.configuration.set_device(self.device)
 
-        return CommandResult(0, "Successfully added {} to the provisioner".format(self.device.get("device_id")))
+        return CommandResult(0, "Successfully added {} to the provisioner".format(self.device.get("hostname")))

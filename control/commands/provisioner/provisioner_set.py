@@ -32,30 +32,30 @@ class ProvisionerSetCommand(Command):
             return CommandResult(1, 'Failure: cannot perform provisioner actions on this device'
                                     ' type ({})'.format(self.device.get("device_type")))
 
-        if self.command_args.get("ip_address") is not None:
-            args = [self.device, self.command_args.get("ip_address")]
-            if self.command_args.get("net_interface") is not None:
-                args.append(self.command_args.get("net_interface"))
+        if self.args.ip_address is not None:
+            args = [self.device, self.args.ip_address]
+            if self.args.net_interface is not None:
+                args.append(self.args.net_interface)
             self.provisioner.set_ip_address(*args)
 
-        if self.command_args.get("hw_address") is not None:
-            args = [self.device, self.command_args.get("hw_address")]
-            if self.command_args.get("net_interface") is not None:
-                args.append(self.command_args.get("net_interface"))
+        if self.args.hw_address is not None:
+            args = [self.device, self.args.hw_address]
+            if self.args.net_interface is not None:
+                args.append(self.args.net_interface)
             self.provisioner.set_hardware_address(*args)
 
-        if self.command_args.get("image") is not None:
-            self.provisioner.set_image(self.device, self.command_args.get("image"))
+        if self.args.image is not None:
+            self.provisioner.set_image(self.device, self.args.image)
 
-        if self.command_args.get("bootstrap") is not None:
-            self.provisioner.set_bootstrap(self.device, self.command_args.get("bootstrap"))
+        if self.args.bootstrap is not None:
+            self.provisioner.set_bootstrap(self.device, self.args.bootstrap)
 
-        if self.command_args.get("files") is not None:
-            self.provisioner.set_files(self.device, self.command_args.get("files"))
+        if self.args.files is not None:
+            self.provisioner.set_files(self.device, self.args.files)
 
-        if self.command_args.get("kernel_args") is not None:
-            self.device = self.provisioner.set_kernel_args(self.device, self.command_args.get("kernel_args"))
+        if self.args.kernel_args is not None:
+            self.device = self.provisioner.set_kernel_args(self.device, self.args.kernel_args)
 
-        self.configuration.device_upsert(self.device)
+        self.configuration.set_device(self.device)
 
-        return CommandResult(0, "Successfully set {} to the provisioner".format(self.device.get("device_id")))
+        return CommandResult(0, "Successfully set {} options for the provisioner".format(self.device.get("hostname")))
