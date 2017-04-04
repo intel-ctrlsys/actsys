@@ -6,9 +6,11 @@
 
 from unittest import TestCase
 from copy import deepcopy
-from mock import patch, call
+from mock import patch, call, MagicMock
+from datastore import DataStore
 from ..utils import split_command_results, print_msg, \
-                    append_to_list_in_dictionary, Usage
+                    append_to_list_in_dictionary, Usage, \
+                    debug_info_from_device_name, device_name_from_debug_info
 from ....commands import CommandResult
 
 def mock_print_and_test(class_name, msg, exp_class_name, exp_msg):
@@ -33,6 +35,7 @@ class TestUtils(TestCase):
         self.base_dic = {self.result_device.device_name: self.result_device}
         self.result_success = CommandResult(0, "Success")
         self.base_success_dic = {self.result_success.device_name: self.result_success}
+        self.datastore = MagicMock(spec=DataStore)
 
     def test_print_msg_no_class_no_msg(self):
         """ Tests print_msg without class_name nor message"""
@@ -176,3 +179,72 @@ class TestUtils(TestCase):
         ret = usage.get_usage_msg()
         self.assertEqual(expected, ret)
         print (ret)
+
+    def test_debug_info_from_device_name_none_params(self):
+        self.assertIsNone(debug_info_from_device_name(None, None))
+
+    def test_debug_info_from_device_name_invalid_DataStore(self):
+        self.assertIsNone(debug_info_from_device_name('', None))
+
+    def test_debug_info_from_device_name_not_found(self):
+        self._check_debug_info_from_device_name_is_none(None)
+
+    def test_debug_info_from_device_name_found(self):
+        device = dict(debug_ip="192.168.20.1", debug_port=0)
+        self._check_debug_info_from_device_name_is_eq(device, device)
+        self.datastore.get_device.assert_called_once()
+
+    def test_debug_info_from_device_name_found_no_debug_port(self):
+        device = dict(debug_ip="192.168.20.1")
+        self._check_debug_info_from_device_name_is_none(device)
+
+    def test_debug_info_from_device_name_found_no_debug_ip(self):
+        device = dict(debug_port=0)
+        self._check_debug_info_from_device_name_is_none(device)
+
+    def _check_debug_info_from_device_name_is_none(self, return_value, device_name='mydevice'):
+        self.datastore.get_device.return_value = return_value
+        self.assertIsNone(debug_info_from_device_name(self.datastore, device_name))
+
+    def _check_debug_info_from_device_name_is_eq(self, return_value, expected, device_name='mydevice'):
+        self.datastore.get_device.return_value = return_value
+        self.assertEqual(expected, debug_info_from_device_name(self.datastore, device_name))
+
+    def test_device_name_from_debug_info_none_params(self):
+        self.assertIsNone(device_name_from_debug_info(None, None, None))
+
+    def test_device_name_from_debug_info_none_debug_ip(self):
+        self.assertIsNone(device_name_from_debug_info(self.datastore, None, None))
+
+    def test_device_name_from_debug_info_none_debug_port(self):
+        self.assertIsNone(device_name_from_debug_info(self.datastore, '', None))
+
+    def test_device_name_from_debug_info_invalid_DataStore(self):
+        self.assertIsNone(device_name_from_debug_info('', None, None))
+
+    def test_device_name_from_debug_info_not_found(self):
+        self._check_device_name_from_debug_info_is_none([])
+
+    def test_device_name_from_debug_info_found_device_id(self):
+        device = dict(device_id='mydevice', hostname='mydevice', ip_address='192.168.20.20')
+        self._check_device_name_from_debug_info_is_eq([device], 'mydevice')
+
+    def test_device_name_from_debug_info_foun_hostname(self):
+        device = dict(hostname='mydevice', ip_address='192.168.20.20')
+        self._check_device_name_from_debug_info_is_eq([device], 'mydevice')
+
+    def test_device_name_from_debug_info_found_ip_address(self):
+        device = dict(ip_address='192.168.20.20')
+        self._check_device_name_from_debug_info_is_eq([device], '192.168.20.20')
+
+    def test_device_name_from_debug_info_found_no_device_name(self):
+        device = dict(debug_address='192.168.20.20')
+        self._check_device_name_from_debug_info_is_none([device])
+
+    def _check_device_name_from_debug_info_is_none(self, return_value, debug_ip='debug_hostname', debug_port=0):
+        self.datastore.list_devices.return_value = return_value
+        self.assertIsNone(device_name_from_debug_info(self.datastore, debug_ip, debug_port))
+
+    def _check_device_name_from_debug_info_is_eq(self, return_value, expected, debug_ip='debug_hostname', debug_port=0):
+        self.datastore.list_devices.return_value = return_value
+        self.assertEqual(expected, device_name_from_debug_info(self.datastore, debug_ip, debug_port))

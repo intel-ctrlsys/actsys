@@ -6,6 +6,7 @@
 This module defines some utility functions.
 """
 from __future__ import print_function
+from datastore import DataStore
 from ...commands import CommandResult
 
 def append_to_list_in_dictionary(dictionary, result):
@@ -51,6 +52,40 @@ def print_msg(class_name, message):
     if not class_name:
         class_name = "REST API"
     print (" * {0} - {1}".format(class_name, message))
+
+
+def debug_info_from_device_name(datastore, device_name):
+    """ Returns a dictionary with the debug_ip and debug_port of a device which
+        its device_id, hostname or ip_address is equal to device_name,
+        Returns None if it fails. """
+    if not datastore or not device_name or not isinstance(datastore, DataStore):
+        return
+    return _get_debug_info(datastore.get_device(device_name))
+
+def _get_debug_info(device):
+    if not device:
+        return
+    debug_ip = device.get('debug_ip')
+    debug_port = device.get('debug_port')
+    return None if (debug_ip is None or debug_port is None) else dict(debug_ip=debug_ip,
+                                                                      debug_port=debug_port)
+
+
+def device_name_from_debug_info(datastore, debug_ip, debug_port):
+    """ Returns the device_name(device_id, hostname or ip_address) of a device
+        matching the debug_ip and debug_port.
+        Returns None if it fails. """
+    if not datastore or not isinstance(datastore, DataStore) or not debug_ip or debug_port is None:
+        return
+    devices = datastore.list_devices(dict(debug_ip=debug_ip, debug_port=debug_port))
+    return None if not devices else _get_device_name(devices[0])
+
+def _get_device_name(device):
+    device_id = device.get('device_id')
+    hostname = device.get('hostname')
+    ip_address = device.get('ip_address')
+    return device_id if device_id else hostname if hostname else ip_address
+
 
 
 class Usage(object):
