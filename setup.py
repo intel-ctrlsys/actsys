@@ -20,9 +20,11 @@ setup(name='datastore',
       entry_points={
           'console_scripts': ['datastore = datastore.__main__:main']
       },
-      install_requires=['psycopg2', 'python-dateutil'],
+      install_requires=['psycopg2', 'python-dateutil', 'pytz'],
       test_suite='tests',
-      tests_require=['coverage',
+      tests_require=['python-dateutil',
+                     'pytz',
+                     'coverage',
                      'pytest',
                      'pylint',
                      'mock'])
