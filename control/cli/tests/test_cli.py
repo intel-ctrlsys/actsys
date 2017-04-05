@@ -220,15 +220,13 @@ class CommandExeFactoryTest(TestCase):
 
     def test_resource_remove_invoker(self):
         device_name = "compute-29,compute-30"
-        sub_command = "remove"
-        retval = self.command_invoker.resource_remove(device_name, sub_command)
+        retval = self.command_invoker.resource_remove(device_name)
         self.assertEqual(retval[0].return_code, 0)
         self.assertEqual(retval[1].return_code, 0)
 
     def test_resource_check_invoker(self):
         device_name = "compute-29,compute-30"
-        sub_command = "check"
-        retval = self.command_invoker.resource_check(device_name, sub_command)
+        retval = self.command_invoker.resource_check(device_name)
         self.assertEqual(retval[0].return_code, 0)
         self.assertEqual(retval[1].return_code, 0)
 
@@ -474,23 +472,21 @@ class ControlCliParserTest(TestCase):
         device_name = "compute-29,compute-30"
         sub_command = "remove"
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
-        retval = self.command_invoker.resource_remove(device_name, sub_command)
+        retval = self.command_invoker.resource_remove(device_name)
         print("RETURN: {}".format(retval))
         self.assertNotEqual(retval, 0)
 
     def test_invalid_device_name(self):
         device_name = "non-existant-node-1"
-        sub_command = "remove"
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
-        retval = self.command_invoker.resource_remove(device_name, sub_command)
+        retval = self.command_invoker.resource_remove(device_name)
         self.assertEqual(retval.return_code, 1)
 
     def test_invalid_device_name2(self):
         device_name = "non-existant-node-1,compute-30"
-        sub_command = "remove"
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = [
             CommandResult(1), CommandResult(0)]
-        retval = self.command_invoker.resource_remove(device_name, sub_command)
+        retval = self.command_invoker.resource_remove(device_name)
         self.assertEqual(retval[0].return_code, 1)
 
     def test_handle_command_result(self):

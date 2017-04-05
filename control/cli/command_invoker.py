@@ -80,6 +80,9 @@ class CommandInvoker(object):
 
     def create_dictionary(self, device_name, args):
         """Function to create dictionary for interface"""
+        from argparse import Namespace
+        if isinstance(args, dict):
+            args = Namespace(**args)
         cmd_dictionary = {
             'device_name': device_name,
             'configuration': self.datastore,
@@ -162,7 +165,7 @@ class CommandInvoker(object):
         except ImportError:
             pass
 
-    def common_cmd_invoker(self, device_name, sub_command, cmd_args=None):
+    def common_cmd_invoker(self, device_name, sub_command, **kwargs):
         """Common Function to execute the user requested command"""
         if self.manager is None:
             self.init_manager()
@@ -201,7 +204,7 @@ class CommandInvoker(object):
                 results.append(CommandResult(1, msg, device))
                 continue
 
-            cmd_dictionary = self.create_dictionary(device, cmd_args)
+            cmd_dictionary = self.create_dictionary(device, kwargs)
             cmd_obj = self.manager.create_instance('command', command_map[sub_command], cmd_dictionary)
             self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device)
             command_result = cmd_obj.execute()
@@ -220,41 +223,41 @@ class CommandInvoker(object):
         """Check if the device exists in the configuration file or not"""
         return self.datastore.get_device(device_name) is not None
 
-    def power_on_invoker(self, device_name, sub_command, cmd_args=None):
+    def power_on_invoker(self, device_name, sub_command, force=None, outlet=None):
         """Execute Power On Command"""
-        return self.common_cmd_invoker(device_name, sub_command, cmd_args)
+        return self.common_cmd_invoker(device_name, sub_command, subcommand=sub_command, force=force, outlet=outlet)
 
-    def power_off_invoker(self, device_name, sub_command, cmd_args=None):
+    def power_off_invoker(self, device_name, sub_command, force=None, outlet=None):
         """Execute Power Off Command"""
-        return self.common_cmd_invoker(device_name, sub_command, cmd_args)
+        return self.common_cmd_invoker(device_name, sub_command, subcommand=sub_command, force=force, outlet=outlet)
 
-    def power_cycle_invoker(self, device_name, sub_command, cmd_args=None):
+    def power_cycle_invoker(self, device_name, sub_command, force=None, outlet=None):
         """Execute Power Reboot Command"""
-        return self.common_cmd_invoker(device_name, sub_command, cmd_args)
+        return self.common_cmd_invoker(device_name, sub_command, subcommand=sub_command, force=force, outlet=outlet)
 
-    def resource_add(self, device_name, cmd_args=None):
+    def resource_add(self, device_name, resource_manager=None):
         """Execute Resource Add Command"""
-        return self.common_cmd_invoker(device_name, "resource_add", cmd_args)
+        return self.common_cmd_invoker(device_name, "resource_add", resource_manager=resource_manager)
 
-    def resource_remove(self, device_name, cmd_args=None):
+    def resource_remove(self, device_name):
         """Execute Resource Add Command"""
-        return self.common_cmd_invoker(device_name, "resource_remove", cmd_args)
+        return self.common_cmd_invoker(device_name, "resource_remove")
 
-    def resource_check(self, device_name, cmd_args=None):
+    def resource_check(self, device_name):
         """Execute Resource Add Command"""
-        return self.common_cmd_invoker(device_name, "resource_check", cmd_args)
+        return self.common_cmd_invoker(device_name, "resource_check")
 
-    def service_status(self, device_name, cmd_args=None):
+    def service_status(self, device_name):
         """Execute a service check command"""
-        return self.common_cmd_invoker(device_name, "service_status", cmd_args)
+        return self.common_cmd_invoker(device_name, "service_status")
 
-    def service_on(self, device_name, cmd_args=None):
+    def service_on(self, device_name):
         """Execute a service check command"""
-        return self.common_cmd_invoker(device_name, "service_start", cmd_args)
+        return self.common_cmd_invoker(device_name, "service_start")
 
-    def service_off(self, device_name, cmd_args=None):
+    def service_off(self, device_name):
         """Execute a service check command"""
-        return self.common_cmd_invoker(device_name, "service_stop", cmd_args)
+        return self.common_cmd_invoker(device_name, "service_stop")
 
     def get_datastore(self):
         """
@@ -265,19 +268,45 @@ class CommandInvoker(object):
         """
         return self.datastore
 
-    def bios_update(self, device_name, cmd_args=None):
+    def bios_update(self, device_name, image):
         """Execute a bios update"""
-        return self.common_cmd_invoker(device_name, "bios_update", cmd_args)
+        return self.common_cmd_invoker(device_name, "bios_update", image=image)
 
-    def bios_version(self, device_name, cmd_args=None):
+    def bios_version(self, device_name):
         """Get BIOS version on node"""
-        return self.common_cmd_invoker(device_name, "bios_version", cmd_args)
+        return self.common_cmd_invoker(device_name, "bios_version")
 
-    def provision_add(self, device_name, cmd_args=None):
-        return self.common_cmd_invoker(device_name, "provisioner_add", cmd_args)
+    def provision_add(self, device_name, provisioner=None):
+        """
+        Add a device to a provisioner
+        :param device_name:
+        :param provisioner: The provisioner to add this device too. If nothing is supplied, attempts to add to the
+            provisioner specified in the device properties.
+        :return: CommandResult
+        """
+        return self.common_cmd_invoker(device_name, "provisioner_add", provisioner=provisioner)
 
-    def provision_delete(self, device_name, cmd_args=None):
-        return self.common_cmd_invoker(device_name, "provisioner_delete", cmd_args)
+    def provision_delete(self, device_name):
+        """
+        Remove a device from the provisioner
+        :param device_name:
+        :return:
+        """
+        return self.common_cmd_invoker(device_name, "provisioner_delete")
 
-    def provision_set(self, device_name, cmd_args=None):
-        return self.common_cmd_invoker(device_name, "provisioner_set", cmd_args)
+    def provision_set(self, device_name, ip_address=None, hw_address=None, image=None,
+                      bootstrap=None, files=None, kernel_args=None):
+        """
+        Set options for a device. The device must already be added to a provisioner. Specify the options you want to set
+        or pass in the str("UNDEF") for the options you want to clear.
+        :param device_name:
+        :param ip_address:
+        :param hw_address:
+        :param image:
+        :param bootstrap:
+        :param files:
+        :param kernel_args:
+        :return:
+        """
+        return self.common_cmd_invoker(device_name, "provisioner_set", ip_address=ip_address, hw_address=hw_address,
+                                       image=image, bootstrap=bootstrap, files=files, kernel_args=kernel_args)

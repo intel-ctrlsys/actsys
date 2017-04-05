@@ -151,13 +151,13 @@ class ControlCommandLineInterface(object):
         """Function to call appropriate power sub-command"""
         if cmd_args.subcommand == 'off':
             return self.cmd_invoker.power_off_invoker(cmd_args.device_name, cmd_args.subcommand,
-                                                      cmd_args)
+                                                      cmd_args.force, cmd_args.outlet)
         elif cmd_args.subcommand == 'cycle':
             return self.cmd_invoker.power_cycle_invoker(cmd_args.device_name, cmd_args.subcommand,
-                                                        cmd_args)
+                                                        cmd_args.force, cmd_args.outlet)
         else:
             return self.cmd_invoker.power_on_invoker(cmd_args.device_name, cmd_args.subcommand,
-                                                     cmd_args)
+                                                     cmd_args.force, cmd_args.outlet)
 
     def process_cmd_execute(self, cmd_args):
         """Function to call appropriate process sub-command"""
@@ -169,11 +169,11 @@ class ControlCommandLineInterface(object):
     def resource_cmd_execute(self, cmd_args):
         """Function to call appropriate resource sub-command"""
         if cmd_args.subcommand == 'add':
-            return self.cmd_invoker.resource_add(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.resource_add(cmd_args.device_name)
         elif cmd_args.subcommand == 'remove':
-            return self.cmd_invoker.resource_remove(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.resource_remove(cmd_args.device_name)
         elif cmd_args.subcommand == 'check':
-            return self.cmd_invoker.resource_check(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.resource_check(cmd_args.device_name)
         else:
             return CommandResult(1, "Invalid resource command entered.")
 
@@ -194,19 +194,19 @@ class ControlCommandLineInterface(object):
     def service_cmd_execute(self, cmd_args):
         """Function to call appropriate resource sub-command"""
         if cmd_args.subcommand == 'status':
-            return self.cmd_invoker.service_status(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.service_status(cmd_args.device_name)
         elif cmd_args.subcommand == 'start':
-            return self.cmd_invoker.service_on(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.service_on(cmd_args.device_name)
         elif cmd_args.subcommand == 'stop':
-            return self.cmd_invoker.service_off(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.service_off(cmd_args.device_name)
         else:
             return CommandResult(1, "Invalid service command entered")
 
     def bios_cmd_execute(self, cmd_args):
         if cmd_args.subcommand == 'update':
-            return self.cmd_invoker.bios_update(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.bios_update(cmd_args.device_name, cmd_args.image)
         elif cmd_args.subcommand == 'get-version':
-            return self.cmd_invoker.bios_version(cmd_args.device_name, cmd_args)
+            return self.cmd_invoker.bios_version(cmd_args.device_name)
         else:
             return CommandResult(1, "Invalid bios command entered")
 
