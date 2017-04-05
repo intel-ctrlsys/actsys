@@ -33,7 +33,7 @@ class MockResource(ResourceControl):
             return os.path.join(os.path.curdir, self.configure_file)
 
         # check for file in ~/
-        home = os.path.join(os.getenv('HOME'), '.' + self.configure_file)
+        home = os.path.join(os.getenv('HOME'), self.configure_file)
         if os.path.isfile(home):
             return home
 

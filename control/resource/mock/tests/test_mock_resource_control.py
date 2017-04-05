@@ -19,6 +19,9 @@ class TestMockResourceControl(unittest.TestCase):
         utility = Utilities()
         utility.execute_no_capture(['rm', '-rf', file_path])
 
+    def tearDown(self):
+        self.delete_mock_resource_file()
+
     def create_mock_resource_file(self, state):
         file_path = os.path.join(os.path.sep, 'tmp', 'mock_resource')
         nodes = {
