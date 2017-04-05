@@ -40,7 +40,7 @@ class MockConfiguration(object):
 
     def get_pdu(self, device_name):
         """Dummy getter"""
-        return self.data[device_name]
+        return [self.data[device_name]]
 
     def get_device(self, device_name):
         """Dummy getter"""

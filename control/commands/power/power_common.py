@@ -112,7 +112,7 @@ class CommonPowerCommand(Command):
 
         self.logger.debug("{}ing services for {}".format(new_state, self.device_name))
         service_stop = self.plugin_manager.create_instance('command', 'service_{}'.format(new_state),
-                                                                   self.command_args)
+                                                           self.command_args)
         service_stop_result = service_stop.execute()
         if service_stop_result.return_code != 0:
             err_msg = "Failed power command due to failed service {}.".format(new_state)
@@ -144,26 +144,30 @@ class CommonPowerCommand(Command):
 
     def switch_pdu(self, new_state):
         """Execute PDU commands"""
-        device = self.configuration.get_pdu(self.device_name)
+        devices = self.configuration.get_pdu(self.device_name)
 
-        if device is None or device.get("device_type") != "pdu":
-            return CommandResult(1, 'Invalid device type: Cannot toggle device type {}'.format(device.device_type))
-        if self.args.outlet is None:
-            return CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify outlet\n'
+        if devices is not None and len(devices) == 1:
+            device = devices[0]
+            if self.args.outlet is None:
+                return CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify outlet\n'
+                                        'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
+            pdu = self.plugin_manager.create_instance('pdu', device.get("access_type"))
+            remote_access = RemoteAccessData(str(device.get("ip_address")), device.get("port"), str(device.get("user")),
+                                             str(device.get("password")))
+            try:
+                outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
+            except RuntimeError as pdu_ex:
+                return CommandResult(1, pdu_ex.message)
+            self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, outlet_state))
+            if outlet_state.upper() == new_state.upper():
+                return CommandResult(0, '{} outlet {} was already {}, no change '
+                                        'made.'.format(self.device_name, self.args.outlet, new_state))
+            try:
+                pdu.set_outlet_state(remote_access, str(self.args.outlet), new_state)
+                self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, new_state))
+            except RuntimeError as ex:
+                return CommandResult(1, ex.message)
+        else:
+            return CommandResult(1, 'No PDU or more than one PDU was found for the device\n'
                                     'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
-        pdu = self.plugin_manager.create_instance('pdu', device.get("access_type"))
-        remote_access = RemoteAccessData(str(device.get("ip_address")), device.get("port"), str(device.get("user")), str(device.get("password")))
-        try:
-            outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
-        except RuntimeError as pdu_ex:
-            return CommandResult(1, pdu_ex.message)
-        self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, outlet_state))
-        if outlet_state.upper() == new_state.upper():
-            return CommandResult(0, '{} outlet {} was already {}, no change '
-                                    'made.'.format(self.device_name, self.args.outlet, new_state))
-        try:
-            pdu.set_outlet_state(remote_access, str(self.args.outlet), new_state)
-            self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, new_state))
-        except RuntimeError as ex:
-            return CommandResult(1, ex.message)
         return CommandResult(0, 'Successfully switched {} {}'.format(self.device_name, new_state))

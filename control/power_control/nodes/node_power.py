@@ -173,7 +173,7 @@ class NodePower(PowerControl):
         """Halt the OS to chassis on not OS."""
         shutdown = os.path.join(os.path.sep, 'sbin', 'shutdown')
         result = self.os_access.execute([shutdown, '--halt', 'now'],
-                                        self.os_credentials)[0]
+                                        self.os_credentials).return_code
         if result != 255 and result != 0:  # 255 if ssh was disconnected
             self._report_error("Failed to shutdown node's OS")
             return False

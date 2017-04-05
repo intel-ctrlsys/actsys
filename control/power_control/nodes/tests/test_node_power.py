@@ -8,7 +8,7 @@ Test the node_power plugin implementation.
 import unittest
 import time
 from ....os_remote_access.mock.os_remote_access import OsRemoteAccessMock
-from ....utilities.utilities import Utilities
+from ....utilities.utilities import Utilities, SubprocessOutput
 from ....plugin.manager import PluginManager
 from ....utilities.remote_access_data import RemoteAccessData
 from ....bmc.mock.bmc import BmcMock
@@ -71,14 +71,14 @@ class MockOsAccess(object):
     def execute(self, cmd, remote_access_data, capture=False, other=None):
         """Mocked call to execute."""
         if len(self.stack) == 0:
-            return 0, None
+            return SubprocessOutput(0, None, None)
         else:
             result = self.stack[0]
             self.stack = self.stack[1:]
             if result:
-                return 0, None
+                return SubprocessOutput(0, None, None)
             else:
-                return 254, None
+                return SubprocessOutput(255, None, None)
 
     def test_connection(self, remote_access_data):
         if len(self.dfx_test_stack) == 0:
@@ -178,7 +178,7 @@ class TestNodePower(unittest.TestCase):
         self._real_sleep(float(seconds) / 100.0)
 
     def test_ctor(self):
-        self.assertIsNotNone(self.controller)\
+        self.assertIsNotNone(self.controller)
 
     def test_no_options(self):
         with self.assertRaises(RuntimeError):
