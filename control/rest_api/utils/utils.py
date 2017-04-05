@@ -6,6 +6,7 @@
 This module defines some utility functions.
 """
 from __future__ import print_function
+from abc import abstractmethod
 from datastore import DataStore
 from ...commands import CommandResult
 
@@ -122,3 +123,17 @@ class Usage(object):
         return '{title}{description}{usage}{http_method_supported}{http_method}{url}{command}{subcommand}'\
                '{args_start}{args}{where}{server_desc}{port_desc}{command_desc}{subcommand_desc}'\
                '{args_desc}'.format(**self._literals)
+
+    @abstractmethod
+    def get_default_usage_msg(self):
+        """ Returns the default usage message. It is intended to be overwritten """
+        return self.get_usage_msg()
+
+    def get_subcommand_usage_msg(self, subcommand=None):
+        """ Return usage message for the given subcommand """
+        usage_fn = getattr(self, '_get_{}_usage_msg'.format(subcommand), None)
+
+        if usage_fn:
+            return usage_fn()
+
+        return self.get_default_usage_msg()
