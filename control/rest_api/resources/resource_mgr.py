@@ -10,6 +10,7 @@ from mock import create_autospec
 from ...cli.command_invoker import CommandInvoker
 from ..utils.utils import split_command_results, print_msg, Usage
 from ...commands.command import CommandResult
+from ...plugin.manager import PluginManagerException
 
 RETURN_ERRORS = {'bad_param':[-1, 1, 5],
                  'plugin_not_installed':[-2],
@@ -176,6 +177,11 @@ class ResourceManager(Resource):
         except ResourceManagerException as rme:
             self._add_usage_message(subcommand, rme)
             return _create_response_from_exception(rme)
+        except PluginManagerException as pme:
+            rme = ResourceManagerException(424, 'Resource Manager plugin is not installed. \n' + pme.message)
+            return _create_response_from_exception(rme)
+        except Exception as unhandled_ex:
+            return _create_response_from_exception(unhandled_ex)
 
     def _add_usage_message(self, subcommand, exception):
         if exception.error_code == 400:
@@ -235,11 +241,13 @@ def _create_http_check_response(results):
 
 def _create_response_from_exception(exception):
     """ Creates Flask response from a ResourceManagerException """
-    return _create_response(exception.error_code, exception.message, exception.response)
+    return _create_response(getattr(exception, 'error_code', 404),
+                            getattr(exception, 'message', ""),
+                            getattr(exception, 'response', None))
 
 def _create_response(error_code, message="", data=None):
     if not data:
-        return make_response(message, error_code)
+        return make_response(message + '\n', error_code)
     data['message'] = message
     return make_response(jsonify(data), error_code)
 

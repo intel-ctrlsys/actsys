@@ -11,6 +11,7 @@ from flask import Flask, json
 from ..resource_mgr import ResourceManager, ResourceManagerUsage, ResourceManagerException
 from ....cli import CommandInvoker
 from ....commands import CommandResult
+from ....plugin.manager import PluginManagerException
 
 class TestResourceManagerUsage(TestCase):
     """ Class to test ResourceManagerUsage """
@@ -274,6 +275,20 @@ class TestResourceManagerFlask(TestResourceManagerBase):
         self.cmd_invoker.resource_check.return_value = self.result['plugin_not_installed']
         ret = self.test_app.get(self.url['check'] + args)
         self._check_response(ret, 424, 'Resource Manager plugin is not installed')
+
+    def test_plugin_not_installed_exception(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        self.cmd_invoker.resource_check.side_effect = PluginManagerException("plugin not installed")
+        ret = self.test_app.get(self.url['check'] + args)
+        self._check_response(ret, 424, 'Resource Manager plugin is not installed')
+
+    def test_unhandled_exception(self):
+        """ Test get function with dfx disabled """
+        args = self.node_regex['prefix'] + self.node_regex['single']
+        self.cmd_invoker.resource_check.side_effect = RuntimeError("unhandled")
+        ret = self.test_app.get(self.url['check'] + args)
+        self._check_response(ret, 404, 'unhandled')
 
     def test_put_remove_plugin_not_installed(self):
         """ Test put function with dfx disabled """
