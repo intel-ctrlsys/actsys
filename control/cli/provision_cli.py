@@ -6,7 +6,6 @@
 CLI commands specificly for provisioning. Putting it in it's own class/file like this allows the Provisioning CLI to be
 used sperately from control. If desired.
 """
-from __future__ import print_function
 import argparse
 from ..commands import CommandResult
 
@@ -100,7 +99,6 @@ class ProvisionCli(object):
             return args.execute_function(args)
         except Exception as exception:
             self.root_parser.print_usage()
-            print(type(exception), exception.message)
             return CommandResult(1, exception)
 
     def add_execute(self, parsed_args):
@@ -109,7 +107,6 @@ class ProvisionCli(object):
         :param parsed_args: As defined by the CLI above
         :return: CommandResult
         """
-        print("Adding a device with args: {}".format(parsed_args))
         return self.command_invoker.provision_add(parsed_args.device_name, parsed_args)
 
     def delete_execute(self, parsed_args):
@@ -118,7 +115,6 @@ class ProvisionCli(object):
         :param parsed_args: As defined by the CLI above
         :return: CommandResult
         """
-        print("Deleting with args: {}".format(parsed_args))
         return self.command_invoker.provision_delete(parsed_args.device_name, parsed_args)
 
     def set_execute(self, parsed_args):
@@ -127,5 +123,10 @@ class ProvisionCli(object):
         :param parsed_args: As defined by the CLI above
         :return: CommandResult
         """
-        print("Set with args: {}".format(parsed_args))
+        something_is_set = parsed_args.ip_address or parsed_args.hw_address or parsed_args.net_interface or \
+                           parsed_args.image or parsed_args.bootstrap or parsed_args.files or parsed_args.kernel_args
+        if something_is_set is None:
+            self.set_parser.print_usage()
+            return CommandResult(1, "Please set at least one optional argument.")
+
         return self.command_invoker.provision_set(parsed_args.device_name, parsed_args)

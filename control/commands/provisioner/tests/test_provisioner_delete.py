@@ -38,6 +38,7 @@ class TestProvisionerDeleteCommand(unittest.TestCase):
         self.configuration_manager.get_device.return_value = {
             "device_type": "node",
             "provisioner": "mock",
+            "hostname": "c1",
             "device_id": 1
         }
 
@@ -59,4 +60,4 @@ class TestProvisionerDeleteCommand(unittest.TestCase):
         result = self.prov_delete.execute()
 
         self.assertEqual(0, result.return_code)
-        self.assertEqual("Successfully deleted {} from the provisioner".format(1), result.message)
+        self.assertEqual("Successfully deleted c1 from the provisioner", result.message)

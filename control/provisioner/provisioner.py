@@ -98,16 +98,6 @@ class Provisioner(object):
         """
         pass
 
-    def add_file(self, src_file_location, dst_file_location=None):
-        """
-
-        :param src_file_location:
-        :param dst_file_location: if None, then dst_file_location = src_file_location
-        :return: Nothing
-        :raise: FileNotFound Exception, the src_file_location doesn't point to a file.
-        """
-        pass
-
     @abstractmethod
     def set_kernel_args(self, device, args):
         """

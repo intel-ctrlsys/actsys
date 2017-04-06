@@ -47,7 +47,10 @@ class TestProvisionCLI(unittest.TestCase):
             self.cli.parse_and_run(['delete'])
 
     def test_set(self):
-        self.cli.parse_and_run(['set', 'test-1'])
+        result = self.cli.parse_and_run(['set', 'test-1'])
+        self.assertEqual(1, result.return_code)
+
+        self.cli.parse_and_run(['set', 'test-1', '--ip_address=127.0.0.1'])
         self.mock_ci.provision_set.assert_called_once()
 
         with self.assertRaises(SystemExit):

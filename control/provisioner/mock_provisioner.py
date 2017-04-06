@@ -123,14 +123,6 @@ class MockProvisioner(Provisioner):
             device[self.PROVISIONER_FILE_KEY] = files
         return device
 
-    def add_file(self, src_file_location, dst_file_location=None):
-        """
-        See @Provisioner for interface details. Implementation here.
-        """
-        if dst_file_location is None:
-            dst_file_location = src_file_location
-        pass
-
     def set_kernel_args(self, device, args):
         """
         See @Provisioner for interface details. Implementation here.
