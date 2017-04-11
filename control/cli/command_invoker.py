@@ -294,7 +294,7 @@ class CommandInvoker(object):
         """
         return self.common_cmd_invoker(device_name, "provisioner_delete")
 
-    def provision_set(self, device_name, ip_address=None, hw_address=None, image=None,
+    def provision_set(self, device_name, ip_address=None, hw_address=None, net_interface=None, image=None,
                       bootstrap=None, files=None, kernel_args=None):
         """
         Set options for a device. The device must already be added to a provisioner. Specify the options you want to set
@@ -302,6 +302,7 @@ class CommandInvoker(object):
         :param device_name:
         :param ip_address:
         :param hw_address:
+        :param net_interface:
         :param image:
         :param bootstrap:
         :param files:
@@ -309,4 +310,5 @@ class CommandInvoker(object):
         :return:
         """
         return self.common_cmd_invoker(device_name, "provisioner_set", ip_address=ip_address, hw_address=hw_address,
-                                       image=image, bootstrap=bootstrap, files=files, kernel_args=kernel_args)
+                                       net_interface=net_interface, image=image, bootstrap=bootstrap, files=files,
+                                       kernel_args=kernel_args)

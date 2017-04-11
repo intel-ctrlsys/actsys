@@ -169,7 +169,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         Proceed?
         Deleted 1 nodes.""")
         self.mock_esub.return_value = SubprocessOutput(0, expected_output, None)
-        result = self.warewulf.delete({"hostname": "test1", Provisioner.DEVICE_ADDED_TO_PROVISIONER_KEY: True})
+        result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
         self.assertEqual({"hostname": "test1"}, result)
 
         expected_output = textwrap.dedent("""\
@@ -181,11 +181,11 @@ class TestWarewulfProvisioner(unittest.TestCase):
         Deleted 2 nodes.""")
         self.mock_esub.return_value = SubprocessOutput(0, expected_output, None)
         with self.assertRaises(ProvisionerException):
-            result = self.warewulf.delete({"hostname": "test1", Provisioner.DEVICE_ADDED_TO_PROVISIONER_KEY: True})
+            result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
 
         self.mock_deip.return_value = False
         self.mock_esub.return_value = SubprocessOutput(1, '', None)
-        result = self.warewulf.delete({"hostname": "test1", Provisioner.DEVICE_ADDED_TO_PROVISIONER_KEY: True})
+        result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
         self.assertEqual({"hostname": "test1"}, result)
 
     def test_set_bootstrap(self):
@@ -327,24 +327,24 @@ class TestWarewulfProvisioner(unittest.TestCase):
         # Positive case
         self.mock_esub.return_value = SubprocessOutput(0, '', '')
         device = self.warewulf.add({"hostname": "test-1"})
-        self.assertTrue(device.get(Provisioner.DEVICE_ADDED_TO_PROVISIONER_KEY))
+        self.assertEqual(device.get(Provisioner.PROVISIONER_KEY), "warewulf")
 
         # Positive case
         self.mock_esub.return_value = SubprocessOutput(0, None, None)
         device = self.warewulf.add({"hostname": "test-1"})
-        self.assertTrue(device.get(Provisioner.DEVICE_ADDED_TO_PROVISIONER_KEY))
+        self.assertEqual(device.get(Provisioner.PROVISIONER_KEY), "warewulf")
 
         self.mock_deip.return_value = True
 
         # Positive case
         self.mock_esub.return_value = SubprocessOutput(0, '', '')
         device = self.warewulf.add({"hostname": "test-1"})
-        self.assertTrue(device.get(Provisioner.DEVICE_ADDED_TO_PROVISIONER_KEY))
+        self.assertEqual(device.get(Provisioner.PROVISIONER_KEY), "warewulf")
 
         # Positive case
         self.mock_esub.return_value = SubprocessOutput(0, None, None)
         device = self.warewulf.add({"hostname": "test-1"})
-        self.assertTrue(device.get(Provisioner.DEVICE_ADDED_TO_PROVISIONER_KEY))
+        self.assertEqual(device.get(Provisioner.PROVISIONER_KEY), "warewulf")
 
     def test_set_files(self):
         device = {"hostname": "test-1"}

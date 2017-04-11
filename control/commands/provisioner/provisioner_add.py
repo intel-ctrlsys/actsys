@@ -20,11 +20,16 @@ class ProvisionerAddCommand(Command):
         Command.__init__(self, args)
 
         self.device = self.configuration.get_device(self.device_name)
-        if self.device.get("provisioner") is None:
-            # TODO: Return a configuration error
-            raise RuntimeError("No provisioner is specified in the config. Cannot perform command.")
+        if self.args.provisioner is not None and self.device.get("provisioner") is not None \
+                and self.args.provisioner != self.device.get("provisioner"):
+            raise RuntimeError("Device already has a provisioner, remove the first before adding another.")
 
-        self.provisioner = self.plugin_manager.create_instance('provisioner', self.device.get("provisioner"))
+        provisioner_name = self.args.provisioner or self.device.get("provisioner")
+        if provisioner_name is None:
+            # TODO: Return a configuration error
+            raise RuntimeError("No provisioner is specified via args or config. Cannot perform command.")
+
+        self.provisioner = self.plugin_manager.create_instance('provisioner', provisioner_name)
 
     def execute(self):
         """Execute the command"""

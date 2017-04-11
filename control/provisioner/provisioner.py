@@ -15,7 +15,6 @@ class Provisioner(object):
 
     # Configuration variables used
     PROVISIONER_KEY = "provisioner"
-    DEVICE_ADDED_TO_PROVISIONER_KEY = "provisioner_active"
     PROVISIONER_IMAGE_KEY = "image"
     PROVISIONER_BOOTSTRAP_KEY = "provisioner_bootstrap"
     PROVISIONER_FILE_KEY = "provisioner_files"
