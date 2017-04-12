@@ -11,25 +11,27 @@ import os
 import os.path
 import inspect
 
-
 PLUGIN_FILE_EXTENSION = '.py'
 PLUGIN_KEY_SEPARATOR = '.'
 
 
 class PluginManagerException(RuntimeWarning):
     """Specific exception class for the PluginManager class."""
+
     def __init__(self, message):
         super(RuntimeWarning, self).__init__(message)
 
 
 class DeclarePlugin(object):
     """Decorator for Plugins"""
+
     def __init__(self, name, priority):
         self._name = name
         self._priority = priority
 
     def __call__(self, cls):
         """Decorator for plugins callable object"""
+
         class _Plugin(cls):
             PLUGIN_NAME = self._name
             PLUGIN_PRIORITY = self._priority
@@ -39,11 +41,13 @@ class DeclarePlugin(object):
 
 class DeclareFramework(object):
     """Decorator for Frameworks"""
+
     def __init__(self, name):
         self._name = name
 
     def __call__(self, cls):
         """Decorator for frameworks callable object"""
+
         class _Framework(cls):
             FRAMEWORK_NAME = self._name
 
@@ -52,18 +56,14 @@ class DeclareFramework(object):
 
 class PluginManager(object):
     """This class defines how plugins are created from a folder. """
-    @classmethod
-    def _safe_remove_file(cls, filename):
-        """Remove a filename suppressing obvious exceptions."""
-        if os.path.isfile(filename):
-            os.remove(filename)
+
+    # TODO: framework => adapter and plugin => provider
 
     @classmethod
     def _make_key(cls, framework_name, plugin_name):
         """Create a key from the category and provider name."""
         if framework_name is None or plugin_name is None:
-            err = 'Neither the "framework_name" or the "plugin_name" are '\
-                  'allowed to be "None"!'
+            err = 'Neither the "framework_name" or the "plugin_name" are allowed to be "None"!'
             raise PluginManagerException(err)
         return '{}{}{}'.format(framework_name, PLUGIN_KEY_SEPARATOR,
                                plugin_name)
@@ -73,40 +73,21 @@ class PluginManager(object):
         """Split the key into category and provider name."""
         return key.split(PLUGIN_KEY_SEPARATOR)
 
-    @classmethod
-    def _walker_callback(cls, self, folder, files):
-        for filename in files:
-            parts = os.path.splitext(filename)
-            if parts[1] == PLUGIN_FILE_EXTENSION and not \
-                    parts[0] == '__init__' and not \
-                    parts[0].startswith('test_'):
-                full = os.path.join(folder, filename)
-                self._add_plugin(full)
-
-    def __init__(self, plugin_folder=None):
+    def __init__(self):
         """Constructor that may add the first folder of plugins."""
         self.__plugin_files = list()
         self.__plugin_frameworks = dict()
-        if plugin_folder is not None:
-            self.add_plugin_folder(plugin_folder)
-
-    def add_plugin_folder(self, plugin_folder):
-        """Add a folder of plugins to the manager."""
-        os.walk(plugin_folder, PluginManager._walker_callback, self)
 
     def register_plugin_class(self, cls):
         """Add this provider to the list."""
         key = PluginManager._make_key(cls.FRAMEWORK_NAME,
                                       cls.PLUGIN_NAME)
         if key in self.__plugin_frameworks.keys():
-            if cls.PLUGIN_PRIORITY == self.__plugin_frameworks[key].\
-                    PLUGIN_PRIORITY:
-                err = 'There is a collision of framework plugin and ' \
-                      'priority. The same named plugin in a framework ' \
+            if cls.PLUGIN_PRIORITY == self.__plugin_frameworks[key].PLUGIN_PRIORITY:
+                err = 'There is a collision of framework plugin and priority. The same named plugin in a framework ' \
                       'cannot have equal priority.'
                 raise PluginManagerException(err)
-            elif cls.PLUGIN_PRIORITY < self.__plugin_frameworks[key].\
-                    PLUGIN_PRIORITY:
+            elif cls.PLUGIN_PRIORITY < self.__plugin_frameworks[key].PLUGIN_PRIORITY:
                 self.__plugin_frameworks[key] = cls
         else:
             self.__plugin_frameworks[key] = cls
@@ -144,47 +125,13 @@ class PluginManager(object):
             provider_list.append(item[1])
         return provider_list
 
-    def create_instance(self, framework_name, plugin_name=None, options=None):
+    def create_instance(self, framework_name, plugin_name, options=None):
         """Create a named (or default) provider in the specified category."""
-        if framework_name is None:
-            return None
-        if plugin_name is None:
-            frameworks = self.get_sorted_plugins_for_framework(framework_name)
-            if frameworks is not None and len(frameworks) > 0:
-                plugin_name = frameworks[0]
-        if plugin_name is None or framework_name is None:
+        if framework_name is None or plugin_name is None:
             return None
         key = PluginManager._make_key(framework_name, plugin_name)
         try:
             return self.__plugin_frameworks[key](options)
         except KeyError:
-            raise PluginManagerException('Plugin "{}" was not found for '
-                                         'framework "{}"'.
+            raise PluginManagerException('Plugin "{}" was not found for framework "{}"'.
                                          format(plugin_name, framework_name))
-
-    def _add_plugin(self, fullname):
-        """Add the plugin to the dictionary."""
-        if fullname not in self.__plugin_files:
-            if self._load_metadata(fullname):
-                self.__plugin_files.append(fullname)
-
-    def _load_metadata(self, plugin_filename):
-        """Load the plugin dynamically."""
-        path_name, base_filename = os.path.split(plugin_filename)
-        module_name = os.path.splitext(base_filename)[0]
-        compiled = os.path.join(path_name, "%s.pyc" % module_name)
-        PluginManager._safe_remove_file(compiled)
-        module = imp.load_source(module_name, plugin_filename)
-        result = False
-        for name, cls in inspect.getmembers(module, inspect.isclass):
-            if hasattr(cls, 'PLUGIN_NAME') and \
-                    hasattr(cls, 'PLUGIN_PRIORITY') and \
-                    hasattr(cls, 'FRAMEWORK_NAME'):
-                init = getattr(cls, '__init__', None)
-                if init is not None:
-                    arg_count = len(inspect.getargspec(init)[0])
-                    if arg_count == 2 and \
-                            inspect.getargspec(init)[0][0] == 'self':
-                        self.register_plugin_class(cls)
-                        result = True
-        return result

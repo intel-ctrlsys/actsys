@@ -45,15 +45,6 @@ class TestPluginManager(unittest.TestCase):
         empty_manager = PluginManager()
         self.assertEquals(0, len(empty_manager.get_frameworks()))
 
-    @unittest.skip("Not yet working")
-    def test_folder_ctor_add_get(self):
-        """Test"""
-        print (os.path.dirname(__file__))
-        manager = PluginManager(os.path.dirname(__file__))
-        print (manager.get_registered_plugins())
-        self.assertGreater(len(manager.get_frameworks()), 0)
-        self.assertGreater(len(manager.get_registered_plugins()), 0)
-
     def test_instances(self):
         """Test"""
         print (os.curdir)
@@ -89,6 +80,20 @@ class TestPluginManager(unittest.TestCase):
             manager4.register_plugin_class(ExamplePlugin1)
 
         self.assertEqual(3, len(manager4.get_registered_plugins()))
+
+    def test_get_frameworks(self):
+        manager4 = PluginManager()
+        manager4.register_plugin_class(ExamplePlugin1)
+        manager4.register_plugin_class(ExamplePlugin2)
+
+        result = manager4.get_frameworks()
+        print(result)
+        self.assertListEqual(result, ['framework1'])
+
+        result = manager4.get_sorted_plugins_for_framework('framework1')
+        print(result)
+        self.assertListEqual(result, ['plugin1', 'plugin2'])
+
 
 if __name__ == '__main__':
     unittest.main()
