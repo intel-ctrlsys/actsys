@@ -9,6 +9,7 @@ from ..plugin import DeclarePlugin
 from .provisioner import Provisioner, ProvisionerException
 import json
 
+
 @DeclarePlugin('mock', 100)
 class MockProvisioner(Provisioner):
     """

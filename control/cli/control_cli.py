@@ -126,6 +126,7 @@ class ControlArgParser(object):
         """Add the simple arguments here"""
         self.ctrl_parser.add_argument("-V", "--version", action="version", version='0.1.0',
                                       help='Provides the version of the tool')
+        self.ctrl_parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
 
     def get_all_args(self, args=None):
         if args is not None:
@@ -138,14 +139,7 @@ class ControlCommandLineInterface(object):
     """This class executes the commands based on user's request"""
 
     def __init__(self):
-        try:
-            self.cmd_invoker = CommandInvoker()
-        except Exception as f:
-            if hasattr(f, 'value'):
-                print(f.value)
-            else:
-                print(f)
-            sys.exit(1)
+        self.command_invoker = None
 
     def power_cmd_execute(self, cmd_args):
         """Function to call appropriate power sub-command"""
@@ -213,10 +207,30 @@ class ControlCommandLineInterface(object):
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
         masterparser = ControlArgParser()
+        # print("Pre Known args: ")
+
+        cmd_args, unknown_args = masterparser.ctrl_parser.parse_known_args()
+
+        # print("Post Known args: ", cmd_args, unknown_args)
+        command_invoker_args = dict()
+        if cmd_args.verbosity == 1:
+            import logging
+            command_invoker_args["screen_log_level"] = logging.INFO
+        elif cmd_args.verbosity == 2:
+            import logging
+            command_invoker_args["screen_log_level"] = logging.DEBUG
+        try:
+            self.cmd_invoker = CommandInvoker(**command_invoker_args)
+        except Exception as f:
+            if hasattr(f, 'value'):
+                print(f.value)
+            else:
+                print(f)
+            sys.exit(1)
 
         # Following this pattern: http://chase-seibert.github.io/blog/2014/03/21/python-multilevel-argparse.html
-        if len(sys.argv) >= 2 and sys.argv[1] == 'datastore':
-            datastore_cli = DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(sys.argv[2:])
+        if cmd_args.subparser_name == 'datastore':
+            datastore_cli = DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(unknown_args)
             return datastore_cli
         if len(sys.argv) >= 2 and sys.argv[1] == 'provision':
             provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(sys.argv[2:])

@@ -23,7 +23,12 @@ class CommandInvoker(object):
     FILE_LOCATION_ENV_VAR = "CTRL_CONFIG_FILE"
     POSTGRES_CONNECTION_STRING = None
 
-    def __init__(self):
+    def __init__(self, screen_log_level=logging.WARNING):
+        """
+
+        :param log_level: An appropriate log level from the python logging module. This level will be used when
+            deciding what to print to the screen. If set to None, then nothing will be printed
+        """
         self.invoker_ret_val = 0
         self.failed_device_name = list()
 
@@ -32,7 +37,8 @@ class CommandInvoker(object):
 
         self.datastore_builder = DataStoreBuilder()
         self.datastore_builder.set_default_log_level(logging.DEBUG)
-        self.datastore_builder.set_print_to_screen(True)
+        if screen_log_level is not None:
+            self.datastore_builder.set_print_to_screen(True, screen_log_level)
         file_location = self._get_correct_configuration_file()
         if file_location is not None:
             self.datastore_builder.add_file_db(file_location)
