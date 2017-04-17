@@ -32,6 +32,7 @@ class ProvisionCli(object):
         """
         self.add_parser = self.subparsers.add_parser('add', help='Add a device to the provisioner')
         self.add_parser.add_argument('device_name', help="The device name of the device you want to add.")
+        self.add_parser.add_argument('--provisioner', help="The provisioner you want to add this device too.")
         self.add_parser.set_defaults(execute_function=self.add_execute)
 
     def add_delete_args(self):
@@ -107,7 +108,7 @@ class ProvisionCli(object):
         :param parsed_args: As defined by the CLI above
         :return: CommandResult
         """
-        return self.command_invoker.provision_add(parsed_args.device_name, parsed_args)
+        return self.command_invoker.provision_add(parsed_args.device_name, parsed_args.provisioner)
 
     def delete_execute(self, parsed_args):
         """
@@ -115,7 +116,7 @@ class ProvisionCli(object):
         :param parsed_args: As defined by the CLI above
         :return: CommandResult
         """
-        return self.command_invoker.provision_delete(parsed_args.device_name, parsed_args)
+        return self.command_invoker.provision_delete(parsed_args.device_name)
 
     def set_execute(self, parsed_args):
         """
@@ -129,4 +130,6 @@ class ProvisionCli(object):
             self.set_parser.print_usage()
             return CommandResult(1, "Please set at least one optional argument.")
 
-        return self.command_invoker.provision_set(parsed_args.device_name, parsed_args)
+        return self.command_invoker.provision_set(parsed_args.device_name, parsed_args.ip_address,
+                                                  parsed_args.hw_address, parsed_args.net_interface, parsed_args.image,
+                                                  parsed_args.bootstrap, parsed_args.files, parsed_args.kernel_args)

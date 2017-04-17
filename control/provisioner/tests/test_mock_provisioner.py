@@ -27,7 +27,7 @@ class MockProvisionerBase(object):
         self.assertListEqual(self.mp.list(), [self.TEST_DEVICE1.get("hostname"),
                                               self.TEST_DEVICE2.get("hostname"),
                                               self.TEST_DEVICE3.get("hostname")])
-        self.assertTrue(result.get(self.mp.DEVICE_ADDED_TO_PROVISIONER_KEY))
+        self.assertTrue(result.get(self.mp.PROVISIONER_KEY))
 
     def test_list(self):
         self.mp.add(self.TEST_DEVICE1)

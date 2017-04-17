@@ -23,7 +23,12 @@ class CommandInvoker(object):
     FILE_LOCATION_ENV_VAR = "CTRL_CONFIG_FILE"
     POSTGRES_CONNECTION_STRING = None
 
-    def __init__(self):
+    def __init__(self, screen_log_level=logging.WARNING):
+        """
+
+        :param log_level: An appropriate log level from the python logging module. This level will be used when
+            deciding what to print to the screen. If set to None, then nothing will be printed
+        """
         self.invoker_ret_val = 0
         self.failed_device_name = list()
 
@@ -32,7 +37,8 @@ class CommandInvoker(object):
 
         self.datastore_builder = DataStoreBuilder()
         self.datastore_builder.set_default_log_level(logging.DEBUG)
-        self.datastore_builder.set_print_to_screen(True)
+        if screen_log_level is not None:
+            self.datastore_builder.set_print_to_screen(True, screen_log_level)
         file_location = self._get_correct_configuration_file()
         if file_location is not None:
             self.datastore_builder.add_file_db(file_location)
@@ -294,7 +300,7 @@ class CommandInvoker(object):
         """
         return self.common_cmd_invoker(device_name, "provisioner_delete")
 
-    def provision_set(self, device_name, ip_address=None, hw_address=None, image=None,
+    def provision_set(self, device_name, ip_address=None, hw_address=None, net_interface=None, image=None,
                       bootstrap=None, files=None, kernel_args=None):
         """
         Set options for a device. The device must already be added to a provisioner. Specify the options you want to set
@@ -302,6 +308,7 @@ class CommandInvoker(object):
         :param device_name:
         :param ip_address:
         :param hw_address:
+        :param net_interface:
         :param image:
         :param bootstrap:
         :param files:
@@ -309,4 +316,5 @@ class CommandInvoker(object):
         :return:
         """
         return self.common_cmd_invoker(device_name, "provisioner_set", ip_address=ip_address, hw_address=hw_address,
-                                       image=image, bootstrap=bootstrap, files=files, kernel_args=kernel_args)
+                                       net_interface=net_interface, image=image, bootstrap=bootstrap, files=files,
+                                       kernel_args=kernel_args)

@@ -5,7 +5,6 @@
 """
 Implements a provisioner for warewulf
 """
-import json
 import socket
 from ..plugin import DeclarePlugin
 from .provisioner import Provisioner, ProvisionerException
@@ -19,6 +18,7 @@ class Warewulf(Provisioner):
     """
     UNSET_KEY = "UNDEF"
     DATABASE_INSERT_ERROR = "DBD::mysql::st execute failed:"
+    PROVISIONER_NAME = "warewulf"
 
     def __init__(self, options=None):
         """
@@ -66,7 +66,7 @@ class Warewulf(Provisioner):
             output = self.utilities.execute_subprocess(['wwsh', '-y', 'node', 'new', device_name_for_provisioner])
             self._check_for_general_errors(output)
 
-        device[self.DEVICE_ADDED_TO_PROVISIONER_KEY] = True
+        device[self.PROVISIONER_KEY] = self.PROVISIONER_NAME
         return device
 
     def delete(self, device):
@@ -116,10 +116,11 @@ class Warewulf(Provisioner):
             output = self.utilities.execute_subprocess(['wwsh', '-y', 'node', 'delete', device_name_for_provisioner])
 
             self._check_for_general_errors(output)
-            if output.stdout is not None and "Deleted 1 nodes." not in output.stdout and "No Nodes Found" not in output.stdout:
+            if output.stdout is not None and "Deleted 1 nodes." not in output.stdout \
+                    and "No Nodes Found" not in output.stdout:
                 raise ProvisionerException("Some unknown error occured", output)
 
-        device.pop(self.DEVICE_ADDED_TO_PROVISIONER_KEY, None)
+        device.pop(self.PROVISIONER_KEY, None)
         return device
 
     def set_ip_address(self, device, ip_address, interface="eth0"):
@@ -570,10 +571,13 @@ class Warewulf(Provisioner):
 
         return image_names
 
-    """ ############### Non-Interface methods ################# """
+    #
+    # *************** Non-Interface methods *****************
+    #
 
     @staticmethod
     def get_device_name_for_provisioner(device):
+        """Get the apropriate name for this device"""
         name_for_provisioner = device.get("hostname")
 
         if name_for_provisioner is None:
@@ -582,11 +586,13 @@ class Warewulf(Provisioner):
         return name_for_provisioner
 
     def device_exists_in_provisioner(self, device_name_for_provisioner):
+        """Check if this device is already in the provisioner"""
         command_output = self.utilities.execute_subprocess(['wwsh', 'node', 'print', device_name_for_provisioner])
         return command_output.return_code == 0
 
     @staticmethod
     def _get_hardware_address_key(device, interface):
+        """Get the hardware haddress key. This is how it will appear in the configuration."""
         key = "mac_address"
         if device.get("default_network_interface", "eth0") != interface:
             key = "{}_{}".format(interface, key)
@@ -594,6 +600,7 @@ class Warewulf(Provisioner):
 
     @staticmethod
     def _get_ip_address_key(device, interface):
+        """Get the IP address key. This is how it will appear in the configuration."""
         key = "ip_address"
         if device.get("default_network_interface", "eth0") != interface:
             key = "{}_{}".format(interface, key)
@@ -601,6 +608,7 @@ class Warewulf(Provisioner):
 
     @staticmethod
     def _check_for_general_errors(output, assert_is_zero=True):
+        """Check for the most common errors in warewulf commands. Permission errors, and pad error codes."""
         if output.stderr is not None and Warewulf.DATABASE_INSERT_ERROR in output.stderr:
             raise ProvisionerException("Could not complete action due to insufficient"
                                        " permissions to the warewulf db.", output)

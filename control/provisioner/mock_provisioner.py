@@ -9,6 +9,7 @@ from ..plugin import DeclarePlugin
 from .provisioner import Provisioner, ProvisionerException
 import json
 
+
 @DeclarePlugin('mock', 100)
 class MockProvisioner(Provisioner):
     """
@@ -30,13 +31,12 @@ class MockProvisioner(Provisioner):
         """
         See @Provisioner for interface details. Implementation here.
         """
-        print(self.parsed_file)
         if self.parsed_file.get("devices") is None:
             self.parsed_file["devices"] = set()
 
         self.parsed_file["devices"].add(device.get("hostname"))
 
-        device[self.DEVICE_ADDED_TO_PROVISIONER_KEY] = True
+        device[self.PROVISIONER_KEY] = "mock"
         return device
 
     def delete(self, device):
@@ -48,7 +48,7 @@ class MockProvisioner(Provisioner):
 
         self.parsed_file["devices"].discard(device.get("hostname"))
 
-        device.pop(self.DEVICE_ADDED_TO_PROVISIONER_KEY, None)
+        device.pop(self.PROVISIONER_KEY, None)
         return device
 
     def set_ip_address(self, device, ip_address, interface="eth0"):

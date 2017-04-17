@@ -10,6 +10,7 @@ from mock import patch, MagicMock
 from datastore import DataStoreLogger
 from ..provisioner_add import ProvisionerAddCommand
 from ....plugin.manager import PluginManager
+from argparse import Namespace
 
 class TestProvisionerAddCommand(unittest.TestCase):
     """Test case for the ProvisionerAdd class."""
@@ -28,7 +29,7 @@ class TestProvisionerAddCommand(unittest.TestCase):
             'configuration': self.configuration_manager,
             'plugin_manager': self.mock_plugin_manager,
             'logger': mock_logger,
-            'arguments': None
+            'arguments': Namespace(provisioner=None)
         }
         self.prov_add = ProvisionerAddCommand(self.configuration)
 

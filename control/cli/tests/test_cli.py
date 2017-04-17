@@ -367,13 +367,13 @@ class ControlCliParserTest(TestCase):
     @patch("control.cli.CommandInvoker.__init__", MagicMock(side_effect=RuntimeError("Error")))
     def test_init_exception(self):
         with self.assertRaises(SystemExit):
-            ControlCommandLineInterface()
+            ControlCommandLineInterface().execute_cli_cmd()
 
     @patch("control.cli.CommandInvoker.__init__",
            MagicMock(side_effect=FileNotFound("Error_file_path")))
     def test_init_exception2(self):
         with self.assertRaises(SystemExit):
-            ControlCommandLineInterface()
+            ControlCommandLineInterface().execute_cli_cmd()
 
     def test_resource_invalid_command(self):
         sys.argv[1:] = ['resource', 'foo', 'compute-29']
