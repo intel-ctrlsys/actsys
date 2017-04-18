@@ -8,10 +8,12 @@ from flask_restful import Api
 from unittest import TestCase
 from mock import MagicMock, patch, call
 from flask import Flask, json
-from ..resource_mgr import ResourceManager, ResourceManagerUsage, ResourceManagerException
+from ..resource_mgr import ResourceManager, ResourceManagerUsage
+from ..resource_common import ResourceCommonException
 from ....cli import CommandInvoker
 from ....commands import CommandResult
 from ....plugin.manager import PluginManagerException
+
 
 class TestResourceManagerUsage(TestCase):
     """ Class to test ResourceManagerUsage """
@@ -42,8 +44,8 @@ class TestResourceManagerUsage(TestCase):
         self.assertEqual(self._create_expected_str(), msg)
         print (msg)
 
-    def test_get_resource_usage_msg(self):
-        self._check_usage_msg(self.usage.get_resource_usage_msg())
+    def test_get_default_usage_msg(self):
+        self._check_usage_msg(self.usage.get_default_usage_msg())
         self._check_usage_msg(self.usage.get_subcommand_usage_msg())
 
     def test_get_add_usage_msg(self):
@@ -177,14 +179,14 @@ class TestResourceManager(TestResourceManagerBase):
         self._test_mock_functions(rmgr, self.node_regex['single'], 5)
 
     def test_add_usage_message_response_none(self):
-        exception = ResourceManagerException(400)
+        exception = ResourceCommonException(400)
         self.rmgr._add_usage_message('add', exception)
         self.assertIsNotNone(exception.response)
         self.assertIn('usage', exception.response)
 
 
     def test_add_usage_message_response_no_dict(self):
-        exception = ResourceManagerException(400, "bar", "foo")
+        exception = ResourceCommonException(400, "bar", "foo")
         self.rmgr._add_usage_message('add', exception)
         self.assertEqual('foo', exception.response)
 
