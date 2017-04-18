@@ -36,15 +36,14 @@ class TestProvisionerSetCommand(unittest.TestCase):
             'device_name': self.node_name,
             'configuration': self.configuration_manager,
             'plugin_manager': self.mock_plugin_manager,
-            'logger': mock_logger,
-            'arguments': None
+            'logger': mock_logger
         }
-        self.prov_set = ProvisionerSetCommand(self.args)
+        self.prov_set = ProvisionerSetCommand(**self.args)
 
     def test_no_provisioner_in_config(self):
         self.configuration_manager.get_device.return_value.pop("provisioner")
         with self.assertRaises(RuntimeError):
-            ProvisionerSetCommand(self.args)
+            ProvisionerSetCommand(**self.args)
 
     def test_incorrect_node_type(self):
         self.configuration_manager.get_device.return_value["device_type"] = 'Not Compute'
@@ -56,50 +55,51 @@ class TestProvisionerSetCommand(unittest.TestCase):
                          'Failure: cannot perform provisioner actions on this device type ({})'.format('Not Compute'))
 
     def test_success(self):
-        self.prov_set.args = self.create_namespace()
         result = self.prov_set.execute()
 
         self.assertEqual(0, result.return_code)
         self.assertEqual("Successfully set c1 options for the provisioner", result.message)
 
     def test_ipaddr(self):
-        self.prov_set.args = self.create_namespace(ip_address="foo")
+        self.prov_set.ip_address = "foo"
         result = self.prov_set.execute()
         self.provisioner_mock.set_ip_address.assert_called_once_with(self.mock_device, "foo")
 
-        self.prov_set.args = self.create_namespace(ip_address="bar", net_interface="io")
+        self.prov_set.ip_address = "bar"
+        self.prov_set.net_interface = "io"
         result = self.prov_set.execute()
         self.provisioner_mock.set_ip_address.assert_called_with(self.mock_device, "bar", "io")
 
     def test_hwaddr(self):
-        self.prov_set.args = self.create_namespace(hw_address="foo")
+        self.prov_set.hw_address = "foo"
         result = self.prov_set.execute()
         self.provisioner_mock.set_hardware_address.assert_called_once_with(self.mock_device, "foo")
 
-        self.prov_set.args = self.create_namespace(hw_address="bar", net_interface="io")
+        self.prov_set.hw_address = "bar"
+        self.prov_set.net_interface = "io"
         result = self.prov_set.execute()
         self.provisioner_mock.set_hardware_address.assert_called_with(self.mock_device, "bar", "io")
 
     def test_image(self):
-        self.prov_set.args = self.create_namespace(image="foo")
+        self.prov_set.image = "foo"
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_image.assert_called_once_with(self.mock_device, "foo")
 
     def test_bootstrap(self):
-        self.prov_set.args = self.create_namespace(bootstrap="foo")
+        self.prov_set.bootstrap = "foo"
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_bootstrap.assert_called_once_with(self.mock_device, "foo")
 
     def test_files(self):
-        self.prov_set.args = self.create_namespace(files="foo")
+        self.prov_set.files = "foo"
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_files.assert_called_once_with(self.mock_device, "foo")
 
     def test_kargs(self):
-        self.prov_set.args = self.create_namespace(kernel_args="foo")
+        self.prov_set.kernel_args = "foo"
 
         result = self.prov_set.execute()
         self.provisioner_mock.set_kernel_args.assert_called_once_with(self.mock_device, "foo")

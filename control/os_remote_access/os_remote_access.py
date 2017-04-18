@@ -11,7 +11,7 @@ from ..plugin import DeclareFramework
 @DeclareFramework('os_remote_access')
 class OsRemoteAccess(object):
     """Interface for remote process execution."""
-    def __init__(self, options=None):
+    def __init__(self):
         pass
 
     def execute(self, cmd, remote_access_data, capture=False, other=None):

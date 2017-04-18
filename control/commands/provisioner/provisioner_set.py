@@ -15,9 +15,20 @@ class ProvisionerSetCommand(Command):
     Set options for the device in the provisioner
     """
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None, ip_address=None, hw_address=None,
+                 net_interface=None, image=None, bootstrap=None, files=None, kernel_args=None):
         """Retrieve dependencies, prepare to perform command."""
-        Command.__init__(self, args)
+        Command.__init__(self, device_name, configuration, plugin_manager, logger, ip_address=ip_address,
+                         hw_address=hw_address, net_interface=net_interface, image=image, bootstrap=bootstrap,
+                         files=files, kernel_args=kernel_args)
+
+        self.ip_address = ip_address
+        self.hw_address = hw_address
+        self.net_interface = net_interface
+        self.image = image
+        self.bootstrap = bootstrap
+        self.files = files
+        self.kernel_args = kernel_args
 
         self.device = self.configuration.get_device(self.device_name)
         if self.device.get("provisioner") is None:
@@ -32,29 +43,29 @@ class ProvisionerSetCommand(Command):
             return CommandResult(1, 'Failure: cannot perform provisioner actions on this device'
                                     ' type ({})'.format(self.device.get("device_type")))
 
-        if self.args.ip_address is not None:
-            args = [self.device, self.args.ip_address]
-            if self.args.net_interface is not None:
-                args.append(self.args.net_interface)
+        if self.ip_address is not None:
+            args = [self.device, self.ip_address]
+            if self.net_interface is not None:
+                args.append(self.net_interface)
             self.provisioner.set_ip_address(*args)
 
-        if self.args.hw_address is not None:
-            args = [self.device, self.args.hw_address]
-            if self.args.net_interface is not None:
-                args.append(self.args.net_interface)
+        if self.hw_address is not None:
+            args = [self.device, self.hw_address]
+            if self.net_interface is not None:
+                args.append(self.net_interface)
             self.provisioner.set_hardware_address(*args)
 
-        if self.args.image is not None:
-            self.provisioner.set_image(self.device, self.args.image)
+        if self.image is not None:
+            self.provisioner.set_image(self.device, self.image)
 
-        if self.args.bootstrap is not None:
-            self.provisioner.set_bootstrap(self.device, self.args.bootstrap)
+        if self.bootstrap is not None:
+            self.provisioner.set_bootstrap(self.device, self.bootstrap)
 
-        if self.args.files is not None:
-            self.provisioner.set_files(self.device, self.args.files)
+        if self.files is not None:
+            self.provisioner.set_files(self.device, self.files)
 
-        if self.args.kernel_args is not None:
-            self.device = self.provisioner.set_kernel_args(self.device, self.args.kernel_args)
+        if self.kernel_args is not None:
+            self.device = self.provisioner.set_kernel_args(self.device, self.kernel_args)
 
         self.configuration.set_device(self.device)
 

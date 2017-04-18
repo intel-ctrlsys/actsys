@@ -15,16 +15,16 @@ class ProvisionerAddCommand(Command):
     Add a device to the provisioner.
     """
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None, provisioner=None):
         """Retrieve dependencies, prepare to perform command."""
-        Command.__init__(self, args)
+        Command.__init__(self, device_name, configuration, plugin_manager, logger, provisioner=provisioner)
 
         self.device = self.configuration.get_device(self.device_name)
-        if self.args.provisioner is not None and self.device.get("provisioner") is not None \
-                and self.args.provisioner != self.device.get("provisioner"):
+        if provisioner is not None and self.device.get("provisioner") is not None \
+                and provisioner != self.device.get("provisioner"):
             raise RuntimeError("Device already has a provisioner, remove the first before adding another.")
 
-        provisioner_name = self.args.provisioner or self.device.get("provisioner")
+        provisioner_name = provisioner or self.device.get("provisioner")
         if provisioner_name is None:
             # TODO: Return a configuration error
             raise RuntimeError("No provisioner is specified via args or config. Cannot perform command.")

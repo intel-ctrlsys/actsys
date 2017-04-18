@@ -14,8 +14,8 @@ from ..pdu_interface import PDUInterface
 @DeclarePlugin('mock', 1000)
 class PduMock(PDUInterface):
     """Implement pdu contract"""
-    def __init__(self, options=None):
-        PDUInterface.__init__(self, options)
+    def __init__(self):
+        PDUInterface.__init__(self)
         self.__current_states = {}
         self.__persistent_file = os.path.sep + os.path.join('tmp', 'pdu_file')
         if os.path.exists(self.__persistent_file):

@@ -12,7 +12,7 @@ from ..plugin import DeclareFramework
 @DeclareFramework('bios')
 class BiosControl(object):
     """Interface for Node controller type classes."""
-    def __init__(self, options=None):
+    def __init__(self):
         pass
 
     def get_version(self, node, bmc):

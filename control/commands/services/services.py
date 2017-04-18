@@ -16,9 +16,9 @@ class ServicesCommand(Command):
     SSH_RETRIES = 1
     SSH_SUCCESS = 0
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None):
         """Retrieve dependencies and prepare for power on"""
-        Command.__init__(self, args)
+        Command.__init__(self, device_name, configuration, plugin_manager, logger)
 
         self.device = self.configuration.get_device(self.device_name)
         self.ssh = self.plugin_manager.create_instance('os_remote_access', self.device.get("access_type"))

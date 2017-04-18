@@ -12,8 +12,13 @@ from control.utilities.remote_access_data import RemoteAccessData
 class CommonPowerCommand(Command):
     """Common functionality"""
 
-    def __init__(self, args=None):
-        Command.__init__(self, args)
+    def __init__(self, device_name, configuration, plugin_manager, logger=None,
+                 subcommand=None, outlet=None, force=None):
+        Command.__init__(self, device_name, configuration, plugin_manager, logger,
+                         subcommand=subcommand, outlet=outlet, force=force)
+        self.subcommand = subcommand
+        self.outlet = outlet
+        self.force = force
         self.power_plugin = None
 
         # Step 1 & 2
@@ -40,7 +45,7 @@ class CommonPowerCommand(Command):
             raise RuntimeError("Device {} was not found in the "
                                "configuration".format(self.device_name))
         options = dict()
-        options['device_name'] = node.get("device_id")
+        options['device_name'] = node.get("device_id", self.device_name)
         options['device_type'] = node.get("device_type")
         options['bmc_fa_port'] = node.get("bmc_fa_port", None)
         # BMC
@@ -94,9 +99,10 @@ class CommonPowerCommand(Command):
             return False
 
         self.logger.debug("Removing {} from the resource pool.".format(self.device_name))
-        resource_pool = self.plugin_manager.create_instance('command',
-                                                            'resource_pool_{}'.format(new_state),
-                                                            self.command_args)
+        resource_pool = self.plugin_manager.create_instance('command', 'resource_pool_{}'.format(new_state),
+                                                            device_name=self.device_name,
+                                                            configuration=self.configuration,
+                                                            plugin_manager=self.plugin_manager, logger=self.logger)
         resource_pool_command_result = resource_pool.execute()
         if resource_pool_command_result.return_code != 0:
             err_msg = "Power command failed due to failed resource {}.".format(new_state)
@@ -112,7 +118,9 @@ class CommonPowerCommand(Command):
 
         self.logger.debug("{}ing services for {}".format(new_state, self.device_name))
         service_stop = self.plugin_manager.create_instance('command', 'service_{}'.format(new_state),
-                                                           self.command_args)
+                                                           device_name=self.device_name,
+                                                           configuration=self.configuration,
+                                                           plugin_manager=self.plugin_manager, logger=self.logger)
         service_stop_result = service_stop.execute()
         if service_stop_result.return_code != 0:
             err_msg = "Failed power command due to failed service {}.".format(new_state)
@@ -123,16 +131,13 @@ class CommonPowerCommand(Command):
 
     def _parse_power_arguments(self, default_target, targets):
         target = default_target
-        if self.args is not None:
-            force = self.args.force
-            if self.args.subcommand is not None:
-                try:
-                    target = targets[self.args.subcommand]
-                except KeyError:
-                    target = None
-            return target, force
-        else:
-            return None, None
+        force = self.force
+        if self.subcommand is not None:
+            try:
+                target = targets[self.subcommand]
+            except KeyError:
+                target = None
+        return target, force
 
     def _execute_for_node(self):
         return CommandResult(message='"CommonPowerCommand._execute_for_node" '
@@ -148,22 +153,22 @@ class CommonPowerCommand(Command):
 
         if devices is not None and len(devices) == 1:
             device = devices[0]
-            if self.args.outlet is None:
+            if self.outlet is None:
                 return CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify outlet\n'
                                         'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
             pdu = self.plugin_manager.create_instance('pdu', device.get("access_type"))
             remote_access = RemoteAccessData(str(device.get("ip_address")), device.get("port"), str(device.get("user")),
                                              str(device.get("password")))
             try:
-                outlet_state = pdu.get_outlet_state(remote_access, str(self.args.outlet))
+                outlet_state = pdu.get_outlet_state(remote_access, str(self.outlet))
             except RuntimeError as pdu_ex:
                 return CommandResult(1, pdu_ex.message)
             self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, outlet_state))
             if outlet_state.upper() == new_state.upper():
                 return CommandResult(0, '{} outlet {} was already {}, no change '
-                                        'made.'.format(self.device_name, self.args.outlet, new_state))
+                                        'made.'.format(self.device_name, self.outlet, new_state))
             try:
-                pdu.set_outlet_state(remote_access, str(self.args.outlet), new_state)
+                pdu.set_outlet_state(remote_access, str(self.outlet), new_state)
                 self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, new_state))
             except RuntimeError as ex:
                 return CommandResult(1, ex.message)

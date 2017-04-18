@@ -16,12 +16,12 @@ class MockProvisioner(Provisioner):
     The MockProvisioner does nothing except return the same values every time.
     """
 
-    def __init__(self, options=None):
+    def __init__(self, file_location=None):
         """
         Construct the obj, nothing more.
         """
-        if options is not None and options.get("file") is not None:
-            self.provisioner_file_location = options.get("file")
+        if file_location is not None:
+            self.provisioner_file_location = file_location
             with open(self.provisioner_file_location) as f:
                 self.parsed_file = json.load(f)
         else:

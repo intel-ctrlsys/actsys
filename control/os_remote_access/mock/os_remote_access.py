@@ -16,9 +16,8 @@ import os
 @DeclarePlugin('mock', 1000)
 class OsRemoteAccessMock(OsRemoteAccess):
     """SSH remote OS access implementation."""
-    def __init__(self, options=None):
-        OsRemoteAccess.__init__(self, options)
-        self.__options = options
+    def __init__(self):
+        OsRemoteAccess.__init__(self)
         self.dfx_result_list = []
         self._load_test_results()
 

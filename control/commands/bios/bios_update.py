@@ -13,17 +13,18 @@ from .bios import BiosCommand
 class BiosUpdateCommand(BiosCommand):
     """Bios Update Command"""
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None, image=None):
         """Retrieve dependencies"""
-        BiosCommand.__init__(self, args)
+        BiosCommand.__init__(self, device_name, configuration, plugin_manager, logger, image=image)
+        self.image = image
 
     def execute(self):
         """Execute the command"""
         self.setup()
-        if self.args.image is None:
+        if self.image is None:
             return CommandResult(255, "Please provide BIOS image. See usage")
         try:
-            ret_msg = self.node_controller.bios_update(self.device, self.bmc, self.args.image)
+            ret_msg = self.node_controller.bios_update(self.device, self.bmc, self.image)
         except Exception as ex:
             return CommandResult(255, ex.message)
         return CommandResult(0, ret_msg)

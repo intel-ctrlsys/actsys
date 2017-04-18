@@ -13,7 +13,7 @@ from .services import ServicesCommand
 class ServicesStartCommand(ServicesCommand):
     """ServicesCheckCommand"""
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None):
         """Retrieve dependencies and prepare for power on"""
-        ServicesCommand.__init__(self, args)
+        ServicesCommand.__init__(self, device_name, configuration, plugin_manager, logger)
         self.command = ["systemctl", "start"]

@@ -14,7 +14,8 @@ from ..power_control import PowerControl
 @DeclarePlugin('mock', 1000)
 class PowerControlMock(PowerControl):
     """Plugin for mocking Power Control."""
-    def __init__(self, options=None):
+    def __init__(self, **kwargs):
+        options = kwargs
         PowerControl.__init__(self, options)
         self.device_name = options['device_name']
         if options['device_type'] not in ['node', 'compute', 'service',

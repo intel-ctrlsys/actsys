@@ -10,7 +10,6 @@ from mock import patch, MagicMock
 from datastore import DataStoreLogger
 from ..provisioner_add import ProvisionerAddCommand
 from ....plugin.manager import PluginManager
-from argparse import Namespace
 
 class TestProvisionerAddCommand(unittest.TestCase):
     """Test case for the ProvisionerAdd class."""
@@ -28,10 +27,9 @@ class TestProvisionerAddCommand(unittest.TestCase):
             'device_name': self.node_name,
             'configuration': self.configuration_manager,
             'plugin_manager': self.mock_plugin_manager,
-            'logger': mock_logger,
-            'arguments': Namespace(provisioner=None)
+            'logger': mock_logger
         }
-        self.prov_add = ProvisionerAddCommand(self.configuration)
+        self.prov_add = ProvisionerAddCommand(**self.configuration)
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()
@@ -45,7 +43,7 @@ class TestProvisionerAddCommand(unittest.TestCase):
     def test_no_provisioner_in_config(self):
         self.configuration_manager.get_device.return_value.pop("provisioner")
         with self.assertRaises(RuntimeError):
-            ProvisionerAddCommand(self.configuration)
+            ProvisionerAddCommand(**self.configuration)
 
     def test_incorrect_node_type(self):
         self.configuration_manager.get_device.return_value["device_type"] = 'Not Compute'

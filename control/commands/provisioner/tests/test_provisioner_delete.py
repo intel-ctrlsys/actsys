@@ -28,10 +28,9 @@ class TestProvisionerDeleteCommand(unittest.TestCase):
             'device_name': self.node_name,
             'configuration': self.configuration_manager,
             'plugin_manager': self.mock_plugin_manager,
-            'logger': mock_logger,
-            'arguments': None
+            'logger': mock_logger
         }
-        self.prov_delete = ProvisionerDeleteCommand(self.configuration)
+        self.prov_delete = ProvisionerDeleteCommand(**self.configuration)
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()
@@ -45,7 +44,7 @@ class TestProvisionerDeleteCommand(unittest.TestCase):
     def test_no_provisioner_in_config(self):
         self.configuration_manager.get_device.return_value.pop("provisioner")
         with self.assertRaises(RuntimeError):
-            ProvisionerDeleteCommand(self.configuration)
+            ProvisionerDeleteCommand(**self.configuration)
 
     def test_incorrect_node_type(self):
         self.configuration_manager.get_device.return_value["device_type"] = 'Not Compute'

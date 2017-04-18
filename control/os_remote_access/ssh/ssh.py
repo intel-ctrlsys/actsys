@@ -15,12 +15,9 @@ from ...plugin import DeclarePlugin
 class RemoteSshPlugin(OsRemoteAccess):
     """SSH remote OS access implementation."""
 
-    def __init__(self, options=None):
-        OsRemoteAccess.__init__(self, options)
-        self.__connect_timeout = 4
-        self.__options = options
-        if self.__options is not None and 'ConnectTimeout' in self.__options:
-            self.__connect_timeout = self.__options['ConnectTimeout']
+    def __init__(self, connect_timeout=4):
+        OsRemoteAccess.__init__(self)
+        self.__connect_timeout = connect_timeout
         self.utilities = Utilities()
 
     def execute(self, cmd, remote_access_data, capture=False, other=None):

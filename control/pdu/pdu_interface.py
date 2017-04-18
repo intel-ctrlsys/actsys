@@ -16,7 +16,7 @@ class PDUInterface(object):
 
     valid_states = ['On', 'Off', 'on', 'off']
 
-    def __init__(self, options=None):
+    def __init__(self):
         pass
 
     @abstractmethod

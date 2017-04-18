@@ -15,8 +15,8 @@ from ...utilities.utilities import Utilities
 @DeclarePlugin('Raritan_PX3-5180CR', 100)
 class PduRaritanPX35180CR(PDUInterface):
     """Implement pdu contract using RaritanPX35180CR."""
-    def __init__(self, options=None):
-        PDUInterface.__init__(self, options)
+    def __init__(self):
+        PDUInterface.__init__(self)
         self.utilities = Utilities()
 
     def get_outlet_state(self, connection, outlet):

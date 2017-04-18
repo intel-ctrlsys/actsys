@@ -14,9 +14,9 @@ from .resource_pool import ResourcePoolCommand
 class ResourcePoolAddCommand(ResourcePoolCommand):
     """ResourcePoolAddCommand"""
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None):
         """Retrieve dependencies and prepare for power on"""
-        ResourcePoolCommand.__init__(self, args)
+        ResourcePoolCommand.__init__(self, device_name, configuration, plugin_manager, logger)
 
     def execute(self):
         """Execute the command"""

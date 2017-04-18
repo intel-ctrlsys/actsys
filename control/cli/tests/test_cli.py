@@ -214,7 +214,7 @@ class CommandExeFactoryTest(TestCase):
     def test_resource_add_invoker(self):
         device_name = "compute-29,compute-30"
         sub_command = "add"
-        retval = self.command_invoker.resource_add(device_name, sub_command)
+        retval = self.command_invoker.resource_add(device_name)
         self.assertEqual(retval[0].return_code, 0)
         self.assertEqual(retval[1].return_code, 0)
 
@@ -463,7 +463,7 @@ class ControlCliParserTest(TestCase):
         device_name = "compute-29,compute-30"
         sub_command = "add"
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
-        retval = self.command_invoker.resource_add(device_name, sub_command)
+        retval = self.command_invoker.resource_add(device_name)
         print("RETURN: {}".format(retval))
         self.assertNotEqual(retval, 0)
 

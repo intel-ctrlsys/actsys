@@ -12,7 +12,7 @@ from ..plugin import DeclareFramework
 @DeclareFramework('resource_control')
 class ResourceControl(object):
     """Interface for resource control classes."""
-    def __init__(self, options=None):
+    def __init__(self):
         pass
 
     def remove_node_from_resource_pool(self, node_name):

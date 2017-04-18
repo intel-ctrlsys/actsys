@@ -15,9 +15,9 @@ from ...utilities.utilities import Utilities
 class SlurmResource(ResourceControl):
     """This class controls cluster resource using Slurm resource manager."""
 
-    def __init__(self, options=None):
+    def __init__(self):
         """Constructor that creates an utility and gets configuration"""
-        ResourceControl.__init__(self, options)
+        ResourceControl.__init__(self)
         self.utilities = Utilities()
 
     def _parse_node_state(self, output):

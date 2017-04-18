@@ -84,20 +84,6 @@ class CommandInvoker(object):
         else:
             return 1
 
-    def create_dictionary(self, device_name, args):
-        """Function to create dictionary for interface"""
-        from argparse import Namespace
-        if isinstance(args, dict):
-            args = Namespace(**args)
-        cmd_dictionary = {
-            'device_name': device_name,
-            'configuration': self.datastore,
-            'plugin_manager': self.manager,
-            'logger': self.logger,
-            'arguments': args
-        }
-        return cmd_dictionary
-
     def init_manager(self):
         self.manager = PluginManager()
 
@@ -168,8 +154,8 @@ class CommandInvoker(object):
         try:
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)
-        except ImportError:
-            pass
+        except ImportError as ie:
+            print("******* It failed", ie)
 
     def common_cmd_invoker(self, device_name, sub_command, **kwargs):
         """Common Function to execute the user requested command"""
@@ -210,8 +196,14 @@ class CommandInvoker(object):
                 results.append(CommandResult(1, msg, device))
                 continue
 
-            cmd_dictionary = self.create_dictionary(device, kwargs)
-            cmd_obj = self.manager.create_instance('command', command_map[sub_command], cmd_dictionary)
+            # Prepare kwargs
+            kwargs["device_name"] = device_name
+            kwargs["configuration"] = self.datastore
+            kwargs["plugin_manager"] = self.manager
+            kwargs["logger"] = self.logger
+            # End kwargs prep
+
+            cmd_obj = self.manager.create_instance('command', command_map[sub_command], **kwargs)
             self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device)
             command_result = cmd_obj.execute()
 
@@ -241,9 +233,9 @@ class CommandInvoker(object):
         """Execute Power Reboot Command"""
         return self.common_cmd_invoker(device_name, sub_command, subcommand=sub_command, force=force, outlet=outlet)
 
-    def resource_add(self, device_name, resource_manager=None):
+    def resource_add(self, device_name):
         """Execute Resource Add Command"""
-        return self.common_cmd_invoker(device_name, "resource_add", resource_manager=resource_manager)
+        return self.common_cmd_invoker(device_name, "resource_add")
 
     def resource_remove(self, device_name):
         """Execute Resource Add Command"""

@@ -12,8 +12,8 @@ from ...plugin import DeclarePlugin
 @DeclarePlugin('mock', 100)
 class MockResourceControl(ResourceControl):
     """Interface for resource control classes."""
-    def __init__(self, options=None):
-        ResourceControl.__init__(self, options)
+    def __init__(self):
+        ResourceControl.__init__(self)
         self.return_value = True
 
     def remove_node_from_resource_pool(self, node_name):

@@ -14,8 +14,8 @@ from ..bmc import Bmc
 @DeclarePlugin('mock', 1000)
 class BmcMock(Bmc):
     """Implement Bmc contract using IPMI."""
-    def __init__(self, options=None):
-        Bmc.__init__(self, options)
+    def __init__(self):
+        Bmc.__init__(self)
         self.state_change_delay = 5  # seconds
         self.__current_states = {}
         self.__persistent_file = os.path.join(os.path.sep, 'tmp', 'bmc_file')

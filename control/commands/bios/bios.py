@@ -10,8 +10,8 @@ from ..command import Command, CommandResult
 
 class BiosCommand(Command):
     """Update BIOS firmware on node"""
-    def __init__(self, args=None):
-        Command.__init__(self, args)
+    def __init__(self, device_name, configuration, plugin_manager, logger=None, **kwargs):
+        Command.__init__(self, device_name, configuration, plugin_manager, logger, **kwargs)
         self.device = None
         self.bmc = None
         self.node_controller = None
@@ -26,6 +26,5 @@ class BiosCommand(Command):
             return CommandResult(255, "The device is not a compute node!")
         if bios_controller is None:
             return CommandResult(255, "Please provide bios controller type in configuration")
-        self.node_controller = self.plugin_manager.create_instance(
-            'bios', bios_controller, None)
+        self.node_controller = self.plugin_manager.create_instance('bios', bios_controller)
         return None

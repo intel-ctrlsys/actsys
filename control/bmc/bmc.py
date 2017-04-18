@@ -11,7 +11,7 @@ from ..plugin import DeclareFramework
 @DeclareFramework('bmc')
 class Bmc(object):
     """Interface class for bmc classes."""
-    def __init__(self, options=None):
+    def __init__(self):
         pass
 
     def get_chassis_state(self, remote_access_object):

@@ -32,11 +32,11 @@ class NodePower(PowerControl):
               'policy': policy_dictionary_for_this_node
           }
     """
-    def __init__(self, options):
+    def __init__(self, **kwargs):
         """Will throw is bad or missing data is passed in options."""
-        PowerControl.__init__(self, options)
-        self.__options = options
-        if self.__options is None:
+        PowerControl.__init__(self, kwargs)
+        self.__options = kwargs
+        if self.__options is None or self.__options == dict():
             raise RuntimeError('The options parameter to this class must not '
                                'be None!')
         self.utilities = Utilities()
@@ -88,8 +88,10 @@ class NodePower(PowerControl):
 
     def _parse_options(self):
         """Parse the options data contract."""
-        self.device_name = self.__options['device_name']
-        self.device_type = self.__options['device_type']
+        self.device_name = self.__options.get('device_name')
+        if self.device_name is None:
+            raise RuntimeError('The device_name passed was None!')
+        self.device_type = self.__options.get('device_type')
         if self.device_type not in ['node', 'compute', 'service']:
             raise(RuntimeError('NodePower controller used on a non-node type '
                                'device!'))

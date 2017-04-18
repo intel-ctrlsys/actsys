@@ -14,9 +14,11 @@ from ...plugin import DeclarePlugin
 class PowerCycleCommand(CommonPowerCommand):
     """Power reboot command"""
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None,
+                 subcommand=None, outlet=None, force=None):
         """Retrieve dependencies and prepare for power reboot"""
-        CommonPowerCommand.__init__(self, args)
+        CommonPowerCommand.__init__(self, device_name, configuration, plugin_manager, logger,
+                                    subcommand=subcommand, outlet=outlet, force=force)
 
     def _execute_for_node(self):
         """
@@ -37,7 +39,7 @@ class PowerCycleCommand(CommonPowerCommand):
             # STEP 4
             if self.power_plugin is None:
                 self.power_plugin = self.plugin_manager.create_instance('power_control', self.plugin_name,
-                                                                        self.node_options)
+                                                                        **self.node_options)
 
             # STEP 5
             target, force = self._parse_power_arguments('On:bmc_on', {

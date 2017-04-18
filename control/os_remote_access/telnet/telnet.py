@@ -21,8 +21,8 @@ class RemoteTelnetPlugin(OsRemoteAccess):
     TIMEOUT = 10
     SLEEP_TIME = TIMEOUT + 1
 
-    def __init__(self, options=None):
-        OsRemoteAccess.__init__(self, options)
+    def __init__(self):
+        OsRemoteAccess.__init__(self)
 
     def execute(self, cmd, remote_access_data, capture=False, other=None):
         """Execute the remote command"""

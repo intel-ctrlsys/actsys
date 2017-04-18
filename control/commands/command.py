@@ -15,40 +15,33 @@ class Command(object):
     its conventions.
     """
 
-    def __init__(self, args):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None, **additional_arguments):
         """
-        Command 'args' are a dictionary of five items listed below:
-            'device_name': str: device_name for the command
-            'configuration': obj: configuration object
-            'plugin_manager': obj: PluginManager instance
-            'logger': obj: logger for use in the code base for debug messages
-            'arguments': list: command args specific to the command
+
+        :param device_name: str: device_name for the command
+        :param configuration: obj: configuration object
+        :param plugin_manager: obj: PluginManager instance
+        :param logger: obj: logger for use in the code base for debug messages
+        :param arguments: list: command args specific to the command
         """
-        if args is None:
-            raise RuntimeError('Cannot pass "None" as arguments for commands!')
-
-        self.command_args = args
-
-        if 'device_name' not in args or args['device_name'] is None or len(args['device_name']) == 0:
+        if device_name is None or len(device_name) == 0:
             raise RuntimeError('The "device_name" argument cannot be missing '
                                'or "None" or an empty string!')
-        self.device_name = args['device_name']
-        if 'configuration' not in args or args['configuration'] is None:
+        self.device_name = device_name
+        if configuration is None:
             raise RuntimeError('The "configuration" argument cannot be missing or "None"!')
-        self.configuration = args['configuration']
-        if 'plugin_manager' not in args or args['plugin_manager'] is None or \
-                not isinstance(args['plugin_manager'], PluginManager):
-            raise RuntimeError('The "plugin_manager" argument cannot be '
-                               'missing, "None" or a different type!')
-        self.plugin_manager = args['plugin_manager']
-        if 'logger' in args:
-            self.logger = args['logger']
-        else:
-            self.logger = None
-        if 'arguments' in args:
-            self.args = args['arguments']
-        else:
-            self.args = None
+        self.configuration = configuration
+        if plugin_manager is None or not isinstance(plugin_manager, PluginManager):
+            raise RuntimeError('The "plugin_manager" argument cannot be missing, "None" or a different type!')
+        self.plugin_manager = plugin_manager
+        self.logger = logger
+
+        additional_arguments["device_name"] = self.device_name,
+        additional_arguments["configuration"] = self.configuration,
+        additional_arguments["plugin_manager"] = self.plugin_manager,
+        additional_arguments["logger"] = self.logger,
+        self.additional_arguments = additional_arguments
+        self.command_args = additional_arguments
 
     def get_name(self):
         """Get the Class name"""

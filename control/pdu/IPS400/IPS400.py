@@ -16,8 +16,8 @@ class PduIPS400(PDUInterface):
     """
     Implement pdu contract using IPS400
     """
-    def __init__(self, options=None):
-        PDUInterface.__init__(self, options)
+    def __init__(self):
+        PDUInterface.__init__(self)
 
     def get_outlet_state(self, connection, outlet):
         """

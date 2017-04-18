@@ -3,7 +3,7 @@ from ...manager import DeclarePlugin, DeclareFramework
 
 @DeclareFramework('framework1')
 class ExampleFramework(object):
-    def __init__(self, options=None):
+    def __init__(self):
         pass
 
 

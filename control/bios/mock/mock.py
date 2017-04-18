@@ -15,10 +15,10 @@ from ..bios_control import BiosControl
 
 @DeclarePlugin('mock', 1000)
 class MockNC(BiosControl):
-    "Mock class"
-    def __init__(self, args=None):
+    """Mock class"""
+    def __init__(self):
         """Constructor that creates an utility and gets configuration"""
-        BiosControl.__init__(self, args)
+        BiosControl.__init__(self)
         self.__current_image_list = {}
         self.__persistent_file = os.path.sep + os.path.join(tempfile.gettempdir(), 'bios_file')
         if os.path.exists(self.__persistent_file):

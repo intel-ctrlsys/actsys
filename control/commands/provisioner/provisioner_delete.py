@@ -15,9 +15,9 @@ class ProvisionerDeleteCommand(Command):
     Delete a device from the provisioner.
     """
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None):
         """Retrieve dependencies, prepare to perform command."""
-        Command.__init__(self, args)
+        Command.__init__(self, device_name, configuration, plugin_manager, logger)
 
         self.device = self.configuration.get_device(self.device_name)
         if self.device.get("provisioner") is None:

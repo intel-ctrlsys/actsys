@@ -20,7 +20,7 @@ class Warewulf(Provisioner):
     DATABASE_INSERT_ERROR = "DBD::mysql::st execute failed:"
     PROVISIONER_NAME = "warewulf"
 
-    def __init__(self, options=None):
+    def __init__(self):
         """
         Construct the obj, nothing more.
         """

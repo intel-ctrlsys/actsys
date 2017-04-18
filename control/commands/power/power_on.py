@@ -14,9 +14,11 @@ from ...plugin import DeclarePlugin
 @DeclarePlugin('power_on', 100)
 class PowerOnCommand(CommonPowerCommand):
     """PowerOn command"""
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None,
+                 subcommand=None, outlet=None, force=None):
         """Retrieve dependencies and prepare for power on"""
-        CommonPowerCommand.__init__(self, args)
+        CommonPowerCommand.__init__(self, device_name, configuration, plugin_manager, logger,
+                                    subcommand=subcommand, outlet=outlet, force=force)
 
     def _execute_for_node(self):
         """
@@ -38,8 +40,7 @@ class PowerOnCommand(CommonPowerCommand):
             # STEP 4
             if self.power_plugin is None:
                 self.power_plugin = self.plugin_manager.\
-                    create_instance('power_control', self.plugin_name,
-                                            self.node_options)
+                    create_instance('power_control', self.plugin_name, **self.node_options)
 
             # STEP 5
             target, force = self._parse_power_arguments('On:bmc_on', {

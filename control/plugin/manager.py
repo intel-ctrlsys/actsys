@@ -125,13 +125,13 @@ class PluginManager(object):
             provider_list.append(item[1])
         return provider_list
 
-    def create_instance(self, framework_name, plugin_name, options=None):
+    def create_instance(self, framework_name, plugin_name, **kwargs):
         """Create a named (or default) provider in the specified category."""
         if framework_name is None or plugin_name is None:
             return None
         key = PluginManager._make_key(framework_name, plugin_name)
         try:
-            return self.__plugin_frameworks[key](options)
+            return self.__plugin_frameworks[key](**kwargs)
         except KeyError:
             raise PluginManagerException('Plugin "{}" was not found for framework "{}"'.
                                          format(plugin_name, framework_name))

@@ -16,8 +16,6 @@ from datastore import DataStore
 
 class TestBiosUpdateCommand(unittest.TestCase):
     """Test case for the Bios Update"""
-    class Object(object):
-        pass
 
     @patch("datastore.DataStore", spec=DataStore)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
@@ -27,16 +25,14 @@ class TestBiosUpdateCommand(unittest.TestCase):
         self.mock_plugin_manager = mock_plugin_manager
         self.bios_manager_mock = self.mock_plugin_manager.create_instance.return_value
         self.bios_manager_mock.bios_update.return_value = "Success"
-        self.args = self.Object()
-        setattr(self.args, 'image', "test_bios.bin")
         self.config = {
                 'device_name': self.node_name,
                 'configuration': self.configuration_manager,
                 'plugin_manager': mock_plugin_manager,
                 'logger': mock_logger,
-                'arguments': self.args
+                'image': "test_bios.bin"
             }
-        self.bios_update = BiosUpdateCommand(self.config)
+        self.bios_update = BiosUpdateCommand(**self.config)
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()
@@ -54,7 +50,7 @@ class TestBiosUpdateCommand(unittest.TestCase):
         self.assertEqual(self.bios_update.execute().return_code, 0)
         self.bios_manager_mock.bios_update.side_effect = Exception("Fail")
         self.assertEqual(self.bios_update.execute().return_code, 255)
-        self.bios_update.args.image = None
+        self.bios_update.image = None
         self.assertEqual(self.bios_update.execute().return_code, 255)
 
     def test_execute_wrong_node_type(self):

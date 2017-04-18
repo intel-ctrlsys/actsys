@@ -30,10 +30,9 @@ class TestResourcePoolAddCommand(unittest.TestCase):
                 'device_name': self.node_name,
                 'configuration': self.configuration_manager,
                 'plugin_manager': mock_plugin_manager,
-                'logger': mock_logger,
-                'arguments': None
+                'logger': mock_logger
             }
-        self.resource_add = ResourcePoolAddCommand(self.config)
+        self.resource_add = ResourcePoolAddCommand(**self.config)
 
     def setup_mock_config(self):
         self.configuration_manager = MagicMock()

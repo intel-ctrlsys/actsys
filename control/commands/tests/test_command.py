@@ -27,54 +27,54 @@ class TestCommandResult(unittest.TestCase):
 
 class TestCommand(unittest.TestCase):
     def test(self):
-        instance = Command({'device_name': 'node_name',
-                            'configuration': [],  # Placeholder
-                            'plugin_manager': PluginManager(),
-                            'logger': None,
-                            'arguments': None})
+        instance = Command(**{'device_name': 'node_name',
+                              'configuration': [],  # Placeholder
+                              'plugin_manager': PluginManager(),
+                              'logger': None,
+                              'arguments': None})
         instance.execute()
-        Command({'device_name': 'node_name',
-                 'configuration': [],  # Placeholder
-                 'plugin_manager': PluginManager(),
-                 'unknown_param': None})
+        Command(**{'device_name': 'node_name',
+                   'configuration': [],  # Placeholder
+                   'plugin_manager': PluginManager(),
+                   'unknown_param': None})
+        with self.assertRaises(TypeError):
+            Command()
+        with self.assertRaises(TypeError):
+            Command(**{'configuration': [],  # Placeholder
+                       'plugin_manager': PluginManager()})  # Placeholder
         with self.assertRaises(RuntimeError):
-            Command(None)
+            Command(**{'device_name': None,
+                       'configuration': [],  # Placeholder
+                       'plugin_manager': PluginManager()})  # Placeholder
         with self.assertRaises(RuntimeError):
-            Command({'configuration': [],  # Placeholder
-                     'plugin_manager': PluginManager()})  # Placeholder
+            Command(**{'device_name': '',
+                       'configuration': [],  # Placeholder
+                       'plugin_manager': PluginManager()})
+        with self.assertRaises(TypeError):
+            Command(**{'device_name': 'node_name',
+                       'plugin_manager': PluginManager()})
         with self.assertRaises(RuntimeError):
-            Command({'device_name': None,
-                     'configuration': [],  # Placeholder
-                     'plugin_manager': PluginManager()})  # Placeholder
+            Command(**{'device_name': 'node_name',
+                       'configuration': None,
+                       'plugin_manager': PluginManager()})
         with self.assertRaises(RuntimeError):
-            Command({'device_name': '',
-                     'configuration': [],  # Placeholder
-                     'plugin_manager': PluginManager()})
+            Command(**{'device_name': 'node_name',
+                       'configuration': [],  # Placeholder
+                       'plugin_manager': None})  # Placeholder
+        with self.assertRaises(TypeError):
+            Command(**{'device_name': 'node_name',
+                       'configuration': []})  # Placeholder
         with self.assertRaises(RuntimeError):
-            Command({'device_name': 'node_name',
-                     'plugin_manager': PluginManager()})
-        with self.assertRaises(RuntimeError):
-            Command({'device_name': 'node_name',
-                     'configuration': None,
-                     'plugin_manager': PluginManager()})
-        with self.assertRaises(RuntimeError):
-            Command({'device_name': 'node_name',
-                     'configuration': [],  # Placeholder
-                     'plugin_manager': None})  # Placeholder
-        with self.assertRaises(RuntimeError):
-            Command({'device_name': 'node_name',
-                     'configuration': []})  # Placeholder
-        with self.assertRaises(RuntimeError):
-            Command({'device_name': 'node_name',
-                     'configuration': [],  # Placeholder
-                     'plugin_manager': self})
+            Command(**{'device_name': 'node_name',
+                       'configuration': [],  # Placeholder
+                       'plugin_manager': self})
 
     def test_get_name(self):
-        command = Command({'device_name': 'node_name',
-                           'configuration': [],  # Placeholder
-                           'plugin_manager': PluginManager(),
-                           'logger': None,
-                           'arguments': None})
+        command = Command(**{'device_name': 'node_name',
+                             'configuration': [],  # Placeholder
+                             'plugin_manager': PluginManager(),
+                             'logger': None,
+                             'arguments': None})
         self.assertEqual(command.get_name(), "command")
 
     def test_get_name2(self):
@@ -82,22 +82,22 @@ class TestCommand(unittest.TestCase):
         class CommandPlugin(Command):
             pass
 
-        command = CommandPlugin({'device_name': 'node_name',
-                                 'configuration': [],  # Placeholder
-                                 'plugin_manager': PluginManager(),
-                                 'logger': None,
-                                 'arguments': None})
+        command = CommandPlugin(**{'device_name': 'node_name',
+                                   'configuration': [],  # Placeholder
+                                   'plugin_manager': PluginManager(),
+                                   'logger': None,
+                                   'arguments': None})
         self.assertEqual(command.get_name(), "sample_plugin")
 
     def test_get_name3(self):
         class SomeObject(Command):
             pass
 
-        command = SomeObject({'device_name': 'node_name',
-                              'configuration': [],  # Placeholder
-                              'plugin_manager': PluginManager(),
-                              'logger': None,
-                              'arguments': None})
+        command = SomeObject(**{'device_name': 'node_name',
+                                'configuration': [],  # Placeholder
+                                'plugin_manager': PluginManager(),
+                                'logger': None,
+                                'arguments': None})
         self.assertEqual(command.get_name(), "SomeObject")
 
 

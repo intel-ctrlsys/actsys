@@ -15,8 +15,8 @@ from ..bmc import Bmc
 class BmcIpmiUtil(Bmc):
     """Implement Bmc contract using IPMI."""
 
-    def __init__(self, options=None):
-        Bmc.__init__(self, options)
+    def __init__(self):
+        Bmc.__init__(self)
         self.utilities = Utilities()
         self.tool = 'ipmiutil'
         self.name_to_find = 'chassis_power'

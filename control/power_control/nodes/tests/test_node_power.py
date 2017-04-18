@@ -64,7 +64,7 @@ class MockSwitch(object):
 
 class MockOsAccess(object):
     """Mock up OS access plugin for certain tests."""
-    def __init__(self, options=None):
+    def __init__(self):
         self.stack = []
         self.dfx_test_stack = []
 
@@ -91,8 +91,8 @@ class MockOsAccess(object):
 
 class MockBmcAccess(BmcMock):
     """Mock the bmc mock class."""
-    def __init__(self, options=None):
-        super(MockBmcAccess, self).__init__(options)
+    def __init__(self):
+        super(MockBmcAccess, self).__init__()
         self.state_stack = []
         self.set_failure = False
 
@@ -108,8 +108,8 @@ class MockBmcAccess(BmcMock):
 
 class MockNodePower(NodePower):
     """Mocking parts of NodePower."""
-    def __init__(self, options):
-        super(MockNodePower, self).__init__(options)
+    def __init__(self, **options):
+        super(MockNodePower, self).__init__(**options)
         self.shutdown_succeed = None
         self.graceful_fail = False
 
@@ -166,9 +166,7 @@ class TestNodePower(unittest.TestCase):
             }
         }
 
-        self.controller = self.manager.create_instance('power_control',
-                                                               'node_power',
-                                                               self.__options)
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
         self.controller.utilities = self.__utilities
 
     def tearDown(self):
@@ -182,9 +180,7 @@ class TestNodePower(unittest.TestCase):
 
     def test_no_options(self):
         with self.assertRaises(RuntimeError):
-            self.controller = self.manager.create_instance(
-                    'power_control',
-                    'node_power')
+            self.controller = self.manager.create_instance('power_control', 'node_power')
 
     def test_get_current_device_power_state(self):
         self.__utilities.returned_value = True
@@ -207,34 +203,27 @@ class TestNodePower(unittest.TestCase):
     def test__parse_options(self):
         self.__options['device_type'] = 'network_switch'
         with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power',
-                                                 self.__options)
+            self.manager.create_instance('power_control', 'node_power', **self.__options)
         self.__options['device_type'] = 'node'
         self.__options['os'] = (None, self.os_plugin)
         with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power',
-                                                 self.__options)
+            self.manager.create_instance('power_control', 'node_power', **self.__options)
         self.__options['os'] = (self.os_access, None)
         with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power',
-                                                 self.__options)
+            self.manager.create_instance('power_control', 'node_power', **self.__options)
         self.__options['os'] = (self.os_access, self.os_plugin)
         self.__options['bmc'] = (None, self.bmc_plugin)
         with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power',
-                                                 self.__options)
+            self.manager.create_instance('power_control', 'node_power', **self.__options)
         self.__options['bmc'] = (self.bmc_access, None)
         with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power',
-                                                 self.__options)
+            self.manager.create_instance('power_control', 'node_power', **self.__options)
         self.__options['bmc'] = (self.bmc_access, self.bmc_plugin)
         self.__options['switches'] = None
         self.__options['policy'] = None
-        self.manager.create_instance('power_control',
-                                             'node_power', self.__options)
+        self.manager.create_instance('power_control', 'node_power', **self.__options)
         self.__options['policy'] = {}
-        self.manager.create_instance('power_control',
-                                             'node_power', self.__options)
+        self.manager.create_instance('power_control', 'node_power', **self.__options)
 
     def test_switches_exceptions(self):
         self.switch_plugin2.state = False
@@ -261,7 +250,7 @@ class TestNodePower(unittest.TestCase):
     def test_wait_for_chassis_state(self):
         mock_bmc = MockBmcAccess()
         self.__options['bmc'] = (self.bmc_access, mock_bmc)
-        power = MockNodePower(self.__options)
+        power = MockNodePower(**self.__options)
         mock_bmc.state_stack = [False, True]
         result = power.wait_for_chassis_state(True, 3)
         self.assertTrue(result)
@@ -269,7 +258,7 @@ class TestNodePower(unittest.TestCase):
     def test_target_on_to_state(self):
         mock_os = MockOsAccess()
         self.__options['os'] = (self.os_access, mock_os)
-        power = NodePower(self.__options)
+        power = NodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:on'))
         mock_os.dfx_test_stack = [True, False]
@@ -278,7 +267,7 @@ class TestNodePower(unittest.TestCase):
     def test_target_on_to_state_2(self):
         mock_os = MockOsAccess()
         self.__options['os'] = (self.os_access, mock_os)
-        power = MockNodePower(self.__options)
+        power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         mock_os.dfx_test_stack = [False, True]
         self.assertTrue(power.set_device_power_state('On'))
@@ -288,7 +277,7 @@ class TestNodePower(unittest.TestCase):
     def test_target_off(self):
         mock_os = MockOsAccess()
         self.__options['os'] = (self.os_access, mock_os)
-        power = MockNodePower(self.__options)
+        power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:efi'))
         mock_os.dfx_test_stack = [False]
@@ -300,7 +289,7 @@ class TestNodePower(unittest.TestCase):
     def test_target_off_force(self):
         mock_os = MockOsAccess()
         self.__options['os'] = (self.os_access, mock_os)
-        power = MockNodePower(self.__options)
+        power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
         self.os_plugin.dfx_test_stack = [True]
@@ -312,7 +301,7 @@ class TestNodePower(unittest.TestCase):
     def test_target_on_force(self):
         mock_os = MockOsAccess()
         self.__options['os'] = (self.os_access, mock_os)
-        power = MockNodePower(self.__options)
+        power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
         self.os_plugin.dfx_test_stack = [True]
@@ -328,7 +317,7 @@ class TestNodePower(unittest.TestCase):
         mock_bmc = MockBmcAccess()
         self.__options['os'] = (self.os_access, mock_os)
         self.__options['bmc'] = (self.bmc_access, mock_bmc)
-        power = MockNodePower(self.__options)
+        power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         mock_bmc.state_stack = [False, False]
         mock_bmc.set_failure = True
@@ -337,7 +326,7 @@ class TestNodePower(unittest.TestCase):
     def test_target_on_shutdown_failed(self):
         mock_os = MockOsAccess()
         self.__options['os'] = (self.os_access, mock_os)
-        power = MockNodePower(self.__options)
+        power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
         self.os_plugin.dfx_test_stack = [True]

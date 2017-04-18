@@ -19,10 +19,10 @@ class TestBiosCtrlMock(unittest.TestCase):
     def test_persist_state(self):
         if os.path.exists(self.bios_file):
             os.unlink(self.bios_file)
-        mock_nc = MockNC(args=None)
+        mock_nc = MockNC()
         self.assertTrue('No image found' in mock_nc.get_version(self.device, self.bmc))
         self.assertTrue('Bios for' in mock_nc.bios_update(self.device, self.bmc, 'test.bin'))
         self.assertTrue('test.bin' in mock_nc.get_version(self.device, self.bmc))
 
-        mock_nc = MockNC(args=None)
+        mock_nc = MockNC()
         self.assertTrue(mock_nc.get_version(self.device, self.bmc))

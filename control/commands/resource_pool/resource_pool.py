@@ -11,9 +11,9 @@ from ..command import Command, CommandResult
 class ResourcePoolCommand(Command):
     """ResourcePoolAddCommand"""
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None):
         """Retrieve dependencies and prepare for power on"""
-        Command.__init__(self, args)
+        Command.__init__(self, device_name, configuration, plugin_manager, logger)
         self.device = None
         self.resource_manager = None
 
@@ -24,7 +24,7 @@ class ResourcePoolCommand(Command):
         if 'compute' != self.device.get("device_type") and 'node' != self.device.get("device_type"):
             return CommandResult(-1, "The device is not a compute node!")
         self.resource_manager = self.plugin_manager.create_instance('resource_control',
-                                                                    self.device.get("resource_controller"), None)
+                                                                    self.device.get("resource_controller"))
         if not self.resource_manager.check_resource_manager_installed():
             return CommandResult(-2, "Resource manager is not installed!")
 

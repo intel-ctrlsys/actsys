@@ -13,10 +13,10 @@ from ..power_control_mock import PowerControlMock
 class TestPowerControlMock(unittest.TestCase):
     """Test the power control mock test."""
     def setUp(self):
-        self.mock1 = PowerControlMock({'device_name': 'test_node_1',
-                                       'device_type': 'node'})
-        self.mock2 = PowerControlMock({'device_name': 'test_node_2',
-                                       'device_type': 'node'})
+        self.mock1 = PowerControlMock(device_name='test_node_1',
+                                       device_type='node')
+        self.mock2 = PowerControlMock(device_name='test_node_2',
+                                       device_type='node')
         self.mock2.set_device_power_state('On:bmc_on')
 
     def tearDown(self):
@@ -26,10 +26,10 @@ class TestPowerControlMock(unittest.TestCase):
             os.unlink(self.mock2.file_path)
 
     def test_mock_power_control(self):
-        node1 = PowerControlMock({'device_name': 'test_node_1',
-                                  'device_type': 'node'})
-        node2 = PowerControlMock({'device_name': 'test_node_2',
-                                  'device_type': 'node'})
+        node1 = PowerControlMock(device_name='test_node_1',
+                                  device_type='node')
+        node2 = PowerControlMock(device_name='test_node_2',
+                                  device_type='node')
         self.assertEqual('Off', node1.get_current_device_power_state())
         self.assertEqual('On:bmc_on', node2.get_current_device_power_state())
 
@@ -44,12 +44,12 @@ class TestPowerControlMock(unittest.TestCase):
 
     def test_bad_type(self):
         with self.assertRaises(RuntimeError):
-            PowerControlMock({'device_name': 'test_node_1',
-                              'device_type': 'network_switch'})
+            PowerControlMock(device_name='test_node_1',
+                              device_type='network_switch')
 
     def test_bad_target(self):
-        node = PowerControlMock({'device_name': 'test_node_1',
-                                 'device_type': 'node'})
+        node = PowerControlMock(device_name='test_node_1',
+                                 device_type='node')
         with self.assertRaises(RuntimeError):
             node.set_device_power_state('Sleep')
         with self.assertRaises(RuntimeError):

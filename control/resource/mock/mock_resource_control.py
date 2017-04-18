@@ -17,9 +17,9 @@ from datastore.datastore import logging
 class MockResource(ResourceControl):
     """This class controls cluster resource using Mocked resource manager."""
 
-    def __init__(self, options=None):
+    def __init__(self):
         """Constructor that load the mocked resource file if there is any"""
-        ResourceControl.__init__(self, options)
+        ResourceControl.__init__(self)
         self.file_path = os.path.join(os.path.sep, 'tmp', 'mock_resource')
         self.configure_file = "ctrl-config.json"
         self.nodes = None

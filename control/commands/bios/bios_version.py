@@ -14,9 +14,9 @@ from .bios import BiosCommand
 class BiosVersionCommand(BiosCommand):
     """Bios Get Version Command"""
 
-    def __init__(self, args=None):
+    def __init__(self, device_name, configuration, plugin_manager, logger=None):
         """Retrieve dependencies and prepare for power on"""
-        BiosCommand.__init__(self, args)
+        BiosCommand.__init__(self, device_name, configuration, plugin_manager, logger)
 
     def execute(self):
         """Execute the command"""

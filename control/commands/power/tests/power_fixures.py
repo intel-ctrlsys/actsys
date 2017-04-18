@@ -62,8 +62,8 @@ class MockConfiguration(object):
 class MockPowerPlugin(PowerControlMock):
     """Pre-programmed responses"""
 
-    def __init__(self, options=None):
-        super(MockPowerPlugin, self).__init__(options)
+    def __init__(self, **options):
+        super(MockPowerPlugin, self).__init__(**options)
 
     def set_device_power_state(self, target_state, force_on_failure=False):
         return False
@@ -72,8 +72,8 @@ class MockPowerPlugin(PowerControlMock):
 class MockPowerPluginException(PowerControlMock):
     """Pre-programmed responses"""
 
-    def __init__(self, options=None):
-        super(MockPowerPluginException, self).__init__(options)
+    def __init__(self, **options):
+        super(MockPowerPluginException, self).__init__(**options)
 
     def set_device_power_state(self, target_state, force_on_failure=False):
         raise RuntimeError('Mock exception')
@@ -103,15 +103,13 @@ class PowerCommandsCommon(unittest.TestCase):
         self.manager.register_plugin_class(ServicesStatusCommand)
         self.configuration = MockConfiguration()
         self.setUpConfiguration()
-        self.args = self.Object()
-        setattr(self.args, "subcommand", "off")
-        setattr(self.args, "force", False)
         self.command_options = {
             'device_name': self.node_name,
             'configuration': self.configuration,
             'plugin_manager': self.manager,
             'logger': MagicMock(spec=DataStoreLogger),
-            'arguments': self.args
+            'subcommand': "off",
+            "force": False
         }
         self.options = {
             'device_name': self.node_name,

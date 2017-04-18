@@ -34,7 +34,7 @@ class Utilities(object):
            code, stdout, stderr.
         :param command: A list of args to execute
         """
-        self.logger.warning("Attempting command {}".format(command))
+        self.logger.debug("Attempting command {}".format(command))
         pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = pipe.communicate()
         result = SubprocessOutput(pipe.returncode, stdout, stderr)
