@@ -14,16 +14,14 @@ class ControlRestApi(object):
     """ Class that creates a rest application to execute user commands. """
     def __init__(self, **kwargs):
         self._set_flags_from_kwargs(kwargs)
-        self.cmd_invoker = None if self.dfx else CommandInvoker()
+        self.cmd_invoker = CommandInvoker()
         self.flask_app = Flask(__name__)
         self.rest_api = Api(self.flask_app)
         self._load_config()
         self._add_resources()
 
     def _set_flags_from_kwargs(self, kwargs):
-        self.dfx = kwargs.get('dfx', False)
         self.debug = kwargs.get('debug', False)
-        self.dfx_resource_mgr = kwargs.get('dfx_resource_mgr', self.dfx)
         self.host = kwargs.get('host')
         self.port = kwargs.get('port')
 
@@ -34,7 +32,7 @@ class ControlRestApi(object):
         self.rest_api.add_resource(ResourceManager, \
             '/resource', '/resource/', '/resource/<string:subcommand>', \
             resource_class_kwargs={'cmd_invoker':self.cmd_invoker, \
-            'dfx':self.dfx_resource_mgr, 'debug': self.debug})
+            'debug': self.debug})
 
     def run(self):
         """ Runs the rest api application """

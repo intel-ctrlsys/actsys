@@ -13,13 +13,12 @@ def parse_arguments():
     ctrl_parser = argparse.ArgumentParser(prog='rest_api', description='Control Rest API Parser')
     ctrl_parser.add_argument("-V", "--version", action="version", version='0.1.0',
                              help="Provides the tool's version.")
-    ctrl_parser.add_argument("-D", "--dfx", action='store_true', help="Enables DFx.")
     ctrl_parser.add_argument("-d", "--debug", action='store_true', help="Enables debug messages.")
     ctrl_parser.add_argument("-p", "--port", type=int, help="Specifies the port to be use for the Flask application.")
     ctrl_parser.add_argument("-H", "--host", help="Specifies the host to be use for the Flask application.")
     args = ctrl_parser.parse_args()
     print (args)
-    return dict(dfx=args.dfx, debug=args.debug, host=args.host, port=args.port)
+    return dict(debug=args.debug, host=args.host, port=args.port)
 
 if __name__ == '__main__':
     try:

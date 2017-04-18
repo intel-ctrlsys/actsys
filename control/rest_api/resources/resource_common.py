@@ -24,19 +24,11 @@ class HTTP(object):
 class ResourceCommon(Resource):
     """ Common Resource Class """
 
-    def __init__(self, cmd_invoker=None, debug=False, dfx=False,
-                 dfx_data=None):
+    def __init__(self, cmd_invoker=None, debug=False):
         super(ResourceCommon, self).__init__()
         self.cmd_invoker = cmd_invoker if isinstance(cmd_invoker, CommandInvoker) else None
         self.debug = debug
-        self.dfx = dfx
         self.usage = Usage()
-        if self.dfx:
-            self._setup_mocks(dfx_data)
-
-    @abstractmethod
-    def _setup_mocks(self, dfx_data):
-        pass
 
     @classmethod
     def _raise_if_is_single_failure(cls, response, message=""):
@@ -116,14 +108,13 @@ class ResourceCommon(Resource):
     @classmethod
     def _create_response(cls, error_code, message="", data=None):
         if not data:
-            return make_response(message, error_code)
+            return make_response(message+'\n', error_code)
         data['message'] = message
         return make_response(jsonify(data), error_code)
 
     def dispatch_requests(self, valid_subcommands, subcommand=None, method='GET'):
         """ Method to handle HTTP Requests """
-        node_regex = request.args.get('node_regex', '')
-        self._debug_msg('subcommand: {} node_regex: {}'.format(subcommand, node_regex))
+        self._debug_msg('subcommand: {} args: {}'.format(subcommand, request.values))
 
         if subcommand is None:
             return self._create_response(HTTP.BAD_REQUEST, 'Invalid subcommand (no subcommand)',
@@ -137,7 +128,7 @@ class ResourceCommon(Resource):
         local_function = getattr(self, '_{}_{}_subcommand'.format(method.lower(), subcommand), None)
 
         if local_function:
-            return local_function(subcommand, node_regex)
+            return local_function(subcommand, **dict(request.values.items()))
 
         return self._invalid_method_response(method.upper(), subcommand)
 
