@@ -96,6 +96,29 @@ class ControlArgParser(object):
                                }
                            ])
 
+        self.add_subparser('sensor', 'Get specified sensor value on specified nodes/group of nodes',
+                           ['get'], 'Select an action to perform',
+                           [
+                               {
+                                   'name': '--sensor-name',
+                                   'nargs': '?',
+                                   'required': True,
+                                   'help': 'Provide a specific sensor or .* for all sensors'
+                               },
+                               {
+                                   'name': '--duration',
+                                   'nargs': '?',
+                                   'type': int,
+                                   'help': 'Provide a specific duration to sample for, must be greater than 0'
+                               },
+                               {
+                                   'name': '--sample-rate',
+                                   'nargs': '?',
+                                   'type': int,
+                                   'help': 'Provide a specific sample rate to sample on, must be greater than 0'
+                               }
+                           ])
+
     def add_subparser(self, parser_name, parser_help, subcommand_choices=list(),
                       subcommand_help=None, arg_list_kwargs=list(), require_device_name=True):
         """
@@ -204,6 +227,18 @@ class ControlCommandLineInterface(object):
         else:
             return CommandResult(1, "Invalid bios command entered")
 
+    def oobsensor_cmd_execute(self, cmd_args):
+        if cmd_args.subcommand == 'get':
+            if cmd_args.duration is not None or cmd_args.sample_rate is not None:
+                if cmd_args.duration is None or cmd_args.sample_rate is None:
+                    return CommandResult(1, "Error missing required arguments, --duration and --sample-rate")
+                return self.cmd_invoker.oob_sensor_get_over_time(cmd_args.device_name, cmd_args.sensor_name,
+                                                                 cmd_args.duration, cmd_args.sample_rate)
+            elif cmd_args.duration is None and cmd_args.sample_rate is None:
+                return self.cmd_invoker.oob_sensor_get(cmd_args.device_name, cmd_args.sensor_name)
+        else:
+            return CommandResult(1, "Invalid sensor command entered")
+
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
         masterparser = ControlArgParser()
@@ -252,6 +287,8 @@ class ControlCommandLineInterface(object):
             command_result = self.service_cmd_execute(cmd_args)
         elif cmd_args.subparser_name == 'bios':
             command_result = self.bios_cmd_execute(cmd_args)
+        elif cmd_args.subparser_name == 'sensor':
+            command_result = self.oobsensor_cmd_execute(cmd_args)
 
         return self.handle_command_result(command_result)
 

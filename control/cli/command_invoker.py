@@ -150,6 +150,14 @@ class CommandInvoker(object):
         from ..provisioner import MockProvisioner, Warewulf
         self.manager.register_plugin_class(MockProvisioner)
         self.manager.register_plugin_class(Warewulf)
+        
+        #Mock Oobsensor Plugin for OobSensors
+        from ..oob_sensors import OobSensorMock
+        self.manager.register_plugin_class(OobSensorMock)
+
+        from ..commands.oob_sensors import OobSensorGetCommand, OobSensorGetTimeCommand
+        self.manager.register_plugin_class(OobSensorGetCommand)
+        self.manager.register_plugin_class(OobSensorGetTimeCommand)
 
         try:
             from ctrl_plugins import add_plugins_to_manager
@@ -181,7 +189,9 @@ class CommandInvoker(object):
                        'bios_version': 'bios_version',
                        'provisioner_add': 'provisioner_add',
                        'provisioner_delete': 'provisioner_delete',
-                       'provisioner_set': 'provisioner_set'
+                       'provisioner_set': 'provisioner_set',
+                       'oob_sensor_get': 'oob_sensor_get',
+                       'oob_sensor_get_time': 'oob_sensor_get_time'
                        }
         device_list = CommandInvoker._device_name_check(device_name)
         if not isinstance(device_list, list):
@@ -313,3 +323,24 @@ class CommandInvoker(object):
         return self.common_cmd_invoker(device_name, "provisioner_set", ip_address=ip_address, hw_address=hw_address,
                                        net_interface=net_interface, image=image, bootstrap=bootstrap, files=files,
                                        kernel_args=kernel_args)
+
+    def oob_sensor_get(self, device_name, sensor_name):
+        """
+        Get the values for a oob sensor
+        :param device_name:
+        :param sensor_name:
+        :return:
+        """
+        return self.common_cmd_invoker(device_name, "oob_sensor_get", sensor_name=sensor_name)
+
+    def oob_sensor_get_over_time(self, device_name, sensor_name, duration, sample_rate):
+        """
+        Get the values for a oob sensor
+        :param device_name:
+        :param sensor_name:
+        :param duration:
+        :param sample_rate:
+        :return:
+        """
+        return self.common_cmd_invoker(device_name, "oob_sensor_get_time", sensor_name=sensor_name, duration=duration,
+                                       sample_rate=sample_rate)
