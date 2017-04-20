@@ -98,7 +98,6 @@ class TestResourceManagerRemove(TestResourceManagerBase):
         self._check_exception(cmgr.exception, 207, 'Could not remove some nodes.', expected)
 
     def test_create_http_resource_mgr_not_installed(self):
-        """ Test put function with dfx disabled """
         with self.assertRaises(ResourceCommonException) as cmgr:
             self.rmgr._create_http_remove_response({}, \
                 create_dict_from_result(self.result['plugin_not_installed']))
@@ -130,56 +129,56 @@ class TestResourceManagerCheck(TestResourceManagerBase):
 
     def test_get_nodes_status_single_result(self):
         expected = {self.result['idle'].device_name:'idle'}
-        ret =self.rmgr.get_nodes_status(self.result['idle'])
+        ret = self.rmgr.get_nodes_status(self.result['idle'])
         self.assertEqual(expected, ret)
 
     def test_get_nodes_status_multiple_result(self):
         expected = {self.result['idle'].device_name:'idle',
                     self.result['drain'].device_name:'drain'}
-        ret =self.rmgr.get_nodes_status([self.result['idle'], self.result['drain']])
+        ret = self.rmgr.get_nodes_status([self.result['idle'], self.result['drain']])
         self.assertEqual(expected, ret)
 
     def test_get_nodes_status_multiple_invalid(self):
-        self.assertEqual({},self.rmgr.get_nodes_status(['foo', 'bar']))
+        self.assertEqual({}, self.rmgr.get_nodes_status(['foo', 'bar']))
 
     def test_get_nodes_status_none(self):
-        self.assertEqual({},self.rmgr.get_nodes_status(None))
+        self.assertEqual({}, self.rmgr.get_nodes_status(None))
 
     def test_get_nodes_status_invalid_results(self):
-        self.assertEqual({},self.rmgr.get_nodes_status('foo'))
+        self.assertEqual({}, self.rmgr.get_nodes_status('foo'))
 
     def test_create_http_check_response_none(self):
         with self.assertRaises(ResourceCommonException) as cmgr:
-          self.rmgr._create_http_check_response(None)
+            self.rmgr._create_http_check_response(None)
         self._check_exception(cmgr.exception, 409, 'Could not parse command results.')
 
     def test_create_http_check_response_single(self):
-        ret =self.rmgr._create_http_check_response(self.result['idle'])
+        ret = self.rmgr._create_http_check_response(self.result['idle'])
         expected = {self.result['idle'].device_name:self.result['idle'].message}
         self.assertEqual(expected, ret)
 
     def test_create_http_check_response_single_failed(self):
         with self.assertRaises(ResourceCommonException) as cmgr:
-           self.rmgr._create_http_check_response(self.result['device'])
+            self.rmgr._create_http_check_response(self.result['device'])
         expected = {self.result['device'].device_name:'invalid'}
         self._check_exception(cmgr.exception, 404, 'Could not get node(s) status.', expected, False)
 
     def test_create_http_check_response_multiple(self):
-        ret =self.rmgr._create_http_check_response([self.result['idle'], self.result['drain']])
+        ret = self.rmgr._create_http_check_response([self.result['idle'], self.result['drain']])
         expected = {self.result['idle'].device_name:self.result['idle'].message,
                     self.result['drain'].device_name:self.result['drain'].message}
         self.assertEqual(expected, ret)
 
     def test_create_http_check_response_multiple_failed(self):
         with self.assertRaises(ResourceCommonException) as cmgr:
-           self.rmgr._create_http_check_response([self.result['device'], self.result['default']])
+            self.rmgr._create_http_check_response([self.result['device'], self.result['default']])
         expected = {self.result['device'].device_name:'invalid',
                     self.result['default'].device_name:'invalid'}
         self._check_exception(cmgr.exception, 404, 'Could not get node(s) status.', expected, False)
 
     def test_create_http_check_response_multiple_mix(self):
         with self.assertRaises(ResourceCommonException) as cmgr:
-           self.rmgr._create_http_check_response([self.result['drain'], self.result['default']])
+            self.rmgr._create_http_check_response([self.result['drain'], self.result['default']])
         expected = {self.result['drain'].device_name:self.result['drain'].message,
                     self.result['default'].device_name:'invalid'}
         self._check_exception(cmgr.exception, 207, 'Could not get some node(s) status.', expected, False)

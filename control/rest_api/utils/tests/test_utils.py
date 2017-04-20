@@ -157,7 +157,7 @@ class TestUtils(TestCase):
         self.assertFalse(fail)
         self.assertEqual(self.base_success_dic, success)
 
-    def test_utils_get_usage_msg(self):
+    def test_utils_get_default_usage_msg(self):
         """ Tests the get_usage_msg from Usage class """
         usage = Usage()
         expected = (usage._literals['title']+
@@ -176,7 +176,7 @@ class TestUtils(TestCase):
                     usage._literals['subcommand_desc']+
                     usage._literals['args_desc']
                    )
-        ret = usage.get_usage_msg()
+        ret = usage.get_default_usage_msg()
         self.assertEqual(expected, ret)
         print (ret)
 

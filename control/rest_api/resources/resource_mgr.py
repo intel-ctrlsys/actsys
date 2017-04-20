@@ -4,7 +4,6 @@
 #
 """ Module to handle Resource Manager related requests """
 from flask import jsonify
-from mock import create_autospec
 
 from ..utils.utils import split_command_results, Usage
 from ...commands.command import CommandResult
@@ -20,42 +19,22 @@ RETURN_ERRORS = {'bad_param':[-1, 1, 5],
 class ResourceManager(ResourceCommon):
     """ Resource Manager Resource Class """
 
-    def __init__(self, cmd_invoker=None, debug=False, dfx=False,
-                 dfx_data=None):
-        super(ResourceManager, self).__init__(cmd_invoker, debug, dfx, dfx_data)
+    def __init__(self, cmd_invoker=None, debug=False):
+        super(ResourceManager, self).__init__(cmd_invoker, debug)
         self.usage = ResourceManagerUsage()
         self.valid_commands = ['check', 'add', 'remove']
 
-    def _setup_mocks(self, dfx_data):
-        if not dfx_data:
-            self.mock_debug_ip = "192.168.1.100"
-            self.mock_port = 0
-        else:
-            self.mock_debug_ip = dfx_data.get('debug_ip', '192.168.1.100')
-            self.mock_port = dfx_data.get('port', 0)
-        self._mock_remove_nodes = self._create_mock_fn(self._remove_nodes, \
-            self.mock_debug_ip, self.mock_port, 'drain')
-        self._mock_check_status = self._create_mock_fn_check_status(self._check_status)
-        self._mock_add_nodes = self._create_mock_fn(self._add_nodes, \
-            self.mock_debug_ip, self.mock_port, 'idle')
+    def _get_check_subcommand(self, subcommand, **kwargs):
+        return self._handle_subcommand(subcommand, self._check_status,
+                                       self._create_http_check_response, **kwargs)
 
-    def _get_check_subcommand(self, subcommand, node_regex):
-        if self.dfx:
-            return jsonify(self._mock_check_status(node_regex))
-        return self._handle_subcommand(subcommand, node_regex, self._check_status,
-                                       self._create_http_check_response)
+    def _put_remove_subcommand(self, subcommand, **kwargs):
+        return self._handle_subcommand(subcommand, self._remove_nodes,
+                                       self._create_http_remove_response, **kwargs)
 
-    def _put_remove_subcommand(self, subcommand, node_regex):
-        if self.dfx:
-            return jsonify(self._mock_remove_nodes(node_regex))
-        return self._handle_subcommand(subcommand, node_regex, self._remove_nodes,
-                                       self._create_http_remove_response)
-
-    def _put_add_subcommand(self, subcommand, node_regex):
-        if self.dfx:
-            return jsonify(self._mock_add_nodes(node_regex))
-        return self._handle_subcommand(subcommand, node_regex, self._add_nodes,
-                                       self._create_http_add_response)
+    def _put_add_subcommand(self, subcommand, **kwargs):
+        return self._handle_subcommand(subcommand, self._add_nodes,
+                                       self._create_http_add_response, **kwargs)
 
     def _check_status(self, node_regex):
         self._raise_if_is_empty(node_regex, "Invalid node_regex.", HTTP.BAD_REQUEST)
@@ -100,7 +79,8 @@ class ResourceManager(ResourceCommon):
                 for fail in failures[node]:
                     self._add_failure(response, node, fail)
 
-    def _handle_subcommand(self, subcommand, node_regex, subcommand_fn, response_fn):
+    def _handle_subcommand(self, subcommand, subcommand_fn, response_fn, **kwargs):
+        node_regex = kwargs.get('node_regex', '')
         try:
             if subcommand == 'check':
                 return jsonify(response_fn(subcommand_fn(node_regex)))
@@ -180,18 +160,6 @@ class ResourceManager(ResourceCommon):
         if not isinstance(results, list):
             results = [results]
         return cls._get_nodes_status_from_list(results)
-
-    @classmethod
-    def _create_mock_fn_check_status(cls, base_fn):
-        """ Creates mock function for check_status function """
-        ret_dict = dict(node1='idle', node2='drain', node3='alloc', node4='invalid')
-        return create_autospec(base_fn, return_value=ret_dict)
-
-    @classmethod
-    def _create_mock_fn(cls, base_fn, debug_ip, port, status=''):
-        """ Creates mock function for the base_fn function """
-        ret_dict = dict(ip=debug_ip, port=port, status=status)
-        return create_autospec(base_fn, return_value=ret_dict)
 
     def get(self, subcommand=None):
         """ Handles HTTP GET requests"""
