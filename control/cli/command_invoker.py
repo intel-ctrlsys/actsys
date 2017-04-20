@@ -155,7 +155,7 @@ class CommandInvoker(object):
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)
         except ImportError as ie:
-            print("******* It failed", ie)
+            self.logger.info("Could not import additional plugins. Proceeding anyways. Err: {}".format(ie))
 
     def common_cmd_invoker(self, device_name, sub_command, **kwargs):
         """Common Function to execute the user requested command"""
