@@ -115,7 +115,7 @@ class DataStoreCLI(object):
         try:
             options = self.parse_options(parsed_args.options)
         except ParseOptionsException as poe:
-            print(poe.msg)
+            print(poe.message)
             return poe.return_code
 
         if parsed_args.action == "list":
@@ -173,7 +173,7 @@ class DataStoreCLI(object):
         try:
             options = self.parse_options(parsed_args.options)
         except ParseOptionsException as poe:
-            print(poe.msg)
+            print(poe.message)
             return poe.return_code
 
         if parsed_args.action == "list":
@@ -233,7 +233,7 @@ class DataStoreCLI(object):
         try:
             options = self.parse_options(parsed_args.options)
         except ParseOptionsException as poe:
-            print(poe.msg)
+            print(poe.message)
             return poe.return_code
 
         if parsed_args.action == "get":
@@ -342,6 +342,11 @@ class DataStoreCLI(object):
             if isinstance(value, str) and value.isdigit():
                 value = int(value)
 
+            # Check if the key already exists, we do not allow duplicate keys
+            if options_dict.get(key):
+                raise ParseOptionsException(1, "Key `{}` was found more than once. Please make sure your keys "
+                                               "in the options list are unique.".format(key))
+
             # Set the option
             options_dict[key] = value
 
@@ -384,4 +389,4 @@ class ParseOptionsException(Exception):
     def __init__(self, return_code, msg):
         super(ParseOptionsException, self).__init__()
         self.return_code = return_code
-        self.msg = msg
+        self.message = msg

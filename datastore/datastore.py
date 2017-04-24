@@ -5,7 +5,6 @@
 """
 Interface and Classes for using the DataStore
 """
-from __future__ import print_function
 import logging
 from logging import StreamHandler
 from abc import ABCMeta, abstractmethod
@@ -318,6 +317,14 @@ class DataStore(object):
         """
         return self.get_devices_by_type("bmc", device_name)
 
+    def get_pdus_for_device(self, device_name):
+        """
+        Get any PDUs attached to this device
+        :param device_name:
+        :return:
+        """
+        raise NotImplementedError()
+
     def get_pdu(self, device_name=None):
         """
 
@@ -466,7 +473,7 @@ def get_logger():
     :return:
     """
     logging.setLoggerClass(DataStoreLogger)
-    logger = logging.getLogger("DataStore")
+    logger = logging.getLogger("Datastore")
     logger.setLevel(DataStore.LOG_LEVEL)
     return logger
 

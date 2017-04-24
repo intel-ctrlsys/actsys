@@ -3,5 +3,5 @@ coverage
 pytest
 pylint
 mock
-python-dateutil
+python-dateutil>=2.6.0
 pytz

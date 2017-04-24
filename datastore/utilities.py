@@ -50,7 +50,6 @@ class DataStoreUtilities(object):
             return list_to_filter
         filtered_objs = list()
         passed_filters = True
-        print(list_to_filter, filters)
         for obj in list_to_filter:
             passed_filters = True
             for specified_filter in filters:

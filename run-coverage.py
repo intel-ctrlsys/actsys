@@ -17,3 +17,4 @@ if __name__ == '__main__':
     cov.save()
     cov.report(ignore_errors=True, show_missing=True)
     cov.html_report(directory='.html')
+    cov.xml_report(outfile='coverage-report.xml')

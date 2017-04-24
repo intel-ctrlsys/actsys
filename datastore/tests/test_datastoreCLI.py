@@ -245,6 +245,20 @@ class TestsDataStoreCLIOptions(unittest.TestCase):
         result = DataStoreCLI.parse_options(["f=b", "kargs=console=tty0,115280 Addl args"])
         self.assertEqual(result, {"f": "b", "kargs": "console=tty0,115280 Addl args"})
 
+    def test_no_duplicate_keys(self):
+        with self.assertRaises(ParseOptionsException):
+            result = DataStoreCLI.parse_options(["a=b", "a=b"])
+
+        try:
+            result = DataStoreCLI.parse_options(["a=b", "a=b"])
+            self.fail()
+        except ParseOptionsException as poe:
+            self.assertEqual(poe.message, "Key `a` was found more than once. Please make sure your keys "
+                                          "in the options list are unique.")
+
+        with self.assertRaises(ParseOptionsException):
+            result = DataStoreCLI.parse_options(["a=b", "foo=bar", "1=2", "a=b"])
+
 
 class TestFunctionalReturnCodes(unittest.TestCase):
     FILE_STRING = "unknown, to be contrusted in setup()"
