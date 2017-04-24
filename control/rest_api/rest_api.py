@@ -8,6 +8,7 @@ This module creates a rest application to execute user commands.
 from flask_restful import Api
 from flask import Flask
 from .resources.resource_mgr import ResourceManager
+from .resources.bios import Bios
 from ..cli.command_invoker import CommandInvoker
 
 class ControlRestApi(object):
@@ -31,6 +32,10 @@ class ControlRestApi(object):
     def _add_resources(self):
         self.rest_api.add_resource(ResourceManager, \
             '/resource', '/resource/', '/resource/<string:subcommand>', \
+            resource_class_kwargs={'cmd_invoker':self.cmd_invoker, \
+            'debug': self.debug})
+        self.rest_api.add_resource(Bios, \
+            '/bios', '/bios/', '/bios/<string:subcommand>', \
             resource_class_kwargs={'cmd_invoker':self.cmd_invoker, \
             'debug': self.debug})
 
