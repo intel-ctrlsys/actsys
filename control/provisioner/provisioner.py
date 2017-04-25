@@ -19,6 +19,8 @@ class Provisioner(object):
     PROVISIONER_BOOTSTRAP_KEY = "provisioner_bootstrap"
     PROVISIONER_FILE_KEY = "provisioner_files"
     PROVISIONER_KARGS_KEY = "provisioner_kernel_args"
+    PROVISIONER_UNSET_KEY = "UNDEF"
+
 
     @abstractmethod
     def add(self, device):

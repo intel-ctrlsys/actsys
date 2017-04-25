@@ -205,7 +205,10 @@ class CommandInvoker(object):
 
             cmd_obj = self.manager.create_instance('command', command_map[sub_command], **kwargs)
             self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device)
-            command_result = cmd_obj.execute()
+            try:
+                command_result = cmd_obj.execute()
+            except Exception as ex:
+                command_result = CommandResult(1, ex.message)
 
             command_result.device_name = device
             self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device, command_result)

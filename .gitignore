@@ -12,6 +12,7 @@ __pycache__/
 .pylint.out
 .test.log
 ctrl-results.xml
+coverage-report.xml
 
 # Build
 dist/

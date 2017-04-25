@@ -170,7 +170,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         Deleted 1 nodes.""")
         self.mock_esub.return_value = SubprocessOutput(0, expected_output, None)
         result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
-        self.assertEqual({"hostname": "test1"}, result)
+        self.assertEqual({"hostname": "test1", Provisioner.PROVISIONER_KEY: "UNDEF"}, result)
 
         expected_output = textwrap.dedent("""\
         About to apply 1 action(s) to 1 node(s):
@@ -186,7 +186,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.mock_deip.return_value = False
         self.mock_esub.return_value = SubprocessOutput(1, '', None)
         result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
-        self.assertEqual({"hostname": "test1"}, result)
+        self.assertEqual({"hostname": "test1", Provisioner.PROVISIONER_KEY: "UNDEF"}, result)
 
     def test_set_bootstrap(self):
         device = {"hostname": "test-1"}

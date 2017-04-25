@@ -16,7 +16,7 @@ class Warewulf(Provisioner):
     """
     The class implements the Provisioner interface for WareWulf
     """
-    UNSET_KEY = "UNDEF"
+    UNSET_KEY = Provisioner.PROVISIONER_UNSET_KEY
     DATABASE_INSERT_ERROR = "DBD::mysql::st execute failed:"
     PROVISIONER_NAME = "warewulf"
 
@@ -120,7 +120,7 @@ class Warewulf(Provisioner):
                     and "No Nodes Found" not in output.stdout:
                 raise ProvisionerException("Some unknown error occured", output)
 
-        device.pop(self.PROVISIONER_KEY, None)
+        device[self.PROVISIONER_KEY] = self.UNSET_KEY
         return device
 
     def set_ip_address(self, device, ip_address, interface="eth0"):

@@ -82,8 +82,8 @@ class ControlArgParser(object):
         self.add_subparser('service', 'Check, start or stop services specified in the configuration file',
                            ['status', 'start', 'stop'], 'Select an action to perform')
 
-        self.ctrl_subparser.add_parser('datastore', help='Access and edit items found in the DataStore')
-        self.ctrl_subparser.add_parser('provision', help='Provision nodes and set information about those nodes')
+        self.ctrl_subparser.add_parser('datastore', add_help=False)
+        self.ctrl_subparser.add_parser('provision', add_help=False)
 
         self.add_subparser('bios', 'Update or get version of bios on specified nodes/group of nodes',
                            ['update', 'get-version'], 'Select an action to perform',
