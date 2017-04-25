@@ -48,7 +48,7 @@ class MockProvisioner(Provisioner):
 
         self.parsed_file["devices"].discard(device.get("hostname"))
 
-        device.pop(self.PROVISIONER_KEY, None)
+        device[self.PROVISIONER_KEY] = self.PROVISIONER_UNSET_KEY
         return device
 
     def set_ip_address(self, device, ip_address, interface="eth0"):

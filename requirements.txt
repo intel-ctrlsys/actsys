@@ -1,8 +1,6 @@
-psycopg2
 coverage
 pytest
 pylint
 mock
-python-dateutil
 flask
 flask_restful
