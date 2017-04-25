@@ -10,8 +10,14 @@ from setuptools import setup, find_packages
 description = "A datastore for exascale clusters"
 author = "Intel Corporation"
 license = "Apache"
+tests_require = ['python-dateutil>=2.6.0',
+                 'pytz',
+                 'coverage',
+                 'pytest',
+                 'pylint',
+                 'mock']
 
-setup(name='datastore',
+setup(name='ctrlsys-datastore',
       version='0.2.0',
       description=description,
       author=author,
@@ -22,9 +28,7 @@ setup(name='datastore',
       },
       install_requires=['psycopg2', 'python-dateutil>=2.6.0', 'pytz'],
       test_suite='tests',
-      tests_require=['python-dateutil',
-                     'pytz',
-                     'coverage',
-                     'pytest',
-                     'pylint',
-                     'mock'])
+      tests_require=tests_require,
+      extras_require={
+          'testing': tests_require
+      })
