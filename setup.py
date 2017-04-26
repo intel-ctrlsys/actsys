@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Intel Corp.
+# Copyright (c) 2016-2017 Intel Corp.
 #
 """
 Setup Module
@@ -11,7 +11,7 @@ description = "A control component for exascale clusters"
 author = "Intel Corporation"
 license = "Apache"
 
-setup(name='ctrl',
+setup(name='actsys',
       version='0.1.0',
       description=description,
       author=author,
@@ -20,7 +20,8 @@ setup(name='ctrl',
       scripts=['ctrl'],
       install_requires=['python-dateutil',
                         'flask',
-                        'flask_restful'],
+                        'flask_restful',
+                        'ctrlsys-datastore'],
       test_suite='tests',
       tests_require=['coverage',
                      'pytest',
