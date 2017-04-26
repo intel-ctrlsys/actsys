@@ -38,6 +38,17 @@ class ControlRestApi(object):
             '/bios', '/bios/', '/bios/<string:subcommand>', \
             resource_class_kwargs={'cmd_invoker':self.cmd_invoker, \
             'debug': self.debug})
+        self._add_plugins()
+
+    def _add_plugins(self):
+        try:
+            from ctrl_plugins import ResourceSut
+            self.rest_api.add_resource(ResourceSut, \
+                '/sut', '/sut/', '/sut/<string:subcommand>', \
+                resource_class_kwargs={'cmd_invoker':self.cmd_invoker, \
+                'debug': self.debug})
+        except ImportError:
+            pass
 
     def run(self):
         """ Runs the rest api application """

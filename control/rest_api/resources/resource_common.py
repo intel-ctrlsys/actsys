@@ -85,11 +85,9 @@ class ResourceCommon(Resource):
         raise ResourceCommonException(HTTP.MULTI_STATUS,
                                       'Could not ' + subcommand + ' some nodes.', response)
 
-    @abstractmethod
     def _fill_response_from_successes(self, response, successes):
         self._raise_not_implemented("_fill_response_from_successes")
 
-    @abstractmethod
     def _fill_response_from_failures(self, response, failures):
         self._raise_not_implemented("_fill_response_from_failures")
 
