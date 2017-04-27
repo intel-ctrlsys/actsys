@@ -98,7 +98,7 @@ class CommonPowerCommand(Command):
         if new_state not in ['add', 'remove']:
             return False
 
-        self.logger.debug("Removing {} from the resource pool.".format(self.device_name))
+        self.logger.debug("{}ing {} from the resource pool.".format(new_state, self.device_name))
         resource_pool = self.plugin_manager.create_instance('command', 'resource_pool_{}'.format(new_state),
                                                             device_name=self.device_name,
                                                             configuration=self.configuration,
@@ -106,7 +106,7 @@ class CommonPowerCommand(Command):
         resource_pool_command_result = resource_pool.execute()
         if resource_pool_command_result.return_code != 0:
             err_msg = "Power command failed due to failed resource {}.".format(new_state)
-            self.logger.fatal(err_msg)
+            self.logger.critical(err_msg)
             return False
 
         return True
@@ -124,7 +124,7 @@ class CommonPowerCommand(Command):
         service_stop_result = service_stop.execute()
         if service_stop_result.return_code != 0:
             err_msg = "Failed power command due to failed service {}.".format(new_state)
-            self.logger.fatal(err_msg)
+            self.logger.critical(err_msg)
             return False
 
         return True

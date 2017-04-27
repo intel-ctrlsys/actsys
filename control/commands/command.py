@@ -79,3 +79,34 @@ class CommandResult(object):
                     self.device_name == other.device_name):
                 return True
         return False
+
+
+class ConfigurationNeeded(Exception):
+    """
+    An exception for informing the user that configuration needs to be set.
+    """
+
+    def __init__(self, configuration_key, device_name=None, configuration_key_options=None):
+        """
+        Default constructor
+        :param configuration_key: the key that is missing
+        :param device_name: name for the device
+        :param configuration_key_options: options that we know about
+        """
+        self.configuration_key = configuration_key
+        self.device_in_need_of_config = device_name
+        self.configuration_key_options = configuration_key_options
+        self.message = str(self)
+
+    def __str__(self):
+        """
+        how this class prints.
+        :return: str
+        """
+        printable = "The configuration key '{}' ".format(self.configuration_key)
+        if self.device_in_need_of_config is not None:
+            printable += "for device '{}' ".format(self.device_in_need_of_config)
+        printable += "is needed to perform this action."
+        if self.configuration_key_options is not None:
+            printable += " Valid options are '{}'.".format(self.configuration_key_options)
+        return printable

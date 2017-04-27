@@ -9,7 +9,8 @@ import unittest
 
 from mock import MagicMock, patch
 from .. import ResourcePoolCheckCommand
-from ....plugin.manager import PluginManager
+from ....plugin.manager import PluginManager, PluginManagerException
+from ...command import ConfigurationNeeded
 from datastore import DataStore
 
 
@@ -41,16 +42,30 @@ class TestResourcePoolCheckCommand(unittest.TestCase):
             "user": "user",
             "password": "pass",
             "device_type": "node",
-            "service_list": []
+            "service_list": [],
+            "resource_controller": "mock"
         }
 
     def test_execute(self):
         self.assertEqual(self.resource_check.execute().return_code, 0)
 
+    def test_no_resource_controller(self):
+        self.configuration_manager.get_device.return_value.pop('resource_controller', None)
+        self.assertEqual(self.resource_check.execute().message, "The resource manager is not specified, nothing to do.")
+
     def test_execute_wrong_node_type(self):
         self.resource_manager_mock.check_resource_manager_installed.return_value = False
 
         self.assertEqual(-2, self.resource_check.execute().return_code)
+
+    def test_invalid_resource_controller_configuration(self):
+        self.resource_manager_mock = self.mock_plugin_manager.create_instance.side_effect = PluginManagerException("FooBar")
+        try:
+            self.resource_check.execute()
+            self.fail("Should of thrown an exception")
+        except ConfigurationNeeded as cn:
+            self.assertTrue(str(cn).startswith("The configuration key 'resource_controller' for device 'knl-123' "
+                                               "is needed to perform this action."))
 
 
 if __name__ == '__main__':

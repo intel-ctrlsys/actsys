@@ -111,12 +111,12 @@ class PluginManager(object):
             keys.append(entry)
         return keys
 
-    def get_sorted_plugins_for_framework(self, category):
+    def get_sorted_plugins_for_framework(self, framework):
         """Retrieve the list of plugins for a specific framework."""
         providers = list()
         for key in self.__plugin_frameworks.keys():
-            stored_category, name = PluginManager._split_key(key)
-            if category == stored_category:
+            stored_framework, name = PluginManager._split_key(key)
+            if framework == stored_framework:
                 providers.append((self.__plugin_frameworks[key].
                                   PLUGIN_PRIORITY, name))
         providers.sort()
@@ -128,7 +128,7 @@ class PluginManager(object):
     def create_instance(self, framework_name, plugin_name, **kwargs):
         """Create a named (or default) provider in the specified category."""
         if framework_name is None or plugin_name is None:
-            return None
+            raise PluginManagerException('Cannot create a plugin where the framework_name or plugin_name is None.')
         key = PluginManager._make_key(framework_name, plugin_name)
         try:
             return self.__plugin_frameworks[key](**kwargs)
