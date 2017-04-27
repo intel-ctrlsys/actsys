@@ -264,15 +264,19 @@ def creating_functions():
         RETURNS TABLE(process character varying, "timestamp" timestamp with time zone, level integer, device_id integer,
         message text) AS
         $BODY$
-
+        DECLARE
+        v_device_id integer;
         BEGIN
 
             IF (p_device_name is null) THEN
                 RETURN QUERY SELECT l.process, l.timestamp, l.level, l.device_id, l.message FROM public.log AS l
                     ORDER BY l.timestamp DESC LIMIT p_limit;
             ELSE
-                RETURN QUERY SELECT process, "timestamp", level, device_id, message FROM public.log
-                    WHERE device_id = p_device_name ORDER BY l.timestamp DESC LIMIT p_limit;
+                -- Get the device ID
+                v_device_id := public.get_device_id(p_device_name);
+                RETURN QUERY SELECT l.process, l.timestamp, l.level, l.device_id, l.message
+                FROM public.log AS l
+                WHERE l.device_id = v_device_id ORDER BY l.timestamp DESC LIMIT p_limit;
             END IF;
 
         END;
@@ -292,7 +296,8 @@ def creating_functions():
         IN p_time_end timestamp with time zone)
         RETURNS TABLE(process character varying, "timestamp" timestamp with time zone, level integer, device_id integer, message text) AS
         $BODY$
-
+        DECLARE
+        v_device_id integer;
         BEGIN
 
             IF (p_device_name is null) THEN
@@ -301,9 +306,11 @@ def creating_functions():
                 WHERE l.timestamp BETWEEN p_time_begin AND p_time_end
                 ORDER BY l.timestamp DESC LIMIT p_limit;
             ELSE
-                RETURN QUERY SELECT process, "timestamp", level, device_id, message
-                FROM public.log
-                WHERE l.device_id = p_device_name AND l.timestamp BETWEEN p_time_being AND p_time_end
+                -- Get the device ID
+                v_device_id := public.get_device_id(p_device_name);
+                RETURN QUERY SELECT l.process, l.timestamp, l.level, l.device_id, l.message
+                FROM public.log AS l
+                WHERE l.device_id = v_device_id AND l.timestamp BETWEEN p_time_begin AND p_time_end
                 ORDER BY l.timestamp DESC LIMIT p_limit;
             END IF;
 
