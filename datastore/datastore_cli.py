@@ -10,7 +10,7 @@ from __future__ import print_function
 import argparse
 import re
 from dateutil.parser import parse as date_parse
-from . import DataStoreException
+from . import DataStoreException, DataStore, DataStoreBuilder
 
 
 class DataStoreCLI(object):
@@ -23,9 +23,13 @@ class DataStoreCLI(object):
     def __init__(self, datastore):
         self.root_parser = argparse.ArgumentParser(prog='datastore')
         self.retval = 0
-        # Check and create command_invoker if its None
-        # TODO: pass in datastore, or build it...
-        self.datastore = datastore
+        # Check for or create a DataStore
+        if isinstance(datastore, DataStore):
+            self.datastore = datastore
+        elif isinstance(datastore, str):
+            self.datastore = DataStoreBuilder.get_datastore_from_string(datastore)
+        else:
+            raise ValueError("Cannot construct a datastore object with passed in `{}`".format(datastore))
 
         self.subparsers = self.root_parser.add_subparsers(title='Data Type', description='What datatype to manipulate')
         self.add_device_args()

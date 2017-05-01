@@ -31,18 +31,9 @@ class TestDataStoreBuilder(unittest.TestCase):
 
         temp_file = tempfile.NamedTemporaryFile("w", delete=True)
         temp_file.close()
-        self.dsb.FILESTORE_DEFUALT_LOCATION = temp_file.name
-        self.dsb.add_file_db(None)
-        self.assertTrue(os.path.isfile(self.dsb.FILESTORE_DEFUALT_LOCATION))
-        os.remove(self.dsb.FILESTORE_DEFUALT_LOCATION)
-
-        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
-        temp_file.write(self.dsb.FILESTORE_DEFAULT_CONFIG)
-        temp_file.close()
-        self.dsb.FILESTORE_DEFUALT_LOCATION = temp_file.name
-        self.dsb.add_file_db(None)
-        self.assertTrue(os.path.isfile(self.dsb.FILESTORE_DEFUALT_LOCATION))
-        os.remove(self.dsb.FILESTORE_DEFUALT_LOCATION)
+        self.dsb.add_file_db(temp_file.name)
+        self.assertTrue(os.path.isfile(temp_file.name))
+        os.remove(temp_file.name)
 
     @patch("psycopg2.connect")
     def test_add_postgres_db(self, mock_connect):
@@ -114,6 +105,37 @@ class TestDataStoreBuilder(unittest.TestCase):
     def test_build_no_options(self):
         with self.assertRaises(DataStoreException):
             self.dsb.build()
+
+    @patch.object(FileStore, "__init__")
+    @patch.object(PostgresStore, "__init__")
+    def test_get_datastore_from_string(self, mock_ps, mock_fs):
+        mock_ps.return_value = None
+        mock_fs.return_value = None
+
+        with self.assertRaises(ValueError):
+            DataStoreBuilder.get_datastore_from_string({})
+
+        result = DataStoreBuilder.get_datastore_from_string("postgres://foo:bar")
+        self.assertEqual(type(result), PostgresStore)
+
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.close()
+        result = DataStoreBuilder.get_datastore_from_string(temp_file.name)
+        self.assertEqual(type(result), FileStore)
+        os.remove(temp_file.name)
+
+        result = DataStoreBuilder.get_datastore_from_string("garbage")
+        self.assertEqual(type(result), PostgresStore)
+
+        mock_ps.side_effect = Exception("Mocked exception")
+
+        result = DataStoreBuilder.get_datastore_from_string(temp_file.name)
+        self.assertEqual(type(result), FileStore)
+
+        mock_fs.side_effect = [Exception("Mocked exception"), None]
+
+        result = DataStoreBuilder.get_datastore_from_string(temp_file.name)
+        self.assertEqual(type(result), FileStore)
 
     def test_get_datastore_from_env_vars(self):
         with self.assertRaises(DataStoreException):

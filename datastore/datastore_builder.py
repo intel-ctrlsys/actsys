@@ -13,15 +13,6 @@ class DataStoreBuilder(object):
     """
     DataStoreBuilder: The interface to build a DataStore that will work for your needs.
     """
-    FILESTORE_DEFUALT_LOCATION = os.path.join(os.getenv('HOME'), "datastore.json")
-    FILESTORE_DEFAULT_CONFIG = """{
-  "configuration_variables": {
-  },
-  "device": [
-  ],
-  "profile": [
-  ]
-}"""
 
     def __init__(self):
         self.dbs = list()
@@ -36,16 +27,6 @@ class DataStoreBuilder(object):
         :param log_level: The level in which you want logging done at.
         :return:
         """
-        if log_level is None:
-            log_level = DataStore.LOG_LEVEL
-
-        if location is None:
-            location = self.FILESTORE_DEFUALT_LOCATION
-            if not os.path.isfile(location):
-                config_file = open(location, 'w')
-                config_file.write(self.FILESTORE_DEFAULT_CONFIG)
-                config_file.close()
-
         self.dbs.append(FileStore(location, log_level))
         return self
 
@@ -56,8 +37,6 @@ class DataStoreBuilder(object):
         :param log_level: The level in which you want logging done at.
         :return:
         """
-        if log_level is None:
-            log_level = DataStore.LOG_LEVEL
         self.dbs.append(PostgresStore(connection_uri, log_level))
         return self
 
@@ -98,6 +77,42 @@ class DataStoreBuilder(object):
             return self.dbs[0]
         else:
             raise DataStoreException("Cannot create a DataStore. No databases were selected (i.e file, postgresql).")
+
+    @staticmethod
+    def get_datastore_from_string(datastore_location, screen_log_level=None):
+        """
+        Creates an instance of the datastore that works with the string passed in. Sets up the printing to screen
+        with the log level specificed (or a default one).
+        :param datastore_location: Either a file location (like /etc/datastore_db) or
+            a postgres uri (See https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING )
+        :param screen_log_level:
+        :return:
+        """
+        if not isinstance(datastore_location, str):
+            raise ValueError("datastore parameter must be a string")
+
+        if screen_log_level is None:
+            screen_log_level = DataStore.LOG_LEVEL
+        add_stream_logger(get_logger(), screen_log_level)
+
+        if datastore_location.startswith("postgres://"):
+            return PostgresStore(datastore_location)
+        elif os.path.isfile(datastore_location):
+            return FileStore(datastore_location)
+
+        try:
+            # Perhaps this is a PostgresStore of a different location
+            return PostgresStore(datastore_location)
+        except:
+            pass
+        try:
+            # Maybe this is a valid location that doesn't already have a file.
+            return FileStore(datastore_location)
+        except:
+            pass
+
+        # Could not find any suitable postgreSQL or file location. Default to FileStore default location.
+        return FileStore()
 
     @staticmethod
     def get_datastore_from_env_vars(print_to_screen=False, filestore_env_var="datastore_file_location",

@@ -36,7 +36,7 @@ class PostgresStore(DataStore):
     Data Store interface.
     """
 
-    def __init__(self, location, log_level):
+    def __init__(self, location, log_level=None):
         """
         Creates the object with parameters passed in. Then calles the connect method, and sets up
         the logger for use.
@@ -48,7 +48,7 @@ class PostgresStore(DataStore):
         self.connection = None
         self.cursor = None
         self.connect()
-        self.log_level = log_level
+        self.log_level = log_level if log_level is not None else DataStore.LOG_LEVEL
         self._setup_postgres_logger(log_level)
 
     def __del__(self):

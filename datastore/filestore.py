@@ -21,11 +21,14 @@ class FileStore(DataStore):
     CONFIG_KEY = "configuration_variables"
     PROFILE_KEY = "profile"
 
-    def __init__(self, location, log_level):
+    def __init__(self, location="/etc/datastore_db", log_level=None):
         super(FileStore, self).__init__()
         self.location = location
-        self.log_level = log_level
+        self.log_level = log_level if log_level is not None else DataStore.LOG_LEVEL
         # TODO: lock the file: http://stackoverflow.com/a/186464/1767377
+        if not os.path.isfile(location):
+            with open(location, "w") as f:
+                f.write("{}")
         self.parsed_file = JsonParser.read_file(location)
         self._setup_file_logger(log_level)
 

@@ -202,6 +202,14 @@ class TestFileStore(unittest.TestCase):
         FileStore(self.FILE_STRING, None)
         FileStore(self.FILE_STRING, logging.CRITICAL)
 
+        new_file_location = os.path.join(tempfile.gettempdir(), "new_fileStore")
+
+        if os.path.isfile(new_file_location):
+            os.remove(new_file_location)
+        FileStore(new_file_location)
+        self.assertTrue(os.path.isfile(new_file_location))
+        os.remove(new_file_location)
+
     def test_device_get(self):
         devices = self.fs.list_devices()
         print(devices)
@@ -518,27 +526,26 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         result = self.fs.delete_configuration("foo")
         self.assertIsNone(result)
 
-@unittest.skip("Tests for future implementation")
 class TestFileStoreWithNoFile(unittest.TestCase):
     FILE_LOCATION_STRING = "unknown, to be constructed in setUpClass(cls)"
-    FILE_LOG_LOCATION_STRING = ""
 
     @classmethod
-    def tearDownClass(cls):
-        import os
-        if os.path.isfile(cls.FILE_LOCATION_STRING):
-            os.remove(cls.FILE_LOCATION_STRING)
-        if os.path.isfile(cls.FILE_LOG_LOCATION_STRING):
-            os.remove(cls.FILE_LOG_LOCATION_STRING)
+    def setUpClass(cls):
+        # create a file for the class to use
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.close()
+        cls.FILE_LOCATION_STRING = temp_file.name
+        os.remove(temp_file.name)
 
     def setUp(self):
-        self.fs = FileStore(True, None)
-        self.FILE_LOCATION_STRING = self.fs.location
-        self.FILE_LOG_LOCATION_STRING = os.path.expanduser('~/datastore.log')
+        self.fs = FileStore(self.FILE_LOCATION_STRING)
 
+    def tearDown(self):
+        if os.path.isfile(self.FILE_LOCATION_STRING):
+            os.remove(self.FILE_LOCATION_STRING)
 
     def test_init(self):
-        FileStore(True, None)
+        FileStore(self.FILE_LOCATION_STRING)
 
     def test_empty_gets(self):
         result = self.fs.list_devices()
@@ -554,21 +561,21 @@ class TestFileStoreWithNoFile(unittest.TestCase):
 
     def test_empty_upserts(self):
         self.fs.set_device({"device_type": "node", "hostname": "test"})
-        result = self.fs.list_devices("test")
-        self.assertEqual(result[0].get("hostname"), "test")
+        result = self.fs.get_device("test")
+        self.assertEqual(result.get("hostname"), "test")
 
         self.fs.set_profile({"profile_name": "test", "port": 22})
-        result = self.fs.list_profiles("test")
-        self.assertEqual(result[0].get("profile_name"), "test")
+        result = self.fs.get_profile("test")
+        self.assertEqual(result.get("profile_name"), "test")
 
         self.fs.set_configuration("test", "value")
         result = self.fs.get_configuration_value("test")
         self.assertEqual(result, "value")
 
     def test_empty_deletes(self):
-        result = self.fs.device_logical_delete("foo")
+        result = self.fs.delete_device("foo")
         self.assertIsNone(result)
-        result = self.fs.device_fatal_delete("foo")
+        result = self.fs.delete_device("foo")
         self.assertIsNone(result)
         result = self.fs.delete_profile("foo")
         self.assertIsNone(result)
