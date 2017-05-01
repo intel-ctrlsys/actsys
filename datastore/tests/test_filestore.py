@@ -67,6 +67,113 @@ class TestFileStore(unittest.TestCase):
     2015-01-01 10:25:18,042 / ERROR / DataStore / BATS / 1 / Does this work?
     2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?
 """
+    FILE_CONFIG_MOCKED = """{
+  "configuration_variables": {
+    "config": "is_mocked"
+  },
+  "device": [
+    {
+      "bmc": "bmc1",
+      "debug_ip": "192.168.6.65",
+      "debug_port": 65,
+      "device_id": 1,
+      "device_type": "node",
+      "enp60s0_ip_address": "192.168.6.3",
+      "hostname": "c1",
+      "ip_address": "192.168.6.655",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node",
+      "provisioner": "UNDEF"
+    },
+    {
+      "bmc": "bmc2",
+      "device_id": 2,
+      "device_type": "node",
+      "hostname": "c2",
+      "ip_address": "192.168.1.102",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "compute_node"
+    },
+    {
+      "device_id": 3,
+      "device_type": "bmc",
+      "hostname": "bmc1",
+      "ip_address": "192.168.2.101",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "bmc_default"
+    },
+    {
+      "device_id": 4,
+      "device_type": "bmc",
+      "hostname": "bmc2",
+      "ip_address": "192.168.2.102",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "bmc_default"
+    },
+    {
+      "connected_device": [
+        {
+          "device": [
+            "c1",
+            "c2"
+          ],
+          "outlet": "5"
+        }
+      ],
+      "device_id": 5,
+      "device_type": "pdu",
+      "hostname": "pdu-1",
+      "ip_address": "192.168.3.101",
+      "mac_address": "00:00:00:00:00:00",
+      "profile_name": "pdu_default"
+    }
+  ],
+  "profile": [
+    {
+      "access_type": "mock",
+      "bmc_boot_timeout_seconds": 1,
+      "bmc_chassis_off_wait": 1,
+      "image": "centos7.2",
+      "os_boot_timeout_seconds": 1,
+      "os_network_to_halt_time": 1,
+      "os_shutdown_timeout_seconds": 1,
+      "password": "password",
+      "port": 22,
+      "profile_name": "compute_node",
+      "provisioner": "mock",
+      "resource_controller": "mock",
+      "role": [
+        "compute"
+      ],
+      "service_list": [
+        "orcmd",
+        "gmond"
+      ],
+      "user": "user",
+      "wait_time_after_boot_services": 1
+    },
+    {
+      "access_type": "mock",
+      "auth_method": "PASSWORD",
+      "channel": 2,
+      "password": "password",
+      "port": 22,
+      "priv_level": "ADMINISTRATOR",
+      "profile_name": "bmc_default",
+      "type": "bmc",
+      "user": "user"
+    },
+    {
+      "access_type": "mock",
+      "outlets_count": 8,
+      "password": "password",
+      "port": 22,
+      "profile_name": "pdu_default",
+      "type": "pdu",
+      "user": "user"
+    }
+  ]
+}"""
 
     def setUp(self):
         temp_log_file = tempfile.NamedTemporaryFile("w", delete=False)
@@ -327,6 +434,29 @@ class TestFileStore(unittest.TestCase):
 
         logs = self.fs.list_logs()
         self.assertEqual(30, len(logs))
+
+    def test_export_to_file(self):
+        file_export_location = os.path.join(tempfile.gettempdir(), 'datastore_export.json')
+        self.fs.export_to_file(file_export_location)
+        self.assertTrue(os.path.isfile(file_export_location))
+
+        import json
+        with open(file_export_location, 'r') as exported_file:
+            exported_file_contents = json.load(exported_file)
+
+        self.assertDictEqual(exported_file_contents, self.fs.parsed_file)
+        os.remove(file_export_location)
+
+    def test_import_from_file(self):
+        import_file = tempfile.NamedTemporaryFile("w", delete=False)
+        import_file.write(self.FILE_CONFIG_MOCKED)
+        import_file.close()
+        self.fs.import_from_file(import_file.name)
+        self.assertTrue(os.path.isfile(import_file.name))
+
+        self.assertEqual(len(self.fs.list_devices()), 5)
+        self.assertEqual(self.fs.get_configuration_value("config"), "is_mocked")
+        os.remove(import_file.name)
 
 
 class TestFileStoreEmptyFile(unittest.TestCase):

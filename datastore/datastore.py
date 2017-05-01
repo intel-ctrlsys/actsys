@@ -374,6 +374,33 @@ class DataStore(object):
 
         return filtered_devices
 
+    @abstractmethod
+    def export_to_file(self, file_location):
+        """
+        Export the current config to a file location. This export includes:
+            - devices
+            - profiles
+            - config
+        It does not include:
+            - device history
+            - logs
+
+        :param file_location: file location for the new file to go
+        :return: Nothing
+        """
+        pass
+
+    @abstractmethod
+    def import_from_file(self, file_location):
+        """
+        Import from a valid configuration file. See self.export_to_file, this does not import logs or device_history.
+
+        :param file_location:
+        :return:
+        :raise: When the file is not found
+        """
+        pass
+
 
 class DataStoreException(Exception):
     """

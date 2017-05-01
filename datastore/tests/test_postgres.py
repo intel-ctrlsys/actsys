@@ -7,7 +7,9 @@ Tests for the RemoteAccessData class
 """
 from __future__ import print_function
 import unittest
-from mock import patch
+import tempfile
+import os
+from mock import patch, MagicMock
 from ..postgresstore import PostgresStore
 from ..datastore import DataStoreException
 from random import randint
@@ -33,7 +35,7 @@ class TestPostgresDB(unittest.TestCase):
         "port": 22,
     }
     TEST_POSTGRES_DEVICE2 = [2, "test_device_type2", {"tests": "are_awesome2"}, "test_hostname2", "127.0.0.2",
-                            "AA:GG:22", "invalid_profile", {"password": "test_pass2", "port": 222}]
+                             "AA:GG:22", "invalid_profile", {"password": "test_pass2", "port": 222}]
     TEST_DEVICE2 = {
         "device_id": 2,
         "device_type": "test_device_type2",
@@ -53,6 +55,10 @@ class TestPostgresDB(unittest.TestCase):
         "password": "test_pass",
         "port": 22,
         "profile_name": "compute_node"
+    }
+    TEST_CONFIG = {
+        "key": "config",
+        "value": "is_mocked"
     }
 
     def setUp(self):
@@ -230,6 +236,7 @@ class TestPostgresDB(unittest.TestCase):
     def test_profile_delete(self, mock_connect):
         def fake_devices(profile_name):
             return []
+
         self.set_expected(mock_connect, [(1,)])
         self.postgres.get_profile_devices = fake_devices
         self.postgres.delete_profile('test')
@@ -285,8 +292,7 @@ class TestPostgresDB(unittest.TestCase):
         self.logger.debug('From BAT tests with love', "test_hostname")
 
         self.logger.journal('command_name', command_result='From BAT tests with love')
-        self.logger.journal('command_name', ['a','b','c','d'], 'From BAT tests with love')
-
+        self.logger.journal('command_name', ['a', 'b', 'c', 'd'], 'From BAT tests with love')
 
     def test_config_get(self, mock_connect):
         self.set_expected(mock_connect, [['bar']])
@@ -361,6 +367,97 @@ class TestPostgresDB(unittest.TestCase):
         result = self.postgres.get_device_types()
         self.assertEqual(result, [])
 
+    def test_export_to_file(self, mock_connect):
+        expected_export_json = {
+            'device': [
+                {'mac_address': '6', 'hostname': '4', 'ip_address': '5', 'device_type': {}, 'device_id': u'1'}
+            ],
+            'profile': [
+                {'profile_name': '1'}
+            ],
+            'configuration_variables': {
+                '1': {},
+                'log_file_path': '/tmp/datastore_export.json.log'
+            }
+        }
+        self.set_expected(mock_connect, [["1", {}, None, "4", "5", "6", None, None]])
+
+        file_export_location = os.path.join(tempfile.gettempdir(), 'datastore_export.json')
+        self.postgres.export_to_file(file_export_location)
+        self.assertTrue(os.path.isfile(file_export_location))
+
+        import json
+        with open(file_export_location, 'r') as exported_file:
+            exported_file_contents = json.load(exported_file)
+
+        print(exported_file_contents)
+        self.assertDictEqual(exported_file_contents, expected_export_json)
+        os.remove(file_export_location)
+
+    def test_import_from_file(self, mock_connect):
+        self.set_expected(mock_connect, [])
+        import_file = tempfile.NamedTemporaryFile("w", delete=False)
+        import_file.write("{}")
+        import_file.close()
+        self.postgres.import_from_file(import_file.name)
+        os.remove(import_file.name)
+
+    def test_import_from_file_failure(self, mock_connect):
+        file_config = """{
+              "configuration_variables": {
+                "log_file_path": "/tmp/ctrl.log",
+                "provisioning_agent_software": "warewulf"
+              },
+              "device": [
+               {
+                  "device_id": 1,
+                  "device_type": "test_dev_type_test",
+                  "hostname": "test_hostname",
+                  "ip_address": "127.0.0.1",
+                  "mac_address": "AA:GG:PP",
+                  "profile_name": "compute_node"
+                },
+                {
+                  "device_id": 2,
+                  "device_type": "test_dev_type_test",
+                  "hostname": "test_hostname2",
+                  "ip_address": "127.0.0.2",
+                  "mac_address": "AA:GG:22",
+                  "profile_name": "compute_node",
+                  "tests": "are_awesome"
+                }
+              ],
+              "profile": [
+                {
+                  "password": "test_pass",
+                  "port": 22,
+                  "profile_name": "compute_node"
+                }
+              ]
+            }"""
+        postgres = MagicMock(spec=PostgresStore)
+        PostgresStore.__init__(postgres, "", 10)
+        postgres._delete_database.return_value = [self.TEST_CONFIG], [self.TEST_DEVICE], [self.TEST_PROFILE]
+        postgres.set_device.side_effect = [Exception("The mocked exception"), None]
+
+        import_file = tempfile.NamedTemporaryFile("w", delete=False)
+        import_file.write(file_config)
+        import_file.close()
+
+        try:
+            PostgresStore.import_from_file(postgres, import_file.name)
+            self.fail()
+        except Exception as ex:
+            self.assertEqual(ex.message, "The mocked exception")
+
+        os.remove(import_file.name)
+
+    def test_database_delete(self, mock_connect):
+        self.set_expected(mock_connect, [])
+        old_config, old_devices, old_profiles = self.postgres._delete_database()
+        self.assertListEqual(old_config, [])
+        self.assertListEqual(old_devices, [])
+        self.assertListEqual(old_profiles, [])
 
 if __name__ == '__main__':
     unittest.main()

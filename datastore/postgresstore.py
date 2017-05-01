@@ -48,6 +48,7 @@ class PostgresStore(DataStore):
         self.connection = None
         self.cursor = None
         self.connect()
+        self.log_level = log_level
         self._setup_postgres_logger(log_level)
 
     def __del__(self):
@@ -292,8 +293,9 @@ class PostgresStore(DataStore):
         See @DataStore for function description. Only implementation details here.
         """
         super(PostgresStore, self).list_configuration()
-        return list()
-
+        self.cursor.execute("SELECT key, value FROM public.configuration;")
+        results = self.cursor.fetchall()
+        return SqlParser.get_config_from_results(results)
 
     def set_configuration(self, key, value):
         """
@@ -342,6 +344,101 @@ class PostgresStore(DataStore):
         result = self.cursor.fetchall()
         self.logger.debug("DataStore.get_device_by_type database result: {}".format(result))
         return SqlParser.get_device_from_results(result)
+
+    def export_to_file(self, file_location):
+        """
+        See @DataStore for function description. Only implementation details here.
+
+        Exporting from the database to a file uses the filestore.
+        """
+        from .filestore import FileStore
+
+        file = open(file_location, 'w')
+        file.write('{ "configuration_variables": { "log_file_path": "' + file_location + '.log" } }')
+        file.close()
+        export_fs = FileStore(file_location, self.log_level)
+
+        configuration = self.list_configuration()
+        for config in configuration:
+            export_fs.set_configuration(config["key"], config["value"])
+
+        profiles = self.list_profiles()
+        for profile in profiles:
+            export_fs.set_profile(profile)
+
+        devices = self.list_devices()
+        for device in devices:
+            # Removing device_history artifact
+            device.pop("sys_period", None)
+            export_fs.set_device(device)
+
+        export_fs.save_file()
+
+    def import_from_file(self, file_location):
+        """
+        See @DataStore for function description. Only implementation details here.
+
+        Importing from a file uses the filestore to collect valid items.
+        """
+        from .filestore import FileStore
+
+        # Check that we can parse and use this file for importing
+        fs = FileStore(file_location, self.log_level)
+
+        # Delete everything from current DB
+        self.logger.info("Importing from file: Deleting old info")
+        old_config, old_devices, old_profiles = self._delete_database()
+
+        # import the new stuff
+        try:
+            self.logger.info("Importing from file: Importing File info")
+            config_list = fs.list_configuration()
+            for config in config_list:
+                self.set_configuration(config["key"], config["value"])
+
+            profiles = fs.list_profiles()
+            for profile in profiles:
+                self.set_profile(profile)
+
+            devices = fs.list_devices()
+            for device in devices:
+                self.set_device(device)
+        except Exception as ex:
+            # Rollback any changes by closing the cursor / connection
+            self.connect()
+            # revert!
+            self.logger.info("Importing from file: Reverting actions due to: {}".format(ex))
+            self.logger.info("Importing from file: Clearing the database")
+            self._delete_database()
+            self.logger.info("Importing from file: Reverting config")
+            for config in old_config:
+                self.set_configuration(config["key"], config["value"])
+
+            self.logger.info("Importing from file: Reverting profiles:")
+            for profile in old_profiles:
+                self.set_profile(profile)
+
+            self.logger.info("Importing from file: Reverting devices:")
+            for device in old_devices:
+                self.set_device(device)
+
+            # raise the exception that happened earlier
+            raise
+
+    def _delete_database(self):
+        old_config = self.list_configuration()
+        for config in old_config:
+            self.delete_configuration(config["key"])
+
+        old_devices = self.list_devices()
+        for device in old_devices:
+            self.delete_device(device["device_id"])
+
+        old_profiles = self.list_profiles()
+        for profile in old_profiles:
+            self.delete_profile(profile["profile_name"])
+
+        return old_config, old_devices, old_profiles
 
 
 class SqlParser(object):
@@ -426,6 +523,22 @@ class SqlParser(object):
             })
 
         return logs
+
+    @staticmethod
+    def get_config_from_results(results):
+        """
+
+        :param results:
+        :return:
+        """
+        configuration_list = list()
+        for result in results:
+            configuration_list.append({
+                "key": result[0],
+                "value": result[1]
+            })
+
+        return configuration_list
 
     @staticmethod
     def prepare_profile_for_query(profile):

@@ -24,6 +24,7 @@ class FileStore(DataStore):
     def __init__(self, location, log_level):
         super(FileStore, self).__init__()
         self.location = location
+        self.log_level = log_level
         # TODO: lock the file: http://stackoverflow.com/a/186464/1767377
         self.parsed_file = JsonParser.read_file(location)
         self._setup_file_logger(log_level)
@@ -91,8 +92,10 @@ class FileStore(DataStore):
                     device_list[index][key] = profile.get(key)
         return device_list
 
-    def save_file(self):
-        JsonParser.write_file(self.location, self.parsed_file)
+    def save_file(self, location=None):
+        if location is None:
+            location = self.location
+        JsonParser.write_file(location, self.parsed_file)
 
     def get_device(self, device_name):
         devices = self.parsed_file.get(self.DEVICE_KEY, [])
@@ -121,15 +124,15 @@ class FileStore(DataStore):
         # Check for a matching device_id
         for index, device in enumerate(devices):
             if device.get('device_id') == device_name:
-                    return index, device
+                return index, device
         # Check for hostname
         for index, device in enumerate(devices):
             if device.get('hostname') == device_name:
-                    return index, device
+                return index, device
         # Check for ip
         for index, device in enumerate(devices):
             if device.get('ip_address') == device_name:
-                    return index, device
+                return index, device
 
         return None, None
 
@@ -368,3 +371,21 @@ class FileStore(DataStore):
             return None
         else:
             return key
+
+    def export_to_file(self, file_location):
+        """
+        See @DataStore for function description. Only implementation details here.
+
+        Exporting is very simple for the file store, simply copy to current fileDB to another location.
+        """
+        self.save_file(file_location)
+
+    def import_from_file(self, file_location):
+        """
+        See @DataStore for function description. Only implementation details here.
+
+        Importing is very simple for the file store, simply copy to target file top the fileDB location and overwrite it
+        """
+        self.parsed_file = JsonParser.read_file(file_location)
+        self._setup_file_logger(self.log_level)
+        self.save_file()

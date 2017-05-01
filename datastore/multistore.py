@@ -213,3 +213,19 @@ class MultiStore(DataStore):
         super(MultiStore, self).get_profile_devices(profile_name)
         results = self._call_function("get_profile_devices", [profile_name])
         return results[0]
+
+    def export_to_file(self, file_location):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).export_to_file(file_location)
+        results = self._call_function("export_to_file", [file_location])
+        return results[0]
+
+    def import_from_file(self, file_location):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).import_from_file(file_location)
+        results = self._call_function("import_from_file", [file_location])
+        return results[0]

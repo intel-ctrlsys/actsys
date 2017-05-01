@@ -32,6 +32,8 @@ class DataStoreCLI(object):
         self.add_profile_args()
         self.add_config_args()
         self.add_log_args()
+        self.add_export_args()
+        self.add_import_args()
 
     def add_device_args(self):
         """
@@ -61,7 +63,7 @@ class DataStoreCLI(object):
         :return:
         """
         self.config_parser = self.subparsers.add_parser('config', help="Manipulations for configuration")
-        self.config_parser.add_argument('action', choices=['get', 'set', 'delete'])
+        self.config_parser.add_argument('action', choices=['list', 'get', 'set', 'delete'])
         self.config_parser.add_argument('options', nargs='*',
                                         help='key=value pairs used to assist in selecting and setting attributes')
         self.config_parser.set_defaults(func=self.config_execute)
@@ -87,6 +89,27 @@ class DataStoreCLI(object):
         # ... and more
         # ...and more!''')
         self.log_parser.set_defaults(func=self.log_execute)
+
+    def add_import_args(self):
+        self.import_parser = self.subparsers.add_parser('import', help="Import a configuration into the datastore, "
+                                                                       "overwriting the current information.",
+                                                        description="Import from a valid configuration file. A valid"
+                                                                    " import includes devices, profiles and"
+                                                                    " configuration values. This command deletes"
+                                                                    " existing data, so be sure to export your current"
+                                                                    " configuration first if you want to save it.")
+        self.import_parser.add_argument('file_location', help="The file location to be used for the import.")
+        self.import_parser.set_defaults(func=self.import_execute)
+
+    def add_export_args(self):
+        self.export_parser = self.subparsers.add_parser('export', help="Export a configuration from the datastore, "
+                                                                       "to a file.",
+                                                        description="Export the current config to a file location. This"
+                                                                    " export includes devices, profiles, and"
+                                                                    " configuration values. It does not include device"
+                                                                    " history or logs")
+        self.export_parser.add_argument('file_location', help="where to export this configuration too.")
+        self.export_parser.set_defaults(func=self.export_execute)
 
     def parse_and_run(self, args=None):
         """
@@ -230,6 +253,15 @@ class DataStoreCLI(object):
         :param parsed_args:
         :return:
         """
+        if parsed_args.action == "list":
+            config_list = self.datastore.list_configuration()
+            for config in config_list:
+                config_key = config.get("key")
+                config_value = config.get("value")
+                key = (config_key[:28] + '..') if len(config_key) > 28 else config_key
+                print("{0:30} : {1}".format(key, config_value))
+            return 0
+
         try:
             options = self.parse_options(parsed_args.options)
         except ParseOptionsException as poe:
@@ -292,6 +324,14 @@ class DataStoreCLI(object):
             self.print_devices(result)
             return 0
 
+    def import_execute(self, parsed_args):
+        self.datastore.import_from_file(parsed_args.file_location)
+        return 0
+
+    def export_execute(self, parsed_args):
+        self.datastore.export_to_file(parsed_args.file_location)
+        return 0
+
     @staticmethod
     def parse_options(options):
         """
@@ -299,8 +339,6 @@ class DataStoreCLI(object):
         :param options: A list like: ['foo=bar', 'baz=1', 'joe=[do,re,me]']
         :return:
         """
-        # TODO: Handle lists
-        # TODO: determine ints and other things.\
         options_dict = dict()
         if options is None:
             return options_dict

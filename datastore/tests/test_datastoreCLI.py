@@ -123,6 +123,12 @@ class TestDataStoreCLI(unittest.TestCase):
         result = self.dscli.parse_and_run(['profile', 'get'])
         self.assertEqual(result, 1)
 
+    def test_configuration_list(self):
+        self.mockDS.list_configuration.return_value = [{'key': 'key1', "value": "value1"}]
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['config', 'list'])
+            self.assertEqual(output.getvalue(), "key1                           : value1\n")
+
     def test_configuration_get(self):
         # print('execute_configurations')
         self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
