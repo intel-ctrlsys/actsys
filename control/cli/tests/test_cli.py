@@ -17,8 +17,8 @@ from datastore.utilities import FileNotFound
 class CommandInvokerTest(TestCase):
     @patch("control.cli.CommandInvoker")
     def setUp(self, mock_command_invoker):
-        self.original_cluster_config_name = CommandInvoker.BASE_CLUSTER_CONFIG_NAME
-        CommandInvoker.BASE_CLUSTER_CONFIG_NAME = "ctrl-config-example.json"
+        self.original_cluster_config_name = CommandInvoker.CTRL_CONFIG_LOCATION
+        CommandInvoker.CTRL_CONFIG_LOCATION = "ctrl-config-example.json"
         self.TestParser = ControlArgParser()
         self.control_cli_executor = ControlCommandLineInterface()
 
@@ -263,14 +263,6 @@ class CommandExeFactoryTest(TestCase):
         retval = self.command_invoker.service_off("compute-29,compute-30")
         self.assertEqual(retval[0].return_code, 0)
         self.assertEqual(retval[1].return_code, 0)
-
-    def test_get_device_location(self):
-        self.assertEqual("./ctrl-config-example.json", self.command_invoker._get_correct_configuration_file())
-
-    def test_get_device_location_not_found(self):
-        CommandInvoker.BASE_CLUSTER_CONFIG_NAME = "random_file_resrs.json"
-        result = self.command_invoker._get_correct_configuration_file()
-        self.assertEqual(None, result)
 
 
 class ControlCliParserTest(TestCase):

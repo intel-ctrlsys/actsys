@@ -18,7 +18,7 @@ from datastore import DataStoreBuilder
 class CommandInvoker(object):
     """This class contains all the functions exposed to cli code"""
 
-    BASE_CLUSTER_CONFIG_NAME = "ctrl-config.json"
+    CTRL_CONFIG_LOCATION = "/usr/share/ctrl_db"
     POSTGRES_ENV_VAR = "CTRL_POSTGRES_CONNECTION_STRING"
     FILE_LOCATION_ENV_VAR = "CTRL_CONFIG_FILE"
     POSTGRES_CONNECTION_STRING = None
@@ -32,48 +32,18 @@ class CommandInvoker(object):
         self.invoker_ret_val = 0
         self.failed_device_name = list()
 
-        if os.environ.get(self.POSTGRES_ENV_VAR) is not None:
-            self.POSTGRES_CONNECTION_STRING = os.environ.get(self.POSTGRES_ENV_VAR)
-
-        self.datastore_builder = DataStoreBuilder()
-        self.datastore_builder.set_default_log_level(logging.DEBUG)
-        if screen_log_level is not None:
-            self.datastore_builder.set_print_to_screen(True, screen_log_level)
-        file_location = self._get_correct_configuration_file()
-        if file_location is not None:
-            self.datastore_builder.add_file_db(file_location)
-        if self.POSTGRES_CONNECTION_STRING is not None:
-            self.datastore_builder.add_postgres_db(self.POSTGRES_CONNECTION_STRING)
-
-        self.datastore = self.datastore_builder.build()
+        datastore_location = self.get_config_file_location()
+        self.datastore = DataStoreBuilder.get_datastore_from_string(datastore_location, screen_log_level)
 
         self.logger = self.datastore.get_logger()
 
         self.manager = None
 
-    def _get_correct_configuration_file(self):
-        """Resolve the configuration file if possible."""
-        if os.environ.get(self.FILE_LOCATION_ENV_VAR) is not None:
-            return os.environ.get(self.FILE_LOCATION_ENV_VAR)
-
-        # Check for the file in the current working directory
-        if os.path.isfile(self.BASE_CLUSTER_CONFIG_NAME):
-            return os.path.join(os.path.curdir, self.BASE_CLUSTER_CONFIG_NAME)
-
-        # check for file in ~/
-        home = os.path.join(os.getenv('HOME'), self.BASE_CLUSTER_CONFIG_NAME)
-        if os.path.isfile(home):
-            return home
-
-        # Check for the file in /etc/
-        etc = '/etc/' + self.BASE_CLUSTER_CONFIG_NAME
-        if os.path.isfile(etc):
-            return etc
-
-        # Failed to resolve, so return the base name... hopefully someone else can resolve it.
-        # if self.logger is not None:
-        #     self.logger.warning("The config file was not found in the current working directory, ~/ or /etc/.")
-        return None
+    @classmethod
+    def get_config_file_location(cls):
+        return os.environ.get(cls.POSTGRES_ENV_VAR, None) or \
+                             os.environ.get(cls.FILE_LOCATION_ENV_VAR, None) or \
+                             cls.CTRL_CONFIG_LOCATION
 
     @classmethod
     def _device_name_check(cls, device_name):
@@ -151,7 +121,7 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(MockProvisioner)
         self.manager.register_plugin_class(Warewulf)
         
-        #Mock Oobsensor Plugin for OobSensors
+        # Mock Oobsensor Plugin for OobSensors
         from ..oob_sensors import OobSensorMock
         self.manager.register_plugin_class(OobSensorMock)
 

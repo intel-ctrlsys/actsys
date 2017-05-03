@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Intel Corp.
+# Copyright (c) 2016-2017 Intel Corp.
 #
 """
 Implements a mock resource_control plugin for DFx.
@@ -8,6 +8,7 @@ Implements a mock resource_control plugin for DFx.
 import os
 import json
 from ...plugin import DeclarePlugin
+from ...cli import CommandInvoker
 from ..resource_control import ResourceControl
 from datastore.filestore import FileStore
 from datastore.datastore import logging
@@ -21,27 +22,13 @@ class MockResource(ResourceControl):
         """Constructor that load the mocked resource file if there is any"""
         ResourceControl.__init__(self)
         self.file_path = os.path.join(os.path.sep, 'tmp', 'mock_resource')
-        self.configure_file = "ctrl-config.json"
+        self.configure_file = CommandInvoker.get_config_file_location()
         self.nodes = None
         self._load_mock_resource_file()
 
     def _get_correct_configuration_file(self):
         """Resolve the configuration file if possible."""
-
-        # Check for the file in the current working directory
-        if os.path.isfile(self.configure_file):
-            return os.path.join(os.path.curdir, self.configure_file)
-
-        # check for file in ~/
-        home = os.path.join(os.getenv('HOME'), self.configure_file)
-        if os.path.isfile(home):
-            return home
-
-        # Check for the file in /etc/
-        etc = '/etc/' + self.configure_file
-        if os.path.isfile(etc):
-            return etc
-
+        self.configure_file = CommandInvoker.get_config_file_location()
         return self.configure_file
 
     def _read_file(self):
