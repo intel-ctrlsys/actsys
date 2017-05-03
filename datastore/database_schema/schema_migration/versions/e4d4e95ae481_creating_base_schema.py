@@ -407,12 +407,12 @@ def creating_functions():
                 VALUES(p_device_id, p_device_type, p_properties, p_hostname, p_ip_address, p_mac_address, p_profile_name)
                 ON CONFLICT ON CONSTRAINT device_pkey DO UPDATE
                 SET
-                    device_type = COALESCE(p_device_type, device.device_type),
-                    properties = COALESCE(p_properties, device.properties),
-                    hostname = COALESCE(p_hostname, device.hostname),
-                    ip_address = COALESCE(p_ip_address, device.ip_address),
-                    mac_address = COALESCE(p_mac_address, device.mac_address),
-                    profile_name = COALESCE(p_profile_name, device.profile_name)
+                    device_type = p_device_type,
+                    properties = p_properties,
+                    hostname = p_hostname,
+                    ip_address = p_ip_address,
+                    mac_address = p_mac_address,
+                    profile_name = p_profile_name
                 WHERE device.device_id = p_device_id;
             END IF;
         GET DIAGNOSTICS num_rows = ROW_COUNT;

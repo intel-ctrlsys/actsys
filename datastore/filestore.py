@@ -4,6 +4,7 @@
 #
 import os
 import logging
+import copy
 from logging.handlers import RotatingFileHandler
 from dateutil.parser import parse as date_parse
 from pytz import UTC
@@ -104,7 +105,7 @@ class FileStore(DataStore):
         devices = self.parsed_file.get(self.DEVICE_KEY, [])
         index, device = self._device_find(device_name, devices)
         if device is not None:
-            return self.add_profile_to_device(device)[0]
+            return copy.copy(self.add_profile_to_device(device)[0])
         else:
             return None
 
@@ -152,13 +153,13 @@ class FileStore(DataStore):
             self.parsed_file[self.DEVICE_KEY] = list()
             devices = self.parsed_file.get(self.DEVICE_KEY)
 
-        device_name = device_info.get("device_id")
+        device_to_update_id = device_info.get("device_id")
         highest_node_id = 0
         for index, device in enumerate(devices):
             device_id = device.get('device_id')
             if device_id > highest_node_id:
                 highest_node_id = device_id
-            if device_id == device_name:
+            if device_id == device_to_update_id:
                 # Update the device with what was passed in
                 devices[index] = self._remove_profile_from_device(device_info)[0]
                 self.save_file()

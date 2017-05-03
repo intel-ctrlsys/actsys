@@ -289,9 +289,17 @@ class DataStore(object):
             device_list = [device_list]
 
         for index, device in enumerate(device_list):
+            # Get the passed in profile name
             profile_name = device.get("profile_name")
             if profile_name is None:
-                continue
+                # Attempt to get it from the DB. This is so that if we are deleting the profile_name, we remove profile
+                #  elements too.
+                db_device = self.get_device(device.get("hostname"))
+                if db_device is not None:
+                    profile_name = db_device.get("profile_name")
+                if profile_name is None:
+                    # No profile specified here or in the DB, nothing to do.
+                    continue
 
             profile = self.get_profile(profile_name)
             if profile is None:

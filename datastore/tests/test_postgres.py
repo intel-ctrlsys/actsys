@@ -119,7 +119,7 @@ class TestPostgresDB(unittest.TestCase):
         self.assertEqual(result[0], self.TEST_DEVICE2)
 
     def test_device_upsert(self, mock_connect):
-        self.set_expected(mock_connect, [(1, 2)])
+        self.set_expected(mock_connect, [(1, 2, None, None, None, None, None, None, None)])
         with self.assertRaises(DataStoreException):
             self.postgres.set_device({})
         with self.assertRaises(DataStoreException):
@@ -128,11 +128,11 @@ class TestPostgresDB(unittest.TestCase):
         result = self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
         self.assertEqual(result, 2)
 
-        self.set_expected(mock_connect, [(0, 0)])
+        self.set_expected(mock_connect, [(0, 0, None, None, None, None, None, None, None)])
         result = self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
         self.assertIsNone(result)
 
-        self.set_expected(mock_connect, [(5, 5)])
+        self.set_expected(mock_connect, [(5, 5, None, None, None, None, None, None, None)])
         with self.assertRaises(DataStoreException):
             self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
 
