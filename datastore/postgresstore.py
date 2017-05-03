@@ -52,8 +52,10 @@ class PostgresStore(DataStore):
         self._setup_postgres_logger(log_level)
 
     def __del__(self):
-        self.cursor.close()
-        self.connection.close()
+        if self.cursor is not None:
+            self.cursor.close()
+        if self.connection is not None:
+            self.connection.close()
 
     def _setup_postgres_logger(self, log_level):
         if log_level is None:
@@ -83,6 +85,8 @@ class PostgresStore(DataStore):
             self.connection.close()
 
         self.connection = psycopg2.connect(self.connection_uri)
+        if self.connection is None:
+            raise DataStoreException("Unable to connect to postgres with connection: `{}`".format(self.connection_uri))
         self.cursor = self.connection.cursor()
 
     def get_device(self, device_name):
