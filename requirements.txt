@@ -1,5 +1,5 @@
-coverage
 pytest
+pytest-cov
 pylint
 mock
 flask
