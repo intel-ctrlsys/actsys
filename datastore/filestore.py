@@ -21,7 +21,7 @@ class FileStore(DataStore):
     CONFIG_KEY = "configuration_variables"
     PROFILE_KEY = "profile"
 
-    def __init__(self, location="/etc/datastore_db", log_level=None):
+    def __init__(self, location="/tmp/datastore_db", log_level=None):
         super(FileStore, self).__init__()
         self.location = location
         self.log_level = log_level if log_level is not None else DataStore.LOG_LEVEL
@@ -51,7 +51,7 @@ class FileStore(DataStore):
         if log_rotating_file_handler is None:
             log_file_path = self.get_configuration_value("log_file_path")
             if log_file_path is None:
-                log_file_path = os.path.expanduser('~/datastore.log')
+                log_file_path = '/tmp/datastore.log'
                 self.set_configuration("log_file_path", log_file_path)
                 if not os.path.isfile(log_file_path):
                     log_file = open(log_file_path, "w")

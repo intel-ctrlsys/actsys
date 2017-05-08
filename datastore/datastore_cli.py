@@ -18,8 +18,6 @@ class DataStoreCLI(object):
     DataStore Command Line Interface
     """
 
-    # TODO: Allow `datastore device get` to be filter with options
-
     def __init__(self, datastore):
         self.root_parser = argparse.ArgumentParser(prog='datastore')
         self.retval = 0
@@ -41,7 +39,7 @@ class DataStoreCLI(object):
 
     def add_device_args(self):
         """
-
+        Add arguments for device manipulations
         :return:
         """
         self.device_parser = self.subparsers.add_parser('device', help="Manipulations for devices")
@@ -52,7 +50,7 @@ class DataStoreCLI(object):
 
     def add_profile_args(self):
         """
-
+        Add arguments for profile manipulations
         :return:
         """
         self.profile_parser = self.subparsers.add_parser('profile', help="Manipulations for profiles")
@@ -63,7 +61,7 @@ class DataStoreCLI(object):
 
     def add_config_args(self):
         """
-
+        Add arguments for configuration manipulations
         :return:
         """
         self.config_parser = self.subparsers.add_parser('config', help="Manipulations for configuration")
@@ -74,7 +72,7 @@ class DataStoreCLI(object):
 
     def add_log_args(self):
         """
-
+        Add arguments for log manipulations
         :return:
         """
         self.log_parser = self.subparsers.add_parser('log', help="Manipulations for logs",
@@ -95,6 +93,10 @@ class DataStoreCLI(object):
         self.log_parser.set_defaults(func=self.log_execute)
 
     def add_import_args(self):
+        """
+        Add arguments for importing a DataStore configuration. This will delete any current DataStore configuration.
+        :return:
+        """
         self.import_parser = self.subparsers.add_parser('import', help="Import a configuration into the datastore, "
                                                                        "overwriting the current information.",
                                                         description="Import from a valid configuration file. A valid"
@@ -106,18 +108,22 @@ class DataStoreCLI(object):
         self.import_parser.set_defaults(func=self.import_execute)
 
     def add_export_args(self):
+        """
+        Add arguments for exporting the current configuration of the DataStore.
+        :return:
+        """
         self.export_parser = self.subparsers.add_parser('export', help="Export a configuration from the datastore, "
                                                                        "to a file.",
                                                         description="Export the current config to a file location. This"
                                                                     " export includes devices, profiles, and"
                                                                     " configuration values. It does not include device"
-                                                                    " history or logs")
+                                                                    " history or logs.")
         self.export_parser.add_argument('file_location', help="where to export this configuration too.")
         self.export_parser.set_defaults(func=self.export_execute)
 
     def parse_and_run(self, args=None):
         """
-
+        Parse the args passed in or from sys.argv and run the function they indicate.
         :param args:
         :return:
         """
@@ -320,7 +326,8 @@ class DataStoreCLI(object):
                 return 0
             begin_date = date_parse(parsed_args.begin)
             end_date = date_parse(parsed_args.end)
-            result = self.datastore.list_logs_between_timeslice(begin_date, end_date, parsed_args.device_name, parsed_args.limit)
+            result = self.datastore.list_logs_between_timeslice(begin_date, end_date, parsed_args.device_name,
+                                                                parsed_args.limit)
             self.print_devices(result)
             return 0
         else:
@@ -329,10 +336,20 @@ class DataStoreCLI(object):
             return 0
 
     def import_execute(self, parsed_args):
+        """
+
+        :param parsed_args:
+        :return:
+        """
         self.datastore.import_from_file(parsed_args.file_location)
         return 0
 
     def export_execute(self, parsed_args):
+        """
+
+        :param parsed_args:
+        :return:
+        """
         self.datastore.export_to_file(parsed_args.file_location)
         return 0
 
@@ -351,7 +368,8 @@ class DataStoreCLI(object):
 
             # Accepts options like 'foo=bar'
             if len(temp) < 2:
-                raise ParseOptionsException(1, "Option `{}` is not valid. Please specify a value like key=value.".format(option))
+                raise ParseOptionsException(1, "Option `{}` is not valid. Please specify a value like"
+                                               " key=value.".format(option))
             elif len(temp) > 2:
                 key = temp[0]
                 value = "=".join(temp[1:])
@@ -361,7 +379,8 @@ class DataStoreCLI(object):
 
             # None or empty str, is not allowed
             if key is None or key == '' or value is None or value == '':
-                raise ParseOptionsException(1, "Option `{}` is not valid. Please specify a value like key=value.".format(option))
+                raise ParseOptionsException(1, "Option `{}` is not valid. Please specify a value like"
+                                               " key=value.".format(option))
 
             # Check for lists
             # Test it is a list:

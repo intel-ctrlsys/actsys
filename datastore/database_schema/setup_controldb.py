@@ -1,11 +1,10 @@
 #
 # Copyright (c) 2017 Intel Corporation. All rights reserved
 #
+import os
+import models
 from argparse import ArgumentParser
 from sqlalchemy.exc import OperationalError
-import os
-
-import models
 
 
 def main():

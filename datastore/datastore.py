@@ -55,7 +55,7 @@ class DataStore(object):
          If conflicts ocour, the first found is returned.
         :return: A List of devices
         """
-        self.logger.debug("DataStore.list_devices called", filters)
+        self.logger.debug("DataStore.list_devices called with filters {}".format(filters))
         return list()
 
     @abstractmethod
@@ -105,7 +105,6 @@ class DataStore(object):
         :return: A single profile of type dict()
         """
         self.logger.debug("DataStore.get_profile called: {}".format(profile_name))
-        pass
 
     def get_profile_names(self):
         profiles = self.list_profiles()
@@ -232,6 +231,10 @@ class DataStore(object):
 
     # UTIL FUNCTIONS
     def get_device_types(self):
+        """
+        Get the device types that the DataStore knows about.
+        :return:
+        """
         devices = self.list_devices()
         types = list()
 
@@ -244,6 +247,10 @@ class DataStore(object):
 
     @classmethod
     def get_log_levels(cls):
+        """
+        Get the log levels that the DataStore knows about.
+        :return:
+        """
         return [
             cls.LOG_LEVEL_CRITICAL,
             cls.LOG_LEVEL_ERROR,

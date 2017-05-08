@@ -286,10 +286,10 @@ class PostgresStore(DataStore):
         result = self.cursor.fetchall()
         self.logger.debug("DataStore.get_configuration_value database result: {}".format(result))
         if result is not None and len(result) > 0:
-            self.logger.info("DataStore.get_configuration_value: ".format(result[0][0]))
+            self.logger.info("DataStore.get_configuration_value: {}".format(result[0][0]))
             return result[0][0]
         else:
-            self.logger.info("DataStore.get_configuration_value: ".format(None))
+            self.logger.info("DataStore.get_configuration_value: None")
             return None
 
     def list_configuration(self):

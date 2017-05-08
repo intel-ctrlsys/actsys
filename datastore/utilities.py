@@ -6,9 +6,21 @@ import json
 
 
 class DataStoreUtilities(object):
+    """
+    Handy utilities that everyone needs.
+    """
 
     @staticmethod
     def tail_file(filename, lines, formatter=None, log_filter=None):
+        """
+        Tries to emulate the function of tail on linux machines by retrieving the last x lines from a file.
+        Allows for two functions, a formatter and lo_filter to be passed in for advanced usage.
+        :param filename:
+        :param lines:
+        :param formatter:
+        :param log_filter:
+        :return:
+        """
         num_lines = int(lines)
 
         with open(filename) as opened_file:
@@ -82,6 +94,12 @@ class JsonParser(object):
 
     @staticmethod
     def write_file(file_path, content):
+        """
+        Tries to format the content into JSON and put it in a file at the file_path.
+        :param file_path: str
+        :param content: str
+        :return:
+        """
         try:
             with open(file_path, "w") as json_file:
                 json_file.write(json.dumps(content, sort_keys=True, indent=2, separators=(',', ': ')))

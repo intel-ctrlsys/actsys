@@ -2,6 +2,9 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
+"""
+A helper module to help a user configurate DataStore and create an instance to their liking.
+"""
 import os
 from .datastore import DataStore, DataStoreException, get_logger, add_stream_logger
 from .filestore import FileStore

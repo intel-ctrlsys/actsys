@@ -12,8 +12,8 @@ author = "Intel Corporation"
 license = "Apache"
 tests_require = ['python-dateutil>=2.6.0',
                  'pytz',
-                 'coverage',
                  'pytest',
+                 'pytest-cov',
                  'pylint',
                  'mock']
 

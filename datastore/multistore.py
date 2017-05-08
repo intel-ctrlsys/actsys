@@ -2,6 +2,10 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
+"""
+For when multiple database are used to store information. Generally this works well for storage but getting from
+both databases is generally discouraged.
+"""
 from .datastore import DataStore, DataStoreException
 
 
