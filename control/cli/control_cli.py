@@ -103,19 +103,16 @@ class ControlArgParser(object):
                                    'name': '--sensor-name',
                                    'nargs': '?',
                                    'required': True,
-                                   'help': 'Provide a specific sensor or .* for all sensors'
+                                   'help': 'Provide a specific sensor or .*/all for all sensors'
                                },
                                {
-                                   'name': '--duration',
-                                   'nargs': '?',
+                                   'name': '--get-overtime',
+                                   'nargs': 2,
                                    'type': int,
-                                   'help': 'Provide a specific duration to sample for, must be greater than 0'
-                               },
-                               {
-                                   'name': '--sample-rate',
-                                   'nargs': '?',
-                                   'type': int,
-                                   'help': 'Provide a specific sample rate to sample on, must be greater than 0'
+                                   'metavar': ('<sample-rate>', '<duration>'),
+                                   'help': 'Please specify 2 values: --get-overtime <sample-rate> <duration>, both '
+                                           'greater than 0'
+
                                }
                            ])
 
@@ -229,13 +226,13 @@ class ControlCommandLineInterface(object):
 
     def oobsensor_cmd_execute(self, cmd_args):
         if cmd_args.subcommand == 'get':
-            if cmd_args.duration is not None or cmd_args.sample_rate is not None:
-                if cmd_args.duration is None or cmd_args.sample_rate is None:
-                    return CommandResult(1, "Error missing required arguments, --duration and --sample-rate")
-                return self.cmd_invoker.oob_sensor_get_over_time(cmd_args.device_name, cmd_args.sensor_name,
-                                                                 cmd_args.duration, cmd_args.sample_rate)
-            elif cmd_args.duration is None and cmd_args.sample_rate is None:
+            if cmd_args.get_overtime is None:
                 return self.cmd_invoker.oob_sensor_get(cmd_args.device_name, cmd_args.sensor_name)
+            else:
+                sample_rate = cmd_args.get_overtime[0]
+                duration = cmd_args.get_overtime[1]
+                return self.cmd_invoker.oob_sensor_get_over_time(cmd_args.device_name, cmd_args.sensor_name,duration,
+                                                                 sample_rate)
         else:
             return CommandResult(1, "Invalid sensor command entered")
 
