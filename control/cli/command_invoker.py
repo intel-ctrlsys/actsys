@@ -135,7 +135,7 @@ class CommandInvoker(object):
         except ImportError as ie:
             self.logger.info("Could not import additional plugins. Proceeding anyways. Err: {}".format(ie))
 
-    def common_cmd_invoker(self, device_name, sub_command, **kwargs):
+    def common_cmd_invoker(self, device_regex, sub_command, **kwargs):
         """Common Function to execute the user requested command"""
         if self.manager is None:
             self.init_manager()
@@ -163,17 +163,17 @@ class CommandInvoker(object):
                        'oob_sensor_get': 'oob_sensor_get',
                        'oob_sensor_get_time': 'oob_sensor_get_time'
                        }
-        device_list = CommandInvoker._device_name_check(device_name)
+        device_list = CommandInvoker._device_name_check(device_regex)
         if not isinstance(device_list, list):
-            result = CommandResult(1, "Failed to parse a valid device name(s) in {}".format(device_name))
+            result = CommandResult(1, "Failed to parse a valid device name(s) in {}".format(device_regex))
             self.logger.warning(result.message)
             return result
         results = list()
-        for device in device_list:
-            if not self.device_exists_in_config(device):
-                msg = "Device {} skipped, because it is not found in the config file.".format(device)
+        for device_name in device_list:
+            if not self.device_exists_in_config(device_name):
+                msg = "Device {} skipped, because it is not found in the config file.".format(device_name)
                 self.logger.warning(msg)
-                results.append(CommandResult(1, msg, device))
+                results.append(CommandResult(1, msg, device_name))
                 continue
 
             # Prepare kwargs
@@ -184,14 +184,14 @@ class CommandInvoker(object):
             # End kwargs prep
 
             cmd_obj = self.manager.create_instance('command', command_map[sub_command], **kwargs)
-            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device)
+            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device_name)
             try:
                 command_result = cmd_obj.execute()
             except Exception as ex:
                 command_result = CommandResult(1, ex.message)
 
-            command_result.device_name = device
-            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device, command_result)
+            command_result.device_name = device_name
+            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device_name, command_result)
 
             results.append(command_result)
 
