@@ -19,20 +19,25 @@ class OobSensorMock(OobSensor):
         self.device_name = device_name
 
     def get_sensor_value(self, sensor_name, device, bmc):
-            sensor_name_f = self._get_sensor_name(sensor_name)
-            return "{0} sensor value(s) is 10".format(sensor_name_f)
+        result = dict()
+        sample = list()
+        sample.append(10)
+        sensor_name_f = self._get_sensor_name(sensor_name)
+        result[sensor_name_f] = sample
+        return result
 
     def get_sensor_value_over_time(self, sensor_name, duration, sample_rate, device, bmc):
         sensor_name_f = self._get_sensor_name(sensor_name)
+        result = dict()
         sample = []
         for i in range(0, duration*sample_rate):
             sample.append(10)
-        return "{0} sensor values over {1} at a sample rate of {2} are {3}".format(sensor_name_f, duration, sample_rate,
-                                                                                   sample)
+        result[sensor_name_f] = sample
+        return result
 
     @staticmethod
     def _get_sensor_name(sensor_name):
         if sensor_name == '.*':
-            return 'All'
+            return 'All sensors'
         else:
             return sensor_name

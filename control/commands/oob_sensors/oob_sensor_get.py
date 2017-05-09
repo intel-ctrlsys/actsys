@@ -24,8 +24,12 @@ class OobSensorGetCommand(OobSensorCommand):
         self.setup()
         self.oob_sensor_plugin = self.plugin_manager.create_instance('oob_sensors', self.plugin_name,
                                                                      device_name=self.device_name)
+
         try:
             ret_msg = self.oob_sensor_plugin.get_sensor_value(self.sensor_name, self.device_data, self.bmc_data)
         except RuntimeError as ex:
             return CommandResult(1, ex.message)
-        return CommandResult(0, ret_msg)
+        p_ret_msg = self.print_table_border('Sensor Name', 'Values', self.device_name) + \
+                    self.print_table_border('-', '-') + self.print_table(ret_msg)
+        return CommandResult(0, p_ret_msg)
+

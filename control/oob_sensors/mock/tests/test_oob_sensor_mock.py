@@ -28,7 +28,7 @@ class TestOobSensorMock(unittest.TestCase):
 
     def test_mock_oob_sensor_all(self):
         node1 = OobSensorMock({'device_name': 'test_node_1', 'device_type': 'node'})
-        self.assertEqual("All sensor value(s) is 10", node1.get_sensor_value(".*", None, None))
+        self.assertEqual({'All sensors': [10]}, node1.get_sensor_value(".*", None, None))
 
     def test_mock_over_time(self):
         node1 = OobSensorMock({'device_name': 'test_node_1', 'device_type': 'node'})

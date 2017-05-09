@@ -39,7 +39,9 @@ class OobSensorGetTimeCommand(OobSensorCommand):
                                                                         self.device_data, self.bmc_data)
         except RuntimeError as ex:
             return CommandResult(1, ex.message)
-        return CommandResult(0, ret_msg)
+        p_ret_msg = self.print_table_border('Sensor Name', 'Values', self.device_name) + self.print_table_border('-', '-') \
+                    + self.print_table(ret_msg)
+        return CommandResult(0, p_ret_msg)
 
     @staticmethod
     def _convert_str_to_num(num):
@@ -53,4 +55,3 @@ class OobSensorGetTimeCommand(OobSensorCommand):
                 return int(math.floor(value))
             except ValueError:
                 raise RuntimeError("Duration and Sample_rate cannot take strings as arguments")
-

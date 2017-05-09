@@ -18,5 +18,7 @@ class TestOobSensorGetCommand(TestOobSensorCommand):
 
     def test_ret_msg(self):
         self.assertEqual(self.oob_sensor_get.execute().return_code, 0)
+        self.oob_manager_mock.get_sensor_value.return_value = {u'temp': [0.88765444]}
+        self.assertEqual(self.oob_sensor_get.execute().return_code, 0)
         self.oob_manager_mock.get_sensor_value.side_effect = RuntimeError
         self.assertEqual(self.oob_sensor_get.execute().return_code, 1)

@@ -10,5 +10,9 @@ from control.cli.control_cli import ControlCommandLineInterface
 from sys import exit
 
 if __name__ == '__main__':
-    return_value = ControlCommandLineInterface().execute_cli_cmd()
-    exit(return_value)
+    try:
+        return_value = ControlCommandLineInterface().execute_cli_cmd()
+        exit(return_value)
+    except KeyboardInterrupt:
+        print('Exiting : On KeyBoard Interrupt')
+        exit(1)
