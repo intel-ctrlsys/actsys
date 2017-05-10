@@ -11,6 +11,7 @@ from __future__ import print_function
 
 import argparse
 import sys
+import os
 from datastore.datastore_cli import DataStoreCLI
 from .command_invoker import CommandInvoker
 from ..commands import CommandResult
@@ -24,6 +25,7 @@ class ControlArgParser(object):
 
     def __init__(self):
         """Init Function for Control Cli Parser"""
+        self.CLI_COMMAND = os.path.basename(sys.argv[0])
 
         self.ctrl_parser = argparse.ArgumentParser(prog=self.CLI_COMMAND,
                                                    description='Control Component Parser')
