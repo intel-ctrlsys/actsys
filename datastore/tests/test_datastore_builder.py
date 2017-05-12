@@ -134,8 +134,17 @@ class TestDataStoreBuilder(unittest.TestCase):
 
         mock_fs.side_effect = [Exception("Mocked exception"), None]
 
-        result = DataStoreBuilder.get_datastore_from_string(temp_file.name)
-        self.assertEqual(type(result), FileStore)
+        try:
+            result = DataStoreBuilder.get_datastore_from_string(temp_file.name)
+        except DataStoreException as dse:
+            self.assertTrue(dse.message.startswith("The string '"), dse.message)
+
+        mock_fs.side_effect = IOError("Insufficient permissions")
+        try:
+            result = DataStoreBuilder.get_datastore_from_string(temp_file.name)
+            self.fail()
+        except DataStoreException as dse:
+            self.assertTrue(dse.message.startswith("You cannot read/write"), dse.message)
 
     def test_get_datastore_from_env_vars(self):
         with self.assertRaises(DataStoreException):

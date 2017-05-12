@@ -422,12 +422,12 @@ class DataStoreException(Exception):
     A staple Exception thrown by the DataStore
     """
 
-    def __init__(self, msg):
+    def __init__(self, message):
         super(DataStoreException, self).__init__()
-        self.msg = msg
+        self.message = message
 
     def __str__(self):
-        return repr(self.msg)
+        return repr(self.message)
 
 
 class DataStoreLogger(logging.getLoggerClass()):

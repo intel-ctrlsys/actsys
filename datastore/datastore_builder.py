@@ -90,6 +90,7 @@ class DataStoreBuilder(object):
             a postgres uri (See https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING )
         :param screen_log_level:
         :return:
+        :raise: DataStoreException, if the string doesn't connect to anything.
         """
         if not isinstance(datastore_location, str):
             raise ValueError("datastore parameter must be a string")
@@ -107,15 +108,20 @@ class DataStoreBuilder(object):
             # Perhaps this is a PostgresStore of a different location
             return PostgresStore(datastore_location)
         except:
+            # Something went wrong connecting, assume it was a bad connection string and continue trying.
             pass
         try:
             # Maybe this is a valid location that doesn't already have a file.
             return FileStore(datastore_location)
+        except IOError:
+            raise DataStoreException("You cannot read/write the configuration database at {}. Do you have sufficient"
+                                     " permissions?".format(datastore_location))
         except:
             pass
 
         # Could not find any suitable postgreSQL or file location. Default to FileStore default location.
-        return FileStore()
+        raise DataStoreException("The string '{}' could not be used to connection to either PostgresSQL or a"
+                                 " file".format(datastore_location))
 
     @staticmethod
     def get_datastore_from_env_vars(print_to_screen=False, filestore_env_var="datastore_file_location",
