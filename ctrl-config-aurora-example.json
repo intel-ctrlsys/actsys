@@ -12,6 +12,7 @@
       "device_type": "node",
       "hostname": "compute-29",
       "bmc_fa_port": 1000,
+      "console_port": 9000,
       "ip_address": "192.168.1.29",
       "profile_name": "compute_node"
     },
@@ -22,6 +23,7 @@
       "hostname": "compute-30",
       "ip_address": "192.168.1.30",
       "bmc_fa_port": 1001,
+      "console_port": 9001,
       "profile_name": "compute_node"
     },
     {
@@ -31,12 +33,13 @@
       "hostname": "compute-31",
       "ip_address": "192.168.1.31",
       "bmc_fa_port": 1002,
+      "console_port": 9002,
       "profile_name": "compute_node"
     },
     {
       "device_id": 4,
       "device_type": "bmc",
-      "hostname": "compute-29-nc",      
+      "hostname": "compute-29-nc",
       "ip_address": "127.0.0.1",
       "rest_server_port": 5000,
       "profile_name": "bmc_default"
@@ -58,6 +61,7 @@
       "image": "centos7.2",
       "profile_name": "compute_node",
       "resource_controller": "mock",
+      "bios_controller": "bky-bios",
       "role": [
         "compute"
       ],
