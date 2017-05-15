@@ -26,7 +26,7 @@ class OobSensorGetTimeCommand(OobSensorCommand):
     def execute(self):
         """Execute the command"""
         self.setup()
-        sensor_name = self.sensor_name
+        final_return = ''
         sample_rate = self._convert_str_to_num(self.sample_rate)
         duration = self._convert_str_to_num(self.duration)
 
@@ -34,14 +34,19 @@ class OobSensorGetTimeCommand(OobSensorCommand):
             raise RuntimeError("Duration and Sample_rate must be greater than 1")
         self.oob_sensor_plugin = self.plugin_manager.create_instance('oob_sensors', self.plugin_name,
                                                                      device_name=self.device_name)
-        try:
-            ret_msg = self.oob_sensor_plugin.get_sensor_value_over_time(sensor_name, duration, sample_rate,
+        num_sensors = self.sensor_name.split(',')
+        for sensors in num_sensors:
+            sensor_value = self.get_sensor_name(sensors)
+            try:
+                ret_msg = self.oob_sensor_plugin.get_sensor_value_over_time(sensor_value, duration, sample_rate,
                                                                         self.device_data, self.bmc_data)
-        except RuntimeError as ex:
-            return CommandResult(1, ex.message)
-        p_ret_msg = self.print_table_border('Sensor Name', 'Values', self.device_name) + self.print_table_border('-', '-') \
-                    + self.print_table(ret_msg)
-        return CommandResult(0, p_ret_msg)
+            except RuntimeError as ex:
+                final_return += ex.message
+                continue
+            p_ret_msg = self.print_table_border('Sensor Name', 'Values', self.device_name, sensor_value) + \
+                            self.print_table_border('-', '-') + self.print_table(ret_msg)
+            final_return += p_ret_msg
+        return CommandResult(0, final_return)
 
     @staticmethod
     def _convert_str_to_num(num):

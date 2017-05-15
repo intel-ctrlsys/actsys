@@ -39,11 +39,21 @@ class OobSensorCommand(Command):
         return result
 
     @staticmethod
-    def print_table_border(row, column, device_name=None):
+    def get_sensor_name(sensor_name):
+        if sensor_name == ' ' or len(sensor_name) == 0:
+            raise RuntimeError("Empty string given to sensor_name")
+        elif sensor_name in ['all', 'All', 'ALL', '.*', '*']:
+            return ('')
+        else:
+            return sensor_name
+
+    @staticmethod
+    def print_table_border(row, column, device_name=None, sensor_name=None):
         if device_name is None:
             result = '\t{:-^40} {:-^80}\n'.format(row, column)
         else:
-            result = '\n Device: {0}\n\n'.format(device_name) + '\t{:^40} {:^40}\n'.format(row, column)
+            result = '\n Device: {0}\n\n'.format(device_name) + '\n\t Sensor: {0}\n\n'.format(sensor_name) + '\t{:^40}'' \
+            ''{:^40}\n'.format(row, column)
         return result
 
     @staticmethod

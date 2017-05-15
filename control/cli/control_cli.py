@@ -99,22 +99,24 @@ class ControlArgParser(object):
                            ])
 
         self.add_subparser('sensor', 'Get specified sensor value on specified nodes/group of nodes',
-                           ['get'], 'Select an action to perform',
+                           ['get'], 'Select option to get sensor values'
+                                    'Ex: 1. {0} --sensor-name temp 2. {1} --sensor-name temp --get-overtime 2 3'.
+                           format(self.CLI_COMMAND, self.CLI_COMMAND),
                            [
                                {
                                    'name': '--sensor-name',
                                    'nargs': '?',
                                    'required': True,
-                                   'help': 'Provide a specific sensor or .*/all for all sensors'
+                                   'help': 'Provide a specific sensor, a comma seperated list of multiple sensors '
+                                           'or .*/all for all sensors'
                                },
                                {
                                    'name': '--get-overtime',
                                    'nargs': 2,
                                    'type': int,
                                    'metavar': ('<sample-rate>', '<duration>'),
-                                   'help': 'Please specify 2 values: --get-overtime <sample-rate> <duration>, both '
-                                           'greater than 0'
-
+                                   'help': 'Provide a sample rate(per second) and a duration of time(seconds) to sample'
+                                           ' over, both values must be integers greater than 1'
                                }
                            ])
 
