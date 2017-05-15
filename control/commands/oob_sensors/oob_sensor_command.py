@@ -33,7 +33,7 @@ class OobSensorCommand(Command):
             key1 = (key[:30] + '..') if len(key) > 30 else key
             values = list()
             for i_value in value:
-                value1 = round(i_value, 5) if len(str(i_value)) > 5 else i_value
+                value1 = round(i_value, 5) if len(str(i_value)) > 5 and type(i_value) == float else i_value
                 values.append(value1)
             result += "\t\t{:40}{:^15}\n".format(key1, self.print_multiline(values)) + self.print_table_border('', '')
         return result
