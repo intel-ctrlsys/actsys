@@ -482,7 +482,6 @@ class TestFileStoreEmptyFile(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        import os
         os.remove(cls.FILE_STRING)
 
     def setUp(self):
@@ -525,6 +524,7 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         self.assertIsNone(result)
         result = self.fs.delete_configuration("foo")
         self.assertIsNone(result)
+
 
 class TestFileStoreWithNoFile(unittest.TestCase):
     FILE_LOCATION_STRING = "unknown, to be constructed in setUpClass(cls)"
@@ -616,7 +616,6 @@ class TestFileStoreInvalidLogs(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        import os
         os.remove(cls.FILE_STRING)
         os.remove(cls.LOG_FILENAME)
 

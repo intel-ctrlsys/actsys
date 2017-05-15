@@ -37,7 +37,7 @@ class TestDataStoreCLI(unittest.TestCase):
         # print('execute_devices')
         self.mockDS.get_device.return_value = [{'device_type': 'compute node'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
-            result = self.dscli.parse_and_run(['device', 'get', 'hostname=node1'])
+            result = self.dscli.parse_and_run(['device', 'get', 'node1'])
             self.assertEqual(output.getvalue(), '--- None ---\ndevice_type          : compute node\n')
 
         self.mockDS.list_devices.return_value = [{'device_type': 'node', 'debug_ip': '127.0.0.111'}]
@@ -133,19 +133,19 @@ class TestDataStoreCLI(unittest.TestCase):
         # print('execute_configurations')
         self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
-            result = self.dscli.parse_and_run(['config', 'get', 'key=key1'])
+            result = self.dscli.parse_and_run(['config', 'get', 'key1'])
             self.assertEqual(output.getvalue(), "key1 : [{'key': 'key1'}]\n")
 
     def test_configuration_get_no_match(self):
         # print('execute_configurations')
         self.mockDS.get_configuration_value.return_value = None
-        result = self.dscli.parse_and_run(['config', 'get', 'key=key1'])
+        result = self.dscli.parse_and_run(['config', 'get', 'key1'])
         self.assertEqual(result, 1)
 
     def test_configuration_set_no_existing_configuration(self):
         # print('execute_configurations')
         self.mockDS.get_configuration_value.return_value = []
-        result = self.dscli.parse_and_run(['config', 'set', 'key=key1'])
+        result = self.dscli.parse_and_run(['config', 'set', 'key1'])
         self.assertEqual(result, 1)
 
     def test_configuration_neg(self):
@@ -156,7 +156,7 @@ class TestDataStoreCLI(unittest.TestCase):
 
     def test_configuration_upsert(self):
         self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
-        result = self.dscli.parse_and_run(['config', 'set', 'key=key4', 'value=value1'])
+        result = self.dscli.parse_and_run(['config', 'set', 'key4', 'value1'])
         self.assertEqual(result, 0)
 
     def test_configuration_upsert_none(self):
@@ -166,7 +166,7 @@ class TestDataStoreCLI(unittest.TestCase):
 
     def test_configuration_delete(self):
         self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
-        result = self.dscli.parse_and_run(['config', 'delete', 'key=key1'])
+        result = self.dscli.parse_and_run(['config', 'delete', 'key1'])
         self.assertEqual(result, 0)
 
     def test_configuration_delete_none(self):
@@ -346,34 +346,38 @@ class TestFunctionalReturnCodes(unittest.TestCase):
         """
         commands = [
             {"cmd": ['device', 'list'], "out": 0},
-            {"cmd": ['device', 'get', 'hostname=test_hostname'], "out": 0},
-            {"cmd": ['device', 'set', 'hostname=test_hostname'], "out": 0},
-            {"cmd": ['device', 'set', 'hostname=test_hostname', 'port=23'], "out": 0},
-            {"cmd": ['device', 'set', 'hostname=test_hostname', 'test=foo'], "out": 0},
+            {"cmd": ['device', 'get', 'test_hostname'], "out": 0},
+            {"cmd": ['device', 'set', 'test_hostname'], "out": 0},
+            {"cmd": ['device', 'set', 'test_hostname', 'port=23'], "out": 0},
+            {"cmd": ['device', 'set', 'test_hostname', 'test=foo'], "out": 0},
+            {"cmd": ['device', 'get', 'new_hostname'], "out": 1},
+            {"cmd": ['device', 'set', 'new_hostname', 'foo=node'], "out": 1},
+            {"cmd": ['device', 'set', 'new_hostname', 'device_type=node'], "out": 0},
+            {"cmd": ['device', 'get', 'new_hostname'], "out": 0},
             {"cmd": ['device', 'list', 'mac_address=AA:GG:PP'], "out": 0},
             {"cmd": ['device', 'list', 'mac_address=AA:GG:111'], "out": 0},
-            {"cmd": ['device', 'delete', 'hostname=test_hostname2'], "out": 0},
-            {"cmd": ['device', 'delete', 'hostname=not_valid_name'], "out": 0},
-            {"cmd": ['profile', 'get', 'profile_name=compute_node'], "out": 0},
+            {"cmd": ['device', 'delete', 'test_hostname2'], "out": 0},
+            {"cmd": ['device', 'delete', 'not_valid_name'], "out": 0},
+            {"cmd": ['profile', 'get', 'compute_node'], "out": 0},
             {"cmd": ['profile', 'get'], "out": 1},
             {"cmd": ['profile', 'get', 'invalid'], "out": 1},
-            {"cmd": ['profile', 'set', 'profile_name=compute_node', 'my=profile_value'], "out": 0},
-            {"cmd": ['profile', 'delete', 'profile_name=compute_node'], "out": 1},
+            {"cmd": ['profile', 'set', 'compute_node', 'my=profile_value'], "out": 0},
+            {"cmd": ['profile', 'delete', 'compute_node'], "out": 1},
             {"cmd": ['profile', 'list'], "out": 0},
-            {"cmd": ['profile', 'set', 'profile_name=compute_node2', 'my=profile_value'], "out": 0},
-            {"cmd": ['profile', 'delete', 'profile_name=compute_node2'], "out": 0},
+            {"cmd": ['profile', 'set', 'compute_node2', 'my=profile_value'], "out": 0},
+            {"cmd": ['profile', 'delete', 'compute_node2'], "out": 0},
             {"cmd": ['config', 'get'], "out": 1},
-            {"cmd": ['config', 'get', 'key=log_file_path'], "out": 0},
-            {"cmd": ['config', 'get', 'key=not_found'], "out": 1},
-            {"cmd": ['config', 'set', 'key=log_file_path2'], "out": 1},
-            {"cmd": ['config', 'set', 'key=log_file_path2', 'value=foo'], "out": 0},
-            {"cmd": ['config', 'delete', 'key=log_file_path2'], "out": 0},
-            {"cmd": ['config', 'delete', 'key=log_file_path2'], "out": 0},
-            {"cmd": ['config', 'set', 'key=log_file_path', 'value=foo'], "out": 0},
-            {"cmd": ['config', 'set', 'key=log_file_path', 'value=bar'], "out": 0},
-            {"cmd": ['config', 'set', 'key=log_file_path', 'value=test'], "out": 0},
-            {"cmd": ['config', 'get', 'key=log_file_path'], "out": 0},
-            {"cmd": ['config', 'get', 'log_file_path'], "out": 1},
+            {"cmd": ['config', 'get', 'log_file_path'], "out": 0},
+            {"cmd": ['config', 'get', 'not_found'], "out": 1},
+            {"cmd": ['config', 'set', 'log_file_path2'], "out": 1},
+            {"cmd": ['config', 'set', 'log_file_path2', 'foo'], "out": 0},
+            {"cmd": ['config', 'delete', 'log_file_path2'], "out": 0},
+            {"cmd": ['config', 'delete', 'log_file_path2'], "out": 0},
+            {"cmd": ['config', 'set', 'log_file_path', 'foo'], "out": 0},
+            {"cmd": ['config', 'set', 'log_file_path', 'bar'], "out": 0},
+            {"cmd": ['config', 'set', 'log_file_path', 'test'], "out": 0},
+            {"cmd": ['config', 'get', 'log_file_path'], "out": 0},
+            {"cmd": ['config', 'get', 'log_file_path123'], "out": 1},
             {"cmd": ['device', 'list', 'mac_address=AA:GG:PP'], "out": 0},
             {"cmd": ['device', 'list', 'mac_address=AA:GG:PP'], "out": 0}
         ]

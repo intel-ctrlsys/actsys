@@ -17,7 +17,7 @@ pylint: install_requirements
 	pylint --rcfile=pylintrc --ignore-patterns=test* datastore || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
 
 coverage: install_requirements
-	python -m pytest . --cov-config .coveragerc --cov=datastore --cov-report term --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
+	python -m pytest . --cov-config .coveragerc --cov=datastore --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
 
 rpm:
 	python setup.py bdist_rpm

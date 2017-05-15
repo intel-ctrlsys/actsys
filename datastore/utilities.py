@@ -3,6 +3,22 @@
 # Copyright (c) 2017 Intel Corp.
 #
 import json
+from ClusterShell.NodeSet import expand, fold, grouplist
+
+
+class DeviceUtilities(object):
+
+    @staticmethod
+    def expand_devicelist(devicelist):
+        return expand(devicelist)
+
+    @staticmethod
+    def fold_devices(device):
+        return fold(device)
+
+    @staticmethod
+    def get_groups():
+        return grouplist()
 
 
 class DataStoreUtilities(object):

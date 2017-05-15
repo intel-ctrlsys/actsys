@@ -7,10 +7,11 @@ Tests for the FileStore class
 """
 from __future__ import print_function
 import unittest
-from ..utilities import DataStoreUtilities, JsonParser, FileNotFound, NonParsableFile
 from random import randint
 import tempfile
 import os
+from ..utilities import DataStoreUtilities, JsonParser, FileNotFound, NonParsableFile, DeviceUtilities
+
 
 class TestUtilities(unittest.TestCase):
 
@@ -95,4 +96,35 @@ gorilla""")
         result = JsonParser.get_file_content_string({"one": 1, "two": "two"})
         self.assertEqual('{\n  "one": 1,\n  "two": "two"\n}', result)
 
+
+expansion_tests = {
+    "accept_lists": ["node1,node2,node3", ["node1", "node2", "node3"]],
+    "sequential_numbers": ["node[1-3]", ["node1", "node2", "node3"]],
+    "accept_lists2": ["node1,node3", ["node1", "node3"]],
+    "comma_seperated_numbers": ["node[1,3]", ["node1", "node3"]],
+    "zero_padded_numbers": ["node[01-03]", ["node01", "node02", "node03"]],
+    "comma_seperated_lists": ["node[1,45-46,990]", ["node1", "node45", "node46", "node990"]],
+}
+
+fold_tests = {
+    "lists": ["node1,node2", "node[1-2]"],
+    "nosequential_lists": ["node1,node5", "node[1,5]"],
+    "nosequential_lists2": ["node1,node12", "node[1,12]"],
+    "nosequential_lists3": ["node3,node1", "node[1,3]"],
+    "strange_lists": ["node001,node4,node94", "node[001,004,094]"],
+    "mutiple_names": ["nhl1,nfl1,nhl2,nfl2", "nfl[1-2],nhl[1-2]"]
+
+}
+
+
+class TestNodeExpand(unittest.TestCase):
+    def test_expand(self):
+        for test_key in expansion_tests.keys():
+            test = expansion_tests.get(test_key)
+            self.assertEqual(DeviceUtilities.expand_devicelist(test[0]), test[1])
+
+    def test_fold(self):
+        for test_key in fold_tests.keys():
+            test = fold_tests.get(test_key)
+            self.assertEqual(DeviceUtilities.fold_devices(test[0]), test[1])
 
