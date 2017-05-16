@@ -27,9 +27,14 @@ class FileStore(DataStore):
         self.location = location
         self.log_level = log_level if log_level is not None else DataStore.LOG_LEVEL
         # TODO: lock the file: http://stackoverflow.com/a/186464/1767377
-        if not os.path.isfile(location):
-            with open(location, "w") as f:
-                f.write("{}")
+        # If the file doesn't exist or is empty. Create it.
+        try:
+            if not os.path.isfile(location) or os.stat(location).st_size == 0:
+                with open(location, "w") as f:
+                    f.write("{}")
+        except IOError:
+            raise DataStoreException("Could not write to location {}. Do you have write permissions?".format(location))
+
         self.parsed_file = JsonParser.read_file(location)
         self._setup_file_logger(log_level)
 
