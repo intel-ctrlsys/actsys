@@ -12,6 +12,7 @@ from __future__ import print_function
 import argparse
 import sys
 import os
+import logging
 from datastore.datastore_cli import DataStoreCLI
 from .command_invoker import CommandInvoker
 from ..commands import CommandResult
@@ -84,8 +85,9 @@ class ControlArgParser(object):
         self.add_subparser('service', 'Check, start or stop services specified in the configuration file',
                            ['status', 'start', 'stop'], 'Select an action to perform')
 
-        self.ctrl_subparser.add_parser('datastore', add_help=False)
-        self.ctrl_subparser.add_parser('provision', add_help=False)
+        self.ctrl_subparser.add_parser('datastore', help="Device and configuration manipulations", add_help=False)
+        self.ctrl_subparser.add_parser('provision', help="Adding, setting and removing provisioning "
+                                                         "options for devices", add_help=False)
 
         self.add_subparser('bios', 'Update or get version of bios on specified nodes/group of nodes',
                            ['update', 'get-version'], 'Select an action to perform',
@@ -243,17 +245,12 @@ class ControlCommandLineInterface(object):
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
         masterparser = ControlArgParser()
-        # print("Pre Known args: ")
-
         cmd_args, unknown_args = masterparser.ctrl_parser.parse_known_args()
 
-        # print("Post Known args: ", cmd_args, unknown_args)
         command_invoker_args = dict()
         if cmd_args.verbosity == 1:
-            import logging
             command_invoker_args["screen_log_level"] = logging.INFO
         elif cmd_args.verbosity == 2:
-            import logging
             command_invoker_args["screen_log_level"] = logging.DEBUG
         try:
             self.cmd_invoker = CommandInvoker(**command_invoker_args)
@@ -268,8 +265,8 @@ class ControlCommandLineInterface(object):
         if cmd_args.subparser_name == 'datastore':
             datastore_cli = DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(unknown_args)
             return datastore_cli
-        if len(sys.argv) >= 2 and sys.argv[1] == 'provision':
-            provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(sys.argv[2:])
+        if cmd_args.subparser_name == 'provision':
+            provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(unknown_args)
             return self.handle_command_result(provisioner_result)
 
         cmd_args = masterparser.get_all_args()
