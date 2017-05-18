@@ -42,8 +42,8 @@ class OobSensorCommand(Command):
     def get_sensor_name(sensor_name):
         if sensor_name == ' ' or len(sensor_name) == 0:
             raise RuntimeError("Empty string given to sensor_name")
-        elif sensor_name in ['all', 'All', 'ALL', '.*', '*']:
-            return ('')
+        elif sensor_name.strip().lower() in ['all', '.*', '*']:
+            return ''
         else:
             return sensor_name
 
