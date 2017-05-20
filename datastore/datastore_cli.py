@@ -44,6 +44,7 @@ class DataStoreCLI(object):
         """
         self.device_parser = self.subparsers.add_parser('device', help="Manipulations for devices")
         self.device_parser.add_argument('action', choices=['list', 'get', 'set', 'delete'])
+        self.device_parser.add_argument('device_name', nargs='?', default=None)
         self.device_parser.add_argument('options', nargs='*',
                                         help='key=value pairs used to assist in selecting and setting attributes')
         self.device_parser.set_defaults(func=self.device_execute)
@@ -55,6 +56,7 @@ class DataStoreCLI(object):
         """
         self.profile_parser = self.subparsers.add_parser('profile', help="Manipulations for profiles")
         self.profile_parser.add_argument('action', choices=['list', 'get', 'set', 'delete'])
+        self.profile_parser.add_argument('profile_name', nargs='?', default=None)
         self.profile_parser.add_argument('options', nargs='*',
                                          help='key=value pairs used to assist in selecting and setting attributes')
         self.profile_parser.set_defaults(func=self.profile_execute)
@@ -66,8 +68,8 @@ class DataStoreCLI(object):
         """
         self.config_parser = self.subparsers.add_parser('config', help="Manipulations for configuration")
         self.config_parser.add_argument('action', choices=['list', 'get', 'set', 'delete'])
-        self.config_parser.add_argument('options', nargs='*',
-                                        help='key=value pairs used to assist in selecting and setting attributes')
+        self.config_parser.add_argument('key', nargs='?', default=None)
+        self.config_parser.add_argument('value', nargs='?', default=None)
         self.config_parser.set_defaults(func=self.config_execute)
 
     def add_log_args(self):
@@ -145,6 +147,8 @@ class DataStoreCLI(object):
         :param parsed_args:
         :return:
         """
+        device_name = parsed_args.device_name
+
         try:
             options = self.parse_options(parsed_args.options)
         except ParseOptionsException as poe:
@@ -152,22 +156,22 @@ class DataStoreCLI(object):
             return poe.return_code
 
         if parsed_args.action == "list":
-            devices = self.datastore.list_devices(options)
+            new_options = options.copy()
+            if device_name is not None:
+                try:
+                    ops2 = self.parse_options([device_name])
+                except ParseOptionsException as poe:
+                    print(poe.message)
+                    return poe.return_code
+                new_options.update(ops2)
+            devices = self.datastore.list_devices(new_options)
             self.print_devices(devices)
             return 0
 
-        device_name = options.get("device_id") or options.get("hostname") or options.get("ip_address")
         if device_name is None:
             print("Please specify a device")
             return 1
 
-        if parsed_args.action == "get":
-            device = self.datastore.get_device(device_name)
-            if device is None:
-                print("Could not find any device matching {}".format(device_name))
-                return 1
-            self.print_devices(device)
-            return 0
         if parsed_args.action == "set":
             existing_device = self.datastore.get_device(device_name)
             if existing_device is None:
@@ -186,9 +190,26 @@ class DataStoreCLI(object):
                 print("Please specify a device_type. (i.e device_type=node)")
                 return 1
 
+            # Set profile_name in the options
+            existing_device["hostname"] = existing_device.get("hostname", device_name)
             self.datastore.set_device(existing_device)
             print("Successfully updated '{}'".format(device_name))
+
             return 0
+
+        if parsed_args.options:
+            self.device_parser.print_usage()
+            print("device {} does not accept additional options.".format(parsed_args.action))
+            return 1
+
+        if parsed_args.action == "get":
+            device = self.datastore.get_device(device_name)
+            if device is None:
+                print("Could not find any device matching {}".format(device_name))
+                return 1
+            self.print_devices(device)
+            return 0
+
         if parsed_args.action == "delete":
             retval = self.datastore.delete_device(device_name)
             if retval is None:
@@ -203,6 +224,7 @@ class DataStoreCLI(object):
         :param parsed_args:
         :return:
         """
+        profile_name = parsed_args.profile_name
         try:
             options = self.parse_options(parsed_args.options)
         except ParseOptionsException as poe:
@@ -210,23 +232,24 @@ class DataStoreCLI(object):
             return poe.return_code
 
         if parsed_args.action == "list":
-            profiles = self.datastore.list_profiles(options)
+            # Copy profile_name to options, profile list doen not accept a profile_name
+            new_options = options.copy()
+            if profile_name is not None:
+                try:
+                    ops2 = self.parse_options([profile_name])
+                except ParseOptionsException as poe:
+                    print(poe.message)
+                    return poe.return_code
+                new_options.update(ops2)
+            profiles = self.datastore.list_profiles(new_options)
             self.print_devices(profiles)
             return 0
 
-        profile_name = options.get("profile_name")
         if profile_name is None:
             self.profile_parser.print_usage()
             print("Please specify a profile_name")
             return 1
 
-        if parsed_args.action == "get":
-            profile = self.datastore.get_profile(profile_name)
-            if profile is None:
-                print("Could not find any profile matching {}".format(profile_name))
-                return 1
-            self.print_devices(profile)
-            return 0
         if parsed_args.action == "set":
             # Get an existing profile, we set all the passed in options in the profile and
             # delete the ones where value is UNDEF
@@ -242,8 +265,23 @@ class DataStoreCLI(object):
                 else:
                     existing_profile[option] = value
 
+            # Set profile_name in the options
+            existing_profile["profile_name"] = existing_profile.get("profile_name", profile_name)
             self.datastore.set_profile(existing_profile)
             print("Profile '{}' updated".format(profile_name))
+            return 0
+
+        if parsed_args.options:
+            self.profile_parser.print_usage()
+            print("profile {} does not accept additional options.".format(parsed_args.action))
+            return 1
+
+        if parsed_args.action == "get":
+            profile = self.datastore.get_profile(profile_name)
+            if profile is None:
+                print("Could not find any profile matching {}".format(profile_name))
+                return 1
+            self.print_devices(profile)
             return 0
         if parsed_args.action == "delete":
             retval = self.datastore.delete_profile(profile_name)
@@ -272,44 +310,32 @@ class DataStoreCLI(object):
                 print("{0:30} : {1}".format(key, config_value))
             return 0
 
-        try:
-            options = self.parse_options(parsed_args.options)
-        except ParseOptionsException as poe:
-            print(poe.message)
-            return poe.return_code
+        config_key = parsed_args.key
+        if config_key is None:
+            self.config_parser.print_usage()
+            print("Please specify a key to retrieve from the config")
+            return 1
 
         if parsed_args.action == "get":
-            config_key = options.get("key")
-            if config_key is None:
-                self.config_parser.print_usage()
-                print("Please specify a key to retrieve from the config")
-                return 1
             config_value = self.datastore.get_configuration_value(config_key)
             if config_value is None:
                 print("Value for key `{}` not found".format(config_key))
                 return 1
             print("{} : {}".format(config_key, config_value))
             return 0
+        if parsed_args.action == "delete":
+            self.datastore.delete_configuration(config_key)
+            print("Deleted")
+            return 0
         if parsed_args.action == "set":
-            config_key = options.get("key")
-            config_value = options.get("value")
-            if config_key is None or config_value is None:
+            config_value = parsed_args.value
+            if config_value is None:
                 self.config_parser.print_usage()
-                print("Please specify a key and value. (i.e. config key=foo value=bar)")
+                print("Please specify a value. (i.e. config foo bar)")
                 return 1
 
             set_key = self.datastore.set_configuration(config_key, config_value)
             print("Successfully set {}, to {}".format(set_key, config_value))
-            return 0
-        if parsed_args.action == "delete":
-            config_key = options.get(None) or options.get("key")
-            if config_key is None:
-                self.config_parser.print_usage()
-                print("Please specify a key to retrieve from the config")
-                return 1
-
-            self.datastore.delete_configuration(config_key)
-            print("Deleted")
             return 0
 
     def log_execute(self, parsed_args):
@@ -396,7 +422,6 @@ class DataStoreCLI(object):
                             match = int(match)
                         value.append(match)
 
-
             # Check for and parse digits
             if isinstance(key, str) and key.isdigit():
                 key = int(key)
@@ -447,6 +472,7 @@ class ParseOptionsException(Exception):
     """
     A staple exception for when option parsing errors happen. Never exposed to the user, only used internally.
     """
+
     def __init__(self, return_code, msg):
         super(ParseOptionsException, self).__init__()
         self.return_code = return_code
