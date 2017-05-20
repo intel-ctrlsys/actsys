@@ -8,14 +8,16 @@ This module creates the command line parser and executes the user commands.
 """
 
 from __future__ import print_function
+from numbers import Number
 
 import argparse
 import sys
 import os
 import logging
+import timeout_decorator
 from datastore.datastore_cli import DataStoreCLI
 from .command_invoker import CommandInvoker
-from ..commands import CommandResult
+from ..commands import CommandResult, ConfigurationNeeded
 from .provision_cli import ProvisionCli
 
 
@@ -153,6 +155,8 @@ class ControlArgParser(object):
         self.ctrl_parser.add_argument("-V", "--version", action="version", version='0.1.0',
                                       help='Provides the version of the tool')
         self.ctrl_parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
+        self.ctrl_parser.add_argument("-t", "--timeout", type=float,
+                                      help="Provides a timeout for the command")
 
     def get_all_args(self, args=None):
         if args is not None:
@@ -163,9 +167,11 @@ class ControlArgParser(object):
 
 class ControlCommandLineInterface(object):
     """This class executes the commands based on user's request"""
-
     def __init__(self):
-        self.command_invoker = None
+        self.cmd_invoker = None
+        """default timeout value is 30 minutes"""
+        self.default_timeout = 1800
+        self.timeout = 0
 
     def power_cmd_execute(self, cmd_args):
         """Function to call appropriate power sub-command"""
@@ -242,53 +248,100 @@ class ControlCommandLineInterface(object):
         else:
             return CommandResult(1, "Invalid sensor command entered")
 
+    def _execute_local_command(self, local_cmd_args):
+        """Check and run the corresponding command"""
+        command_result = None
+        if local_cmd_args.subparser_name == 'power':
+            command_result = self.power_cmd_execute(local_cmd_args)
+        elif local_cmd_args.subparser_name == 'process':
+            command_result = self.process_cmd_execute(local_cmd_args)
+        elif local_cmd_args.subparser_name == 'resource':
+            command_result = self.resource_cmd_execute(local_cmd_args)
+        elif local_cmd_args.subparser_name == 'get':
+            command_result = self.get_cmd_execute(local_cmd_args)
+        elif local_cmd_args.subparser_name == 'set':
+            command_result = self.set_cmd_execute(local_cmd_args)
+        elif local_cmd_args.subparser_name == 'service':
+            command_result = self.service_cmd_execute(local_cmd_args)
+        elif local_cmd_args.subparser_name == 'bios':
+            command_result = self.bios_cmd_execute(local_cmd_args)
+        elif local_cmd_args.subparser_name == 'sensor':
+            command_result = self.oobsensor_cmd_execute(local_cmd_args)
+        return command_result
+
+    def execute_cmd(self, cmd_args, masterparser, unknown_args):
+        """Execute the command through an internal function with
+        timeout decorator that uses specified timeout value"""
+        try:
+            self.set_time_out(cmd_args)
+        except (ConfigurationNeeded, TypeError) as error:
+            self.cmd_invoker.logger.warning(error.message +
+                                            ' Keep executing the command '
+                                            'with the default timeout:' +
+                                            str(self.default_timeout))
+            self.timeout = self.default_timeout
+
+        @timeout_decorator.timeout(self.timeout)
+        def execute_cmd_internal():
+            try:
+                if cmd_args.subparser_name == 'datastore':
+                    datastore_cli = DataStoreCLI(self.cmd_invoker.get_datastore()).\
+                        parse_and_run(unknown_args)
+                    return datastore_cli
+                if cmd_args.subparser_name == 'provision':
+                    provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(
+                        unknown_args)
+                    return self.handle_command_result(provisioner_result)
+
+                command_result = self._execute_local_command(masterparser.get_all_args())
+
+            except timeout_decorator.TimeoutError:
+                """TODO to kill all the sub processes!"""
+                command_result = CommandResult(-1, 'The command timed out '
+                                                   'before done!')
+
+            return self.handle_command_result(command_result)
+
+        return execute_cmd_internal()
+
+    def get_cmd_invoker_args(self, verbosity):
+        """Set the screen log level according to verbosity"""
+        cmd_invoker_args = dict()
+        if verbosity == 1:
+            cmd_invoker_args["screen_log_level"] = logging.INFO
+        elif verbosity == 2:
+            cmd_invoker_args["screen_log_level"] = logging.DEBUG
+        return cmd_invoker_args
+
+    def set_time_out(self, cmd_args):
+        """Set the timeout value, either from the command line or from
+        the configuration file"""
+        if cmd_args.timeout is not None:
+            self.timeout = cmd_args.timeout
+        else:
+            cmd_timeout = self.cmd_invoker.get_datastore().\
+                get_configuration_value('cmd_timeout')
+            if cmd_timeout is not None:
+                if not isinstance(cmd_timeout, Number):
+                    raise TypeError('The cmd_timeout value is not a number.')
+                self.timeout = cmd_timeout
+            else:
+                raise ConfigurationNeeded('cmd_timeout')
+
     def execute_cli_cmd(self):
         """Function to call appropriate sub-parser"""
         masterparser = ControlArgParser()
         cmd_args, unknown_args = masterparser.ctrl_parser.parse_known_args()
-
-        command_invoker_args = dict()
-        if cmd_args.verbosity == 1:
-            command_invoker_args["screen_log_level"] = logging.INFO
-        elif cmd_args.verbosity == 2:
-            command_invoker_args["screen_log_level"] = logging.DEBUG
+        cmd_invoker_args = self.get_cmd_invoker_args(cmd_args.verbosity)
         try:
-            self.cmd_invoker = CommandInvoker(**command_invoker_args)
+            self.cmd_invoker = CommandInvoker(**cmd_invoker_args)
         except Exception as f:
             if hasattr(f, 'value'):
                 print(f.value)
             else:
                 print(f)
             sys.exit(1)
-
-        # Following this pattern: http://chase-seibert.github.io/blog/2014/03/21/python-multilevel-argparse.html
-        if cmd_args.subparser_name == 'datastore':
-            datastore_cli = DataStoreCLI(self.cmd_invoker.get_datastore()).parse_and_run(unknown_args)
-            return datastore_cli
-        if cmd_args.subparser_name == 'provision':
-            provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(unknown_args)
-            return self.handle_command_result(provisioner_result)
-
-        cmd_args = masterparser.get_all_args()
-        command_result = None
-        if cmd_args.subparser_name == 'power':
-            command_result = self.power_cmd_execute(cmd_args)
-        elif cmd_args.subparser_name == 'process':
-            command_result = self.process_cmd_execute(cmd_args)
-        elif cmd_args.subparser_name == 'resource':
-            command_result = self.resource_cmd_execute(cmd_args)
-        elif cmd_args.subparser_name == 'get':
-            command_result = self.get_cmd_execute(cmd_args)
-        elif cmd_args.subparser_name == 'set':
-            command_result = self.set_cmd_execute(cmd_args)
-        elif cmd_args.subparser_name == 'service':
-            command_result = self.service_cmd_execute(cmd_args)
-        elif cmd_args.subparser_name == 'bios':
-            command_result = self.bios_cmd_execute(cmd_args)
-        elif cmd_args.subparser_name == 'sensor':
-            command_result = self.oobsensor_cmd_execute(cmd_args)
-
-        return self.handle_command_result(command_result)
+        return self.execute_cmd(cmd_args, masterparser, unknown_args)
 
     def handle_command_result(self, command_result):
         """

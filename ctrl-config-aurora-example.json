@@ -2,7 +2,8 @@
   "configuration_variables": {
     "log_file_path": "/tmp/ctrl.log",
     "log_file_max_bytes": 10485760,
-    "provisioning_agent_software": "Warewulf"
+    "provisioning_agent_software": "Warewulf",
+    "cmd_timeout": 1800
   },
   "device": [
     {
