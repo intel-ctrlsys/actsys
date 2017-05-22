@@ -7,14 +7,14 @@ Tests for the FileStore class
 """
 from __future__ import print_function
 import unittest
-from random import randint
 import tempfile
 import os
+import json
+from mock import patch
 from ..utilities import DataStoreUtilities, JsonParser, FileNotFound, NonParsableFile, DeviceUtilities
 
 
 class TestUtilities(unittest.TestCase):
-
     def setUp(self):
         pass
 
@@ -72,6 +72,31 @@ gorilla""")
             JsonParser.read_file(temp_file.name)
         os.remove(temp_file.name)
 
+    def test_json_not_parsable(self):
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.write("")
+        temp_file.close()
+        try:
+            result = JsonParser.read_file(temp_file.name)
+            self.fail()
+        except NonParsableFile as npf:
+            self.assertEqual(str(npf), "'File {} cannot be parsed.'".format(temp_file.name))
+
+        os.remove(temp_file.name)
+
+    @patch.object(json, "dumps", side_effect=ValueError())
+    def test_json_not_parseable2(self, mock_json):
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.write("")
+        temp_file.close()
+        try:
+            JsonParser.write_file(temp_file.name, "")
+            self.fail()
+        except NonParsableFile:
+            pass
+
+        os.remove(temp_file.name)
+
     def test_json_write(self):
         temp_file = tempfile.NamedTemporaryFile("w", delete=False)
         temp_file.close()
@@ -112,8 +137,11 @@ fold_tests = {
     "nosequential_lists2": ["node1,node12", "node[1,12]"],
     "nosequential_lists3": ["node3,node1", "node[1,3]"],
     "strange_lists": ["node001,node4,node94", "node[001,004,094]"],
-    "mutiple_names": ["nhl1,nfl1,nhl2,nfl2", "nfl[1-2],nhl[1-2]"]
-
+    "mutiple_names": ["nhl1,nfl1,nhl2,nfl2", "nfl[1-2],nhl[1-2]"],
+    "list1": [["n1", "n2", "n3"], "n[1-3]"],
+    "list2": [["n01", "n02", "n03"], "n[01-03]"],
+    "list3": [["n1", "n222", "n2"], "n[1-2,222]"],
+    "list4": [["n1", "ni2", "nl3"], "n1,ni2,nl3"]
 }
 
 
@@ -128,3 +156,18 @@ class TestNodeExpand(unittest.TestCase):
             test = fold_tests.get(test_key)
             self.assertEqual(DeviceUtilities.fold_devices(test[0]), test[1])
 
+    def test_empty_expand(self):
+        self.assertEqual(DeviceUtilities.expand_devicelist(None), [])
+        self.assertEqual(DeviceUtilities.expand_devicelist(""), [])
+
+    def test_empty_fold(self):
+        self.assertEqual("", DeviceUtilities.fold_devices(None))
+        self.assertEqual("", DeviceUtilities.fold_devices(""))
+
+    def test_invalid_expand(self):
+        try:
+            DeviceUtilities.expand_devicelist("[")
+            self.fail()
+        except DeviceUtilities.DeviceListParseError as dlpe:
+            self.assertEqual(dlpe.message,  'missing bracket: "["')
+            pass

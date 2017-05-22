@@ -2,22 +2,48 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
+"""
+Common utilities that DataStore users or implementers need.
+"""
 import json
-from ClusterShell.NodeSet import expand, fold, grouplist
+from ClusterShell.NodeSet import expand, fold, grouplist, NodeSetParseError
 
 
 class DeviceUtilities(object):
+    """
+    Utilities for handling device names and sets.
+    """
+    DeviceListParseError = NodeSetParseError
 
     @staticmethod
     def expand_devicelist(devicelist):
+        """
+        Expand strings like "device[1-3]" into lists like ["device1", "device2", device3"].
+        Also handles groups like "@compute_nodes".
+        See the range of inputs at: http://clustershell.readthedocs.io/en/latest/tools/nodeset.html
+        :param devicelist: A list of devices.
+        :raise DevicelListParseError: When the expression is not parsable.
+        :return:
+        """
         return expand(devicelist)
 
     @staticmethod
-    def fold_devices(device):
-        return fold(device)
+    def fold_devices(devicelist):
+        """
+        Collabse/fold hte given devicelist to the smallest possible one.
+        :param device:
+        :return:
+        """
+        if isinstance(devicelist, list):
+            devicelist = ",".join(devicelist)
+        return fold(devicelist)
 
     @staticmethod
     def get_groups():
+        """
+        List the known groups
+        :return: A list of strings (group names)
+        """
         return grouplist()
 
 
