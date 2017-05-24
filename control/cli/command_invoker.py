@@ -12,7 +12,7 @@ import re
 import logging
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
-from datastore import DataStoreBuilder
+from datastore import DataStoreBuilder, DeviceUtilities
 
 
 class CommandInvoker(object):
@@ -48,11 +48,7 @@ class CommandInvoker(object):
     @classmethod
     def _device_name_check(cls, device_name):
         """Check the device name & create a list"""
-        if re.match("^[A-Za-z0-9,\-]+$", device_name):
-            dev_list = device_name.split(",")
-            return dev_list
-        else:
-            return 1
+        return DeviceUtilities.expand_devicelist(device_name)
 
     def init_manager(self):
         self.manager = PluginManager()
@@ -163,11 +159,14 @@ class CommandInvoker(object):
                        'oob_sensor_get': 'oob_sensor_get',
                        'oob_sensor_get_time': 'oob_sensor_get_time'
                        }
-        device_list = CommandInvoker._device_name_check(device_regex)
-        if not isinstance(device_list, list):
-            result = CommandResult(1, "Failed to parse a valid device name(s) in {}".format(device_regex))
+        try:
+            device_list = CommandInvoker._device_name_check(device_regex)
+        except DeviceUtilities.DeviceListParseError as dlpe:
+            result = CommandResult(1, "Failed to parse valid device name(s) in {}. Error: {}".format(device_regex, dlpe.message))
             self.logger.warning(result.message)
             return result
+        if not device_list:
+            return CommandResult(1, "No valid devices to run this command on.")
         results = list()
         for device_name in device_list:
             if not self.device_exists_in_config(device_name):

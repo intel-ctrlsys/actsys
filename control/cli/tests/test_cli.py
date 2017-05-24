@@ -11,7 +11,7 @@ from mock import patch, MagicMock
 from ..command_invoker import CommandInvoker
 from ..control_cli import ControlArgParser, ControlCommandLineInterface
 from ...commands import CommandResult
-from datastore.utilities import FileNotFound
+from datastore.utilities import FileNotFound, DeviceUtilities
 
 
 class CommandInvokerTest(TestCase):
@@ -139,8 +139,8 @@ class CommandExeFactoryTest(TestCase):
     @patch("control.plugin.manager.PluginManager")
     def setUp(self, mock_plugin_manager):
         self.TestParser = ControlArgParser()
-        self.original_cluster_config_name = CommandInvoker.BASE_CLUSTER_CONFIG_NAME
-        CommandInvoker.BASE_CLUSTER_CONFIG_NAME = "ctrl-config-example.json"
+        self.original_cluster_config_name = CommandInvoker.CTRL_CONFIG_LOCATION
+        CommandInvoker.CTRL_CONFIG_LOCATION = "ctrl-config-example.json"
         self.command_invoker = CommandInvoker()
         self.command_invoker.logger = MagicMock()
         self.mock_plugin_manager = mock_plugin_manager
@@ -153,7 +153,7 @@ class CommandExeFactoryTest(TestCase):
 
     def tearDown(self):
         self.command_invoker.datastore.get_device = self.get_device
-        CommandInvoker.BASE_CLUSTER_CONFIG_NAME = self.original_cluster_config_name
+        CommandInvoker.CTRL_CONFIG_LOCATION = self.original_cluster_config_name
 
     def returns_true(self, device_name):
         return True
@@ -168,9 +168,9 @@ class CommandExeFactoryTest(TestCase):
         self.assertIsNotNone(self.command_invoker.manager)
 
     def test_wrong_device_name(self):
-        device_name = 'compute-29#'
-        ret_val = CommandInvoker()._device_name_check(device_name)
-        self.assertEqual(ret_val, 1)
+        device_name = 'compute-29['
+        with self.assertRaises(DeviceUtilities.DeviceListParseError):
+            ret_val = CommandInvoker()._device_name_check(device_name)
 
     def test_wrong_device_name2(self):
         self.command_invoker.datastore.get_device = self.get_device
@@ -476,7 +476,7 @@ class ControlCliParserTest(TestCase):
 
     def test_invalid_device_name2(self):
         device_name = "non-existant-node-1,compute-30"
-        self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = [
+        self.command_invoker.manager.create_instance.return_value.execute.side_effect = [
             CommandResult(1), CommandResult(0)]
         retval = self.command_invoker.resource_remove(device_name)
         self.assertEqual(retval[0].return_code, 1)
