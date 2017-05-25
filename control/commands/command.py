@@ -14,7 +14,6 @@ class Command(object):
     Abstract Base Class for all command objects. Ensure derived objects follow
     its conventions.
     """
-
     def __init__(self, device_name, configuration, plugin_manager, logger=None, **additional_arguments):
         """
 

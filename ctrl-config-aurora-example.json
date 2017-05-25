@@ -54,6 +54,8 @@
     {
       "access_type": "ssh",
       "device_power_control": "bky_power",
+      "oob_sensor": "bky_oob_sensor",
+      "diagnostic": "mock",
       "image": "centos7.2",
       "os_boot_timeout_seconds": 300,
       "os_network_to_halt_time": 5,

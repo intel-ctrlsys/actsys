@@ -19,6 +19,7 @@ from datastore.datastore_cli import DataStoreCLI
 from .command_invoker import CommandInvoker
 from ..commands import CommandResult, ConfigurationNeeded
 from .provision_cli import ProvisionCli
+from .diagnostics_cli import DiagnosticsCli
 
 
 class ControlArgParser(object):
@@ -90,6 +91,7 @@ class ControlArgParser(object):
         self.ctrl_subparser.add_parser('datastore', help="Device and configuration manipulations", add_help=False)
         self.ctrl_subparser.add_parser('provision', help="Adding, setting and removing provisioning "
                                                          "options for devices", add_help=False)
+        self.ctrl_subparser.add_parser('diag', help="Launching diagnostic tests on devices", add_help=False)
 
         self.add_subparser('bios', 'Update or get version of bios on specified nodes/group of nodes',
                            ['update', 'get-version'], 'Select an action to perform',
@@ -292,6 +294,9 @@ class ControlCommandLineInterface(object):
                     provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(
                         unknown_args)
                     return self.handle_command_result(provisioner_result)
+                if cmd_args.subparser_name == 'diag':
+                    diagnostic_result = DiagnosticsCli(self.cmd_invoker).parse_and_run(unknown_args)
+                    return self.handle_command_result(diagnostic_result)
 
                 command_result = self._execute_local_command(masterparser.get_all_args())
 

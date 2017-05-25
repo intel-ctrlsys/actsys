@@ -117,6 +117,11 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(OobSensorGetCommand)
         self.manager.register_plugin_class(OobSensorGetTimeCommand)
 
+        # Diagnostics plugin
+        from ..commands.diagnostics import DiagnosticsOnlineCommand, DiagnosticsOfflineCommand
+        self.manager.register_plugin_class(DiagnosticsOnlineCommand)
+        self.manager.register_plugin_class(DiagnosticsOfflineCommand)
+
         try:
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)
@@ -149,7 +154,9 @@ class CommandInvoker(object):
                        'provisioner_delete': 'provisioner_delete',
                        'provisioner_set': 'provisioner_set',
                        'oob_sensor_get': 'oob_sensor_get',
-                       'oob_sensor_get_time': 'oob_sensor_get_time'
+                       'oob_sensor_get_time': 'oob_sensor_get_time',
+                       'diagnostics_online': 'diagnostics_online',
+                       'diagnostics_offline': 'diagnostics_offline'
                        }
         try:
             device_list = CommandInvoker._device_name_check(device_regex)
@@ -305,3 +312,12 @@ class CommandInvoker(object):
         """
         return self.common_cmd_invoker(device_name, "oob_sensor_get_time", sensor_name=sensor_name, duration=duration,
                                        sample_rate=sample_rate)
+
+    def diagnostics_online(self, device_name, test=None, image=None):
+        """Execute the online Diagnostics"""
+        return self.common_cmd_invoker(device_name, "diagnostics_online", test_name=test, diag_image=image)
+
+    def diagnostics_offline(self, device_name, test=None):
+        """Execute the offline Diagnostics"""
+        return self.common_cmd_invoker(device_name, "diagnostics_offline", test_name=test)
+
