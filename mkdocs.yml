@@ -1,0 +1,9 @@
+site_name: Actsys
+repo_url: https://github.com/intel-ctrlsys/actsys/
+theme: readthedocs
+pages:
+    - 'Overview': 'index.md'
+    - 'User Guide':
+        - 'Quick Start': 'quick-start.md'
+        - 'Installation Instructions': 'installation-instructions.md'
+    - 'License': 'license.md'
