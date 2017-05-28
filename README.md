@@ -1,5 +1,5 @@
-# python-starter
-A starting spot for python projects. Embracing open source elements.
+# actsys
+A starting spot for actsys. Embracing open source elements.
 
 [![Documentation status](https://readthedocs.org/projects/actsys/badge/?version=latest)](http://actsys.readthedocs.io/en/latest/) [![Build Status](https://travis-ci.org/intel-ctrlsys/actsys.svg?branch=master)](https://travis-ci.org/intel-ctrlsys/actsys) [![codecov](https://codecov.io/gh/intel-ctrlsys/actsys/branch/master/graph/badge.svg)](https://codecov.io/gh/intel-ctrlsys/actsys)
 
