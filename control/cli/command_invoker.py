@@ -8,11 +8,11 @@ to perform user requested operations.
 """
 from __future__ import print_function
 import os
-import re
 import logging
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
-from datastore import DataStoreBuilder, DeviceUtilities
+from datastore import DataStoreBuilder
+from datastore.utilities import DeviceUtilities
 
 
 class CommandInvoker(object):
