@@ -7,8 +7,10 @@ install:
   - pip install -r requirements.txt
   - pip install codecov
 # command to run tests
+#  The first runs pylint, reads the code raiting and errors if the rating is below 8.
+#  The second runs the tests.
 script:
-  - pylint --ignore-patterns=test* starter || [[ $? == 0 || $? -ge 8 ]]
-  - python -m pytest . --cov=starter --cov-report term-missing --cov-report xml
+  - pylint --ignore-patterns=test* actsys | tee /dev/tty | gawk 'match($0, /([0-9]*)[0-9.]*\.[0-9]/, a) {exit a[1]}' || [[ $? == 0 || $? -ge 8 ]]
+  - python -m pytest . --cov=actsys --cov-report term-missing --cov-report xml
 after_success:
   - codecov
