@@ -20,3 +20,9 @@ class TestInterface(unittest.TestCase):
     def test_interface(self):
         self.interface.get_chassis_state(self.remote)
         self.interface.set_chassis_state(self.remote, 'on')
+        self.interface.get_version(None, None)
+        self.interface.bios_update(None, None, 'test.bin')
+
+    def test_oob_sensor(self):
+        self.interface.get_sensor_value_over_time('none', 'none', 'none', None, None)
+        self.interface.get_sensor_value('name', None, None)

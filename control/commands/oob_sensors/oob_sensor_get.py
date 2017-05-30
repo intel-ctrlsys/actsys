@@ -22,8 +22,7 @@ class OobSensorGetCommand(OobSensorCommand):
         """Execute the command"""
         self.setup()
         final_return = ''
-        self.oob_sensor_plugin = self.plugin_manager.create_instance('oob_sensors', self.plugin_name,
-                                                                     device_name=self.device_name)
+        self.oob_sensor_plugin = self.plugin_manager.create_instance('bmc', self.plugin_name)
         num_sensors = self.sensor_name.split(',')
         for sensors in num_sensors:
             sensor_value = self.get_sensor_name(sensors)
@@ -36,4 +35,3 @@ class OobSensorGetCommand(OobSensorCommand):
                         self.print_table_border('-', '-') + self.print_table(ret_msg)
             final_return += p_ret_msg
         return CommandResult(0, final_return)
-

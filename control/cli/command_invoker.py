@@ -104,10 +104,6 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(SlurmResource)
         self.manager.register_plugin_class(MockResource)
 
-        # NodeController Plugins for BIOS
-        from ..bios import MockNC
-        self.manager.register_plugin_class(MockNC)
-
         from ..commands.provisioner import ProvisionerDeleteCommand, ProvisionerAddCommand, ProvisionerSetCommand
         self.manager.register_plugin_class(ProvisionerAddCommand)
         self.manager.register_plugin_class(ProvisionerDeleteCommand)
@@ -116,10 +112,6 @@ class CommandInvoker(object):
         from ..provisioner import MockProvisioner, Warewulf
         self.manager.register_plugin_class(MockProvisioner)
         self.manager.register_plugin_class(Warewulf)
-        
-        # Mock Oobsensor Plugin for OobSensors
-        from ..oob_sensors import OobSensorMock
-        self.manager.register_plugin_class(OobSensorMock)
 
         from ..commands.oob_sensors import OobSensorGetCommand, OobSensorGetTimeCommand
         self.manager.register_plugin_class(OobSensorGetCommand)

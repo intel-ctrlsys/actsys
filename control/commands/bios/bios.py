@@ -26,5 +26,5 @@ class BiosCommand(Command):
             return CommandResult(255, "The device is not a compute node!")
         if bios_controller is None:
             return CommandResult(255, "Please provide bios controller type in configuration")
-        self.node_controller = self.plugin_manager.create_instance('bios', bios_controller)
+        self.node_controller = self.plugin_manager.create_instance('bmc', bios_controller)
         return None

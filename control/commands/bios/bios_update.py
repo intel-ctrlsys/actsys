@@ -9,6 +9,7 @@ from ...commands.command import CommandResult
 from ...plugin import DeclarePlugin
 from .bios import BiosCommand
 
+
 @DeclarePlugin('bios_update', 100)
 class BiosUpdateCommand(BiosCommand):
     """Bios Update Command"""
