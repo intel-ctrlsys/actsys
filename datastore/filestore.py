@@ -145,12 +145,16 @@ class FileStore(DataStore):
 
         return None, None
 
-    def set_device(self, device_info):
+    def set_device(self, device_info_list):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).set_device(device_info)
+        super(FileStore, self).set_device(device_info_list)
 
+        if not isinstance(device_info_list, list):
+            device_info_list = [device_info_list]
+
+        set_ids = list()
         # Update
         devices = self.parsed_file.get(self.DEVICE_KEY, None)
         if devices is None:
@@ -158,41 +162,53 @@ class FileStore(DataStore):
             self.parsed_file[self.DEVICE_KEY] = list()
             devices = self.parsed_file.get(self.DEVICE_KEY)
 
-        device_to_update_id = device_info.get("device_id")
         highest_node_id = 0
-        for index, device in enumerate(devices):
-            device_id = device.get('device_id')
-            if device_id > highest_node_id:
-                highest_node_id = device_id
-            if device_id == device_to_update_id:
-                # Update the device with what was passed in
-                devices[index] = self._remove_profile_from_device(device_info)[0]
-                self.save_file()
-                return device.get("device_id")
+        for device_info in device_info_list:
+            device_to_update_id = device_info.get("device_id")
+            updated = False
+            for index, device in enumerate(devices):
+                device_id = device.get('device_id')
+                if device_id > highest_node_id:
+                    highest_node_id = device_id
+                if device_id == device_to_update_id:
+                    # Update the device with what was passed in
+                    devices[index] = self._remove_profile_from_device(device_info)[0]
+                    set_ids.append(device_info.get("device_id"))
+                    updated = True
+                    break
 
-        # Set device id to the next aval one
-        if device_info.get("device_id") is None:
-            device_info["device_id"] = highest_node_id + 1
+            if not updated:
+                # Set device id to the next aval one
+                if device_info.get("device_id") is None:
+                    highest_node_id = highest_node_id + 1
+                    device_info["device_id"] = highest_node_id
 
-        # Insert device
-        devices.append(self._remove_profile_from_device(device_info)[0])
+                # Insert device
+                devices.append(self._remove_profile_from_device(device_info)[0])
+                set_ids.append(device_info.get("device_id"))
+
         self.save_file()
-        return device_info.get("device_id")
+        return set_ids
 
-    def delete_device(self, device_name):
+    def delete_device(self, device_list):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(FileStore, self).delete_device(device_name)
+        super(FileStore, self).delete_device(device_list)
         devices = self.parsed_file.get(self.DEVICE_KEY, [])
 
-        index, device = self._device_find(device_name, devices)
-        if index is not None:
-            devices.pop(index)
-            self.save_file()
-            return device.get("device_id")
-        else:
-            return None
+        if not isinstance(device_list, list):
+            device_list = [device_list]
+
+        deleted_device_ids = list()
+        for device_name in device_list:
+            index, device = self._device_find(device_name, devices)
+            if index is not None:
+                removed_device = devices.pop(index)
+                self.save_file()
+                deleted_device_ids.append(removed_device.get("device_id"))
+
+        return deleted_device_ids
 
     def get_device_history(self, device_name=None):
         """

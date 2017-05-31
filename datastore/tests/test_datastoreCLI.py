@@ -9,6 +9,7 @@ from __future__ import print_function
 import unittest
 import tempfile
 import os
+import sys
 import StringIO
 import json
 import logging
@@ -23,6 +24,14 @@ class TestDataStoreCLI(unittest.TestCase):
         self.mockDS = Mock(spec=DataStore)
         self.dscli = DataStoreCLI(self.mockDS)
 
+    def test_via_sysargs(self):
+        sys.argv = ['datastore', 'device', '-h']
+        try:
+            self.dscli.parse_and_run()
+            self.fail()
+        except SystemExit:
+            pass
+
     def test_datastoreCLI_init(self):
         result = DataStoreCLI(self.mockDS)
         self.assertIsNotNone(result)
@@ -32,6 +41,13 @@ class TestDataStoreCLI(unittest.TestCase):
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'list'])
             self.assertEqual(output.getvalue(), '--- node1 ---\nhostname             : node1\n')
+
+    def test_device_bad_options(self):
+        result = self.dscli.parse_and_run(['device', 'list', 'll'])
+        self.assertEqual(result, 1)
+
+        result = self.dscli.parse_and_run(['device', 'list', 'll', 'll'])
+        self.assertEqual(result, 1)
 
     def test_device_get(self):
         # print('execute_devices')
@@ -45,6 +61,17 @@ class TestDataStoreCLI(unittest.TestCase):
             result = self.dscli.parse_and_run(['device', 'list', 'debug_ip=127.0.0.111'])
             self.assertEqual(output.getvalue(),
                              '--- None ---\ndebug_ip             : 127.0.0.111\ndevice_type          : node\n')
+
+    def test_device_get_no_options_allowed(self):
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['device', 'get', 'test1', 'option=opt'])
+            # self.assertEqual(output.getvalue(), 'device get does not accept additional options.')
+            self.assertEqual(result, 1)
+
+    def test_device_get_only_one_device(self):
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['device', 'get', 'test[1-10]'])
+            self.assertEqual(result, 1)
 
     def test_device_get_no_match(self):
         # print('execute_devices')
@@ -90,6 +117,18 @@ class TestDataStoreCLI(unittest.TestCase):
         self.mockDS.list_profiles.return_value = [{'profile_name': 'compute node'}]
         result = self.dscli.parse_and_run(['profile', 'list'])
         self.assertEqual(result, 0)
+
+    def test_profiles_list_filter(self):
+        self.mockDS.list_profiles.return_value = [{'profile_name': 'compute_node'}]
+        result = self.dscli.parse_and_run(['profile', 'list', "profile_name=compute_node"])
+        self.assertEqual(result, 0)
+
+    def test_profile_bad_options(self):
+        result = self.dscli.parse_and_run(['profile', 'list', 'll'])
+        self.assertEqual(result, 1)
+
+        result = self.dscli.parse_and_run(['profile', 'list', 'll', 'll'])
+        self.assertEqual(result, 1)
 
     def test_profiles_delete(self):
         self.mockDS.list_profiles.return_value = [{'profile_name': 'compute node'}]

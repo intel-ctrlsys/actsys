@@ -117,49 +117,53 @@ class PostgresStore(DataStore):
         self.logger.info("DataStore.list_devices: {}".format(filtered_devices))
         return filtered_devices
 
-    def set_device(self, device_info):
+    def set_device(self, device_info_list):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(PostgresStore, self).set_device(device_info)
+        super(PostgresStore, self).set_device(device_info_list)
 
-        args = SqlParser.prepare_device_for_query(self._remove_profile_from_device(device_info)[0])
-        self.cursor.callproc("public.upsert_device", args)
-        result = self.cursor.fetchall()
-        self.logger.debug("DataStore.set_device database result: {}".format(result))
-        if result is None or len(result) != 1 or result[0][0] > 1:
-            raise DataStoreException("Upsert query affected {} rows, excepted 1".format(result[0][0] if result else 0))
+        if not isinstance(device_info_list, list):
+            device_info_list = [device_info_list]
+
+        set_ids = list()
+        # TODO: change this for loop into one batch upsert query.
+        for device_info in device_info_list:
+            args = SqlParser.prepare_device_for_query(self._remove_profile_from_device(device_info)[0])
+            self.cursor.callproc("public.upsert_device", args)
+            result = self.cursor.fetchall()
+            self.logger.debug("DataStore.set_device database result: {}".format(result))
+            if result is None or len(result) != 1 or result[0][0] != 1:
+                raise DataStoreException("Upsert query affected {} rows, excepted 1".format(result[0][0] if result else 0))
+            set_ids.append(result[0][1])
+
         self.connection.commit()
+        return set_ids
 
-        if result[0][0] == 1:
-            self.logger.info("DataStore.set_device affected device: {}".format(result[0][1]))
-            # The affected device_id
-            return result[0][1]
-        else:
-            # Nothing changed
-            self.logger.info("DataStore.set_device affected device: None")
-            return None
-
-    def delete_device(self, device_name):
+    def delete_device(self, device_list):
         """
         See @DataStore for function description. Only implementation details here.
         """
-        super(PostgresStore, self).delete_device(device_name)
-        device_name = str(device_name)
-        self.cursor.callproc("public.delete_device", [device_name])
-        result = self.cursor.fetchall()
-        self.logger.debug("DataStore.delete_device database result: {}".format(result))
-        if result is None or result[0][0] > 1:
-            raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
+        super(PostgresStore, self).delete_device(device_list)
+        if not isinstance(device_list, list):
+            device_list = [device_list]
+
+        deleted_device_ids = list()
+
+        for device_name in device_list:
+            device_name = str(device_name)
+            self.cursor.callproc("public.delete_device", [device_name])
+            result = self.cursor.fetchall()
+            self.logger.debug("DataStore.delete_device database result: {}".format(result))
+            if result is None or result[0][0] > 1:
+                raise DataStoreException("Delete query affected {} rows, excepted 1".format(result[0][0] if result else 0))
+            if result[0][0] == 1:
+                # The affected device_id
+                self.logger.debug("DataStore.delete_device deleted device: {}".format(result[0][1]))
+                deleted_device_ids.append(result[0][1])
         self.connection.commit()
-        if result[0][0] == 1:
-            # The affected device_id
-            self.logger.info("DataStore.delete_device deleted device: {}".format(result[0][1]))
-            return result[0][1]
-        else:
-            # Nothing changed
-            self.logger.info("DataStore.delete_device deleted device: {}".format(None))
-            return None
+
+        return deleted_device_ids
 
     def get_device_history(self, device_name=None):
         super(PostgresStore, self).list_devices(device_name)

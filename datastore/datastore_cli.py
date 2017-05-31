@@ -11,6 +11,7 @@ import argparse
 import re
 from dateutil.parser import parse as date_parse
 from . import DataStoreException, DataStore, DataStoreBuilder
+from .utilities import DeviceUtilities
 
 
 class DataStoreCLI(object):
@@ -44,7 +45,7 @@ class DataStoreCLI(object):
         """
         self.device_parser = self.subparsers.add_parser('device', help="Manipulations for devices")
         self.device_parser.add_argument('action', choices=['list', 'get', 'set', 'delete'])
-        self.device_parser.add_argument('device_name', nargs='?', default=None)
+        self.device_parser.add_argument('device_list', nargs='?', default=None)
         self.device_parser.add_argument('options', nargs='*',
                                         help='key=value pairs used to assist in selecting and setting attributes')
         self.device_parser.set_defaults(func=self.device_execute)
@@ -83,7 +84,7 @@ class DataStoreCLI(object):
         # To get multiline help msgs:
         # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
         self.log_parser.add_argument('--limit', '-l', type=int, default=100, required=False)
-        self.log_parser.add_argument('--device_name', '-n', type=str, required=False)
+        self.log_parser.add_argument('--device_list', '-n', type=str, required=False)
         self.log_parser.add_argument('--begin', '-b', required=False)
         self.log_parser.add_argument('--end', '-e', required=False)
 
@@ -147,7 +148,7 @@ class DataStoreCLI(object):
         :param parsed_args:
         :return:
         """
-        device_name = parsed_args.device_name
+        device_list = parsed_args.device_list
 
         try:
             options = self.parse_options(parsed_args.options)
@@ -157,9 +158,9 @@ class DataStoreCLI(object):
 
         if parsed_args.action == "list":
             new_options = options.copy()
-            if device_name is not None:
+            if device_list is not None:
                 try:
-                    ops2 = self.parse_options([device_name])
+                    ops2 = self.parse_options([device_list])
                 except ParseOptionsException as poe:
                     print(poe.message)
                     return poe.return_code
@@ -168,32 +169,41 @@ class DataStoreCLI(object):
             self.print_devices(devices)
             return 0
 
-        if device_name is None:
+        device_list = DeviceUtilities.expand_devicelist(device_list)
+        if not device_list:
+            self.device_parser.print_usage()
             print("Please specify a device")
             return 1
 
         if parsed_args.action == "set":
-            existing_device = self.datastore.get_device(device_name)
-            if existing_device is None:
-                existing_device = dict()
+            devices_to_be_set = list()
+            for device_name in device_list:
+                # TODO: turn this get into one call to get all the devices (maybe use list_device(hostnames)?)
+                existing_device = self.datastore.get_device(device_name)
+                if existing_device is None:
+                    existing_device = dict()
 
-            # Apply the options to it
-            for option in options:
-                value = options[option]
-                if value == "UNDEF":
-                    existing_device.pop(option, None)
-                else:
-                    existing_device[option] = value
+                # TODO: put this in a datastore function, (called update device, instead of set)
+                # Apply the options to it
+                for option in options:
+                    value = options[option]
+                    if value == "UNDEF":
+                        existing_device.pop(option, None)
+                    else:
+                        existing_device[option] = value
 
-            if existing_device.get("device_type") is None:
-                self.device_parser.print_usage()
-                print("Please specify a device_type. (i.e device_type=node)")
-                return 1
+                if existing_device.get("device_type") is None:
+                    self.device_parser.print_usage()
+                    print("Please specify a device_type. (i.e device_type=node) for device {}".format(device_name))
+                    return 1
 
-            # Set profile_name in the options
-            existing_device["hostname"] = existing_device.get("hostname", device_name)
-            self.datastore.set_device(existing_device)
-            print("Successfully updated '{}'".format(device_name))
+                # Set profile_name in the options
+                existing_device["hostname"] = existing_device.get("hostname", device_name)
+
+                devices_to_be_set.append(existing_device)
+
+            self.datastore.set_device(devices_to_be_set)
+            print("Successfully updated '{}'".format(device_list))
 
             return 0
 
@@ -203,17 +213,21 @@ class DataStoreCLI(object):
             return 1
 
         if parsed_args.action == "get":
-            device = self.datastore.get_device(device_name)
+            if len(device_list) > 1:
+                print("'device get' only supports getting one device at a time. "
+                      "The passed in device list contains {} devices.".format(len(device_list)))
+                return 1
+            device = self.datastore.get_device(device_list[0])
             if device is None:
-                print("Could not find any device matching {}".format(device_name))
+                print("Could not find any device matching {}".format(device_list))
                 return 1
             self.print_devices(device)
             return 0
 
         if parsed_args.action == "delete":
-            retval = self.datastore.delete_device(device_name)
-            if retval is None:
-                print("Device not found. Nothing was deleted.")
+            retval = self.datastore.delete_device(device_list)
+            if not retval:
+                print("Device(s) not found. Nothing was deleted.")
             else:
                 print("Successfully deleted {}".format(retval))
             return 0
@@ -352,12 +366,12 @@ class DataStoreCLI(object):
                 return 0
             begin_date = date_parse(parsed_args.begin)
             end_date = date_parse(parsed_args.end)
-            result = self.datastore.list_logs_between_timeslice(begin_date, end_date, parsed_args.device_name,
+            result = self.datastore.list_logs_between_timeslice(begin_date, end_date, parsed_args.device_list,
                                                                 parsed_args.limit)
             self.print_devices(result)
             return 0
         else:
-            result = self.datastore.list_logs(parsed_args.device_name, parsed_args.limit)
+            result = self.datastore.list_logs(parsed_args.device_list, parsed_args.limit)
             self.print_devices(result)
             return 0
 
@@ -457,9 +471,9 @@ class DataStoreCLI(object):
             # or
             # --- Profile: compute_node ---
             # Header:
-            device_name = item.get("hostname") or item.get("device_id") \
+            device_list = item.get("hostname") or item.get("device_id") \
                           or item.get("ip_address") or item.get("profile_name")
-            print("--- {} ---".format(device_name))
+            print("--- {} ---".format(device_list))
 
             # Body:
             if isinstance(item, dict):

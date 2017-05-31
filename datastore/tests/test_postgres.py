@@ -126,24 +126,29 @@ class TestPostgresDB(unittest.TestCase):
             self.postgres.set_device({"device_id": 1})
 
         result = self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
-        self.assertEqual(result, 2)
+        self.assertEqual(result, [2])
 
         self.set_expected(mock_connect, [(0, 0, None, None, None, None, None, None, None)])
-        result = self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
-        self.assertIsNone(result)
+        with self.assertRaises(DataStoreException):
+            # Exception due to nothing being updated... Something should always be updated.
+            self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
 
         self.set_expected(mock_connect, [(5, 5, None, None, None, None, None, None, None)])
         with self.assertRaises(DataStoreException):
+            # Exception due to too many things being updated, only one should of been updated.
             self.postgres.set_device({"device_type": "test_device_type", "attr": "is_added"})
+
+    def assertListEmpty(self, pList):
+        self.assertListEqual(pList, [])
 
     def test_device_delete(self, mock_connect):
         self.set_expected(mock_connect, [(1, 1)])
         result = self.postgres.delete_device(1)
-        self.assertEqual(1, result)
+        self.assertEqual([1], result)
 
         self.set_expected(mock_connect, [[0, 0]])
         result = self.postgres.delete_device(1)
-        self.assertIsNone(result)
+        self.assertListEmpty(result)
 
         self.set_expected(mock_connect, [[3, 3]])
         with self.assertRaises(DataStoreException):
@@ -151,11 +156,11 @@ class TestPostgresDB(unittest.TestCase):
 
         self.set_expected(mock_connect, [(1, 4)])
         result = self.postgres.delete_device('test')
-        self.assertEqual(result, 4)
+        self.assertEqual(result, [4])
 
         self.set_expected(mock_connect, [(0, None)])
         result = self.postgres.delete_device('test')
-        self.assertIsNone(result)
+        self.assertListEmpty(result)
 
         self.set_expected(mock_connect, [(3,)])
         with self.assertRaises(DataStoreException):
@@ -163,11 +168,11 @@ class TestPostgresDB(unittest.TestCase):
 
         self.set_expected(mock_connect, [[1, 1]])
         result = self.postgres.delete_device(1)
-        self.assertEqual(1, result)
+        self.assertEqual([1], result)
 
         self.set_expected(mock_connect, [[0, 0]])
         result = self.postgres.delete_device(1)
-        self.assertIsNone(result)
+        self.assertListEmpty(result)
 
         self.set_expected(mock_connect, [(3, 3)])
         with self.assertRaises(DataStoreException):
@@ -175,11 +180,11 @@ class TestPostgresDB(unittest.TestCase):
 
         self.set_expected(mock_connect, [(1, 32)])
         result = self.postgres.delete_device('node')
-        self.assertEqual(result, 32)
+        self.assertEqual(result, [32])
 
         self.set_expected(mock_connect, [(0, None)])
         result = self.postgres.delete_device('node')
-        self.assertIsNone(result)
+        self.assertListEmpty(result)
 
         self.set_expected(mock_connect, [(3,)])
         with self.assertRaises(DataStoreException):

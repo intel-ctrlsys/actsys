@@ -238,7 +238,7 @@ class TestFileStore(unittest.TestCase):
     def test_device_upsert(self):
         num = randint(0, 4500000)
         num1 = randint(0, 4500000)
-        device_id = self.fs.set_device({"device_type": "node", "hostname": "test", "port": num})
+        device_id = self.fs.set_device({"device_type": "node", "hostname": "test", "port": num})[0]
         result = self.fs.get_device(device_id)
         self.assertEqual(result.get("port"), num)
         result["port"] = num1
@@ -259,7 +259,7 @@ class TestFileStore(unittest.TestCase):
             device_id = self.fs.delete_device("test")
         self.assertIsNone(self.fs.get_device("test"))
         device_id = self.fs.delete_device(device_id)
-        self.assertIsNone(device_id)
+        self.assertFalse(device_id)
 
         device_id = self.fs.delete_device("test")
         if device_id is None:
@@ -269,7 +269,17 @@ class TestFileStore(unittest.TestCase):
 
         self.assertIsNone(self.fs.get_device("test"))
         device_id = self.fs.delete_device(device_id)
-        self.assertIsNone(device_id)
+        self.assertFalse(device_id)
+
+    def test_delete_multiple(self):
+        self.assertEqual(len(self.fs.list_devices()), 2)
+        result = self.fs.delete_device(["test_hostname", "test_hostname2"])
+        self.assertListEqual(result, [1, 2])
+        self.assertEqual(len(self.fs.list_devices()), 0)
+        result = self.fs.delete_device(["test_hostname", "test_hostname2"])
+        self.assertListEqual(result, [])
+        result = self.fs.delete_device([])
+        self.assertListEqual(result, [])
 
     def test_config_get(self):
         self.assertEqual("warewulf", self.fs.get_configuration_value("provisioning_agent_software"))
@@ -517,9 +527,9 @@ class TestFileStoreEmptyFile(unittest.TestCase):
 
     def test_empty_deletes(self):
         result = self.fs.delete_device("foo")
-        self.assertIsNone(result)
+        self.assertFalse(result)
         result = self.fs.delete_device("foo")
-        self.assertIsNone(result)
+        self.assertFalse(result)
         result = self.fs.delete_profile("foo")
         self.assertIsNone(result)
         result = self.fs.delete_configuration("foo")
@@ -574,9 +584,9 @@ class TestFileStoreWithNoFile(unittest.TestCase):
 
     def test_empty_deletes(self):
         result = self.fs.delete_device("foo")
-        self.assertIsNone(result)
+        self.assertFalse(result)
         result = self.fs.delete_device("foo")
-        self.assertIsNone(result)
+        self.assertFalse(result)
         result = self.fs.delete_profile("foo")
         self.assertIsNone(result)
         result = self.fs.delete_configuration("foo")

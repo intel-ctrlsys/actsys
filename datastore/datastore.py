@@ -59,34 +59,37 @@ class DataStore(object):
         return list()
 
     @abstractmethod
-    def set_device(self, device_info):
+    def set_device(self, device_info_list):
         """
         Either updates or creates a device. This device is saved to the DataStore. An update is attempted when device_id
          is passed in via the device_info param. Otherwise, the device is created.
-        :param device_info: An object or dict of values that define the device. The only required value is that of device_type.
-        :return: the affected device_id
+        :param device_info_list: An object or dict of values that define the device. The only required value is that of device_type.
+        :return list: the affected device_id(s)
         :raise DataStoreException when device_type is not set in the device_info param
         """
-        self.logger.debug("DataStore.set_device called: {}".format(device_info))
+        self.logger.debug("DataStore.set_device called: {}".format(device_info_list))
+        if not isinstance(device_info_list, list):
+            device_info_list = [device_info_list]
 
-        if device_info.get("device_type") is None:
-            raise DataStoreException("device_type is a required key/value in the device_info field")
+        for device_info in device_info_list:
+            if device_info.get("device_type") is None:
+                raise DataStoreException("device_type is a required key/value in the device_info field")
 
-        profile_name = device_info.get("profile_name")
-        if profile_name is not None:
-            profile_names = self.get_profile_names()
-            if profile_name not in profile_names:
-                raise DataStoreException("Cannot set device with profile '{}', because that profile "
-                                         "does not exist.".format(profile_name))
+            profile_name = device_info.get("profile_name")
+            if profile_name is not None:
+                profile_names = self.get_profile_names()
+                if profile_name not in profile_names:
+                    raise DataStoreException("Cannot set device with profile '{}', because that profile "
+                                             "does not exist.".format(profile_name))
 
     @abstractmethod
-    def delete_device(self, device_name):
+    def delete_device(self, device_list):
         """
         Remove the device. Be very careful.
-        :param device_name: As explained in DataStore.list_devices()
-        :return: device_id of the affected device or None
+        :param device_list: As explained in DataStore.get_device()@device_name, optionally accepts a list of device_names.
+        :return: a list of deleted device_id's of the affected device(s)
         """
-        self.logger.debug("DataStore.delete_device called", device_name=device_name)
+        self.logger.debug("DataStore.delete_device called", device_name=device_list)
 
     @abstractmethod
     def get_device_history(self, device_name=None):
