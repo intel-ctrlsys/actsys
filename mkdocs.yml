@@ -6,4 +6,5 @@ pages:
     - 'User Guide':
         - 'Quick Start': 'quick-start.md'
         - 'Installation Instructions': 'installation-instructions.md'
+    - 'Project Management and Contributing': 'project-management.md'
     - 'License': 'license.md'
