@@ -3,8 +3,7 @@
 # Copyright (c) 2017 Intel Corp.
 #
 
-from .. import Command
-
+from ..command import Command
 
 class OobSensorCommand(Command):
     """Oob Sensor Command"""
@@ -24,7 +23,9 @@ class OobSensorCommand(Command):
                                'device!')
         self.device_data = node
         self.bmc_data = cfg.get_device(node.get("bmc"))
-        self.plugin_name = node.get("oob_sensor", 'mock')
+        self.plugin_name = node.get("oob_sensor")
+        if self.plugin_name is None:
+            raise RuntimeError("No OOB Sensor specified in the configuration file. Cannot perform action")
         return None
 
     def print_table(self, ret_msg):
