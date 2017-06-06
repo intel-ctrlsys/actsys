@@ -517,6 +517,7 @@ def get_logger():
     logging.setLoggerClass(DataStoreLogger)
     logger = logging.getLogger("Datastore")
     logger.setLevel(DataStore.LOG_LEVEL)
+    logger.propagate = False
     return logger
 
 
