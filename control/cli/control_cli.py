@@ -8,7 +8,6 @@ This module creates the command line parser and executes the user commands.
 """
 
 from __future__ import print_function
-from numbers import Number
 
 import argparse
 import sys
@@ -276,7 +275,7 @@ class ControlCommandLineInterface(object):
         timeout decorator that uses specified timeout value"""
         try:
             self.set_time_out(cmd_args)
-        except (ConfigurationNeeded, TypeError) as error:
+        except (ConfigurationNeeded, ValueError) as error:
             self.cmd_invoker.logger.warning(error.message +
                                             ' Keep executing the command '
                                             'with the default timeout:' +
@@ -327,9 +326,10 @@ class ControlCommandLineInterface(object):
             cmd_timeout = self.cmd_invoker.get_datastore().\
                 get_configuration_value('cmd_timeout')
             if cmd_timeout is not None:
-                if not isinstance(cmd_timeout, Number):
-                    raise TypeError('The cmd_timeout value is not a number.')
-                self.timeout = cmd_timeout
+                try:
+                    self.timeout = float(cmd_timeout)
+                except ValueError as value_error:
+                    raise value_error
             else:
                 raise ConfigurationNeeded('cmd_timeout')
 

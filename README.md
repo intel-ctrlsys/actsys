@@ -10,7 +10,7 @@ Actsys is a unified API to perform commands on excascale computers. With this AP
 
 ```
 [new-user@my-machine]$ ctrl -h
-usage: ctrl [-h] [-V] [-v]
+usage: ctrl [-h] [-V] [-v] [-t TIMEOUT]
 
             {power,resource,process,get,set,service,datastore,provision,bios,sensor}
             ...
@@ -21,6 +21,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -V, --version         Provides the version of the tool
   -v, --verbosity       increase output verbosity
+  -t TIMEOUT, --timeout TIMEOUT
+                        Provides a timeout for the command
 
 Sub Commands:
   List of Valid Sub Commands
