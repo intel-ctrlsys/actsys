@@ -12,7 +12,6 @@ import logging
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
 from datastore import DataStoreBuilder
-from datastore.utilities import DeviceUtilities
 
 
 class CommandInvoker(object):
@@ -45,10 +44,9 @@ class CommandInvoker(object):
                              os.environ.get(cls.FILE_LOCATION_ENV_VAR, None) or \
                              cls.CTRL_CONFIG_LOCATION
 
-    @classmethod
-    def _device_name_check(cls, device_name):
+    def _device_name_check(self, device_name):
         """Check the device name & create a list"""
-        return DeviceUtilities.expand_devicelist(device_name)
+        return self.datastore.expand_device_list(device_name)
 
     def init_manager(self):
         self.manager = PluginManager()
@@ -159,8 +157,8 @@ class CommandInvoker(object):
                        'diagnostics_offline': 'diagnostics_offline'
                        }
         try:
-            device_list = CommandInvoker._device_name_check(device_regex)
-        except DeviceUtilities.DeviceListParseError as dlpe:
+            device_list = self._device_name_check(device_regex)
+        except self.datastore.DeviceListParseError as dlpe:
             result = CommandResult(1, "Failed to parse valid device name(s) in {}. Error: {}".format(device_regex, dlpe.message))
             self.logger.warning(result.message)
             return result
