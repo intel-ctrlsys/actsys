@@ -8,6 +8,7 @@ import copy
 from logging.handlers import RotatingFileHandler
 from dateutil.parser import parse as date_parse
 from pytz import UTC
+from ClusterShell.NodeSet import NodeSet, RESOLVER_NOGROUP
 from .datastore import DataStore, DataStoreException
 from .utilities import DataStoreUtilities, JsonParser
 
@@ -21,6 +22,7 @@ class FileStore(DataStore):
     DEVICE_KEY = "device"
     CONFIG_KEY = "configuration_variables"
     PROFILE_KEY = "profile"
+    GROUPS_KEY = "groups"
 
     def __init__(self, location="/tmp/datastore_db", log_level=None):
         super(FileStore, self).__init__()
@@ -396,6 +398,62 @@ class FileStore(DataStore):
             return None
         else:
             return key
+
+    def list_groups(self):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(FileStore, self).list_groups()
+        groups = self.parsed_file.get(self.GROUPS_KEY, {})
+        return copy.copy(groups)
+
+    def get_group_devices(self, group):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(FileStore, self).get_group_devices(group)
+        self.logger.debug("Getting for group: {}".format(group))
+        groups = self.parsed_file.get(self.GROUPS_KEY, {})
+        return copy.copy(groups.get(group, ""))
+
+    def add_to_group(self, device_list, group):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(FileStore, self).add_to_group(device_list, group)
+        groups = self.parsed_file.get(self.GROUPS_KEY, None)
+        if groups is None:
+            self.parsed_file[self.GROUPS_KEY] = {}
+
+        updated_device_set = NodeSet(self.parsed_file[self.GROUPS_KEY].get(group, None), resolver=RESOLVER_NOGROUP)
+        updated_device_set.add(device_list)
+        self.parsed_file[self.GROUPS_KEY][group] = str(updated_device_set)
+
+        self.save_file()
+
+        return updated_device_set
+
+    def remove_from_group(self, device_list, group):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(FileStore, self).remove_from_group(device_list, group)
+        groups = self.parsed_file.get(self.GROUPS_KEY, None)
+        if groups is None:
+            # Nothing to delete, done!
+            return NodeSet()
+
+        updated_device_set = NodeSet(self.parsed_file[self.GROUPS_KEY].get(group, None), resolver=RESOLVER_NOGROUP)
+        updated_device_set.difference_update(device_list)
+        if len(updated_device_set) == 0:
+            # Delete the group if its empty.
+            self.parsed_file[self.GROUPS_KEY].pop(group, None)
+        else:
+            # Modify the group, because its not empty yet.
+            self.parsed_file[self.GROUPS_KEY][group] = str(updated_device_set)
+
+        self.save_file()
+        return updated_device_set
 
     def export_to_file(self, file_location):
         """

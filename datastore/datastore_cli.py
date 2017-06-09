@@ -37,6 +37,7 @@ class DataStoreCLI(object):
         self.add_log_args()
         self.add_export_args()
         self.add_import_args()
+        self.add_group_args()
 
     def add_device_args(self):
         """
@@ -123,6 +124,36 @@ class DataStoreCLI(object):
                                                                     " history or logs.")
         self.export_parser.add_argument('file_location', help="where to export this configuration too.")
         self.export_parser.set_defaults(func=self.export_execute)
+
+    def add_group_args(self):
+        """
+        Add arguments for adding, removing and listing groups. Usage is something like:
+        $ group list
+        @all c[1-10]
+        $ ...group add c[1-10] test
+        Success.
+        $ group remove c[6-10] test
+        Sucess.
+        $ group list
+        @all c[1-10]
+        @test c[1-5]
+        $
+        :return:
+        """
+        self.group_parser = self.subparsers.add_parser('group', help="Add/Remove devices to/from groups. List known "
+                                                                     "groups.",
+                                                       description="Handle grouping for ease in using ctrl. Groups"
+                                                                   " manipulated in this way are stored and handled"
+                                                                   " via the DataStore. Groups can also be maintained"
+                                                                   " manually via ClusterShell. See the ClusterShell"
+                                                                   " documentation for advanced group configurations.")
+        self.group_parser.add_argument('action', choices=['get', 'list', 'add', 'remove', 'expand', 'fold', 'groups'])
+        self.group_parser.add_argument('device_list', nargs='?', default=None)
+        self.group_parser.add_argument('group', nargs='?', default=None)
+        self.group_parser.add_argument('--datastore-only', '-d', type=bool, default=False, required=False,
+                                       help="Only use the datastore when retrieving groups, ignore any other"
+                                            " ClusterShell set groups (i.e. SLURM or Genders groups).")
+        self.group_parser.set_defaults(func=self.group_execute)
 
     def parse_and_run(self, args=None):
         """
@@ -393,6 +424,65 @@ class DataStoreCLI(object):
         self.datastore.export_to_file(parsed_args.file_location)
         return 0
 
+    def group_execute(self, parsed_args):
+        """
+
+        :param parsed_args:
+        :return:
+        """
+        device_list = parsed_args.device_list
+        group = parsed_args.group
+
+        if parsed_args.action == "get":
+            devices = self.datastore.get_group_devices(device_list)
+            print(devices)
+
+        if parsed_args.action == "expand":
+            print(self.datastore.expand_device_list(device_list))
+
+        if parsed_args.action == "fold":
+            print(self.datastore.fold_devices(device_list))
+
+        if parsed_args.action == "list":
+            groups = self.datastore.list_groups()
+            group_keys = sorted(groups.keys())
+            for group in group_keys:
+                print("{0}".format(group))
+                # TODO: print out the devices too. This can't be done right now or it
+                # will break the clustershell CLI. (i.e. nodeset -s datastore -L)
+                # So an additional arg like --simple should be added to differenciate.
+                # print("{0:10}: {1}".format(group, groups.get(group)))
+
+            if not groups:
+                print("No groups found.")
+
+        if parsed_args.action == "add":
+            result = self.datastore.add_to_group(device_list, group)
+            print("Group {} has been updated to {}".format(group, result))
+
+        if parsed_args.action == "remove":
+            result = self.datastore.remove_from_group(device_list, group)
+            print("Group {} has been updated to {}".format(group, result))
+
+        if parsed_args.action == "groups":
+            # TODO: Move 'groups' to device CLI? Which is better `... group groups c10` or `... device groups c10`?
+            if not device_list:
+                self.group_parser.print_usage()
+                print("A device is required to get groups")
+                return 1
+            if group:
+                self.group_parser.print_usage()
+                print("Group argument '{}' is unknown to 'groups' action".format(group))
+                return 1
+
+            # All groups a device belongs too
+            device_groups = self.datastore.get_device_groups(device_list)
+            print("{} is a member of groups:".format(device_list))
+            for group in device_groups:
+                print("{}".format(group))
+
+        return 0
+
     @staticmethod
     def parse_options(options):
         """
@@ -431,7 +521,6 @@ class DataStoreCLI(object):
                 for match in matches:
                     match = match.strip()
                     if match is not None and match != '':
-                        print("Found a match", match)
                         if match.isdigit():
                             match = int(match)
                         value.append(match)

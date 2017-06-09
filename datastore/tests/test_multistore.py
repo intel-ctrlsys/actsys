@@ -145,6 +145,18 @@ class TestMultiStore(unittest.TestCase):
         self.ms.delete_configuration("test")
         self.ms.delete_configuration("invalid")
 
+    def test_list_groups(self):
+        self.ms.list_groups()
+
+    def test_get_group_devices(self):
+        self.ms.get_group_devices("foo")
+
+    def test_add_to_group(self):
+        self.ms.add_to_group("foo", "bar")
+
+    def test_remove_from_group(self):
+        self.ms.remove_from_group("foo", "bar")
+
     # UTIL FUNCTIONS
     def test_get_device_types(self):
         self.ms.get_device_types()
@@ -166,3 +178,9 @@ class TestMultiStore(unittest.TestCase):
     def test_get_profile_devices(self):
         self.ms.get_profile_devices("test")
         self.ms.get_profile_devices("compute Node")
+
+    def test_export(self):
+        self.ms.export_to_file("foo")
+
+    def test_import(self):
+        self.ms.import_from_file("foo")

@@ -87,7 +87,6 @@ class MultiStore(DataStore):
         results = self._call_function("get_profile", [profile_name])
         return results[0]
 
-
     def list_profiles(self, filters=None):
         """
         See @DataStore description
@@ -166,6 +165,38 @@ class MultiStore(DataStore):
         """
         super(MultiStore, self).delete_configuration(key)
         results = self._call_function("delete_configuration", [key])
+        return results[0]
+
+    def list_groups(self):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).list_groups()
+        results = self._call_function("list_groups", [])
+        return results[0]
+
+    def get_group_devices(self, group):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).get_group_devices(group)
+        results = self._call_function("get_group_devices", [group])
+        return results[0]
+
+    def add_to_group(self, device_list, group):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).add_to_group(device_list, group)
+        results = self._call_function("add_to_group", [device_list, group])
+        return results[0]
+
+    def remove_from_group(self, device_list, group):
+        """
+        See @DataStore description
+        """
+        super(MultiStore, self).remove_from_group(device_list, group)
+        results = self._call_function("remove_from_group", [device_list, group])
         return results[0]
 
     # UTIL FUNCTIONS

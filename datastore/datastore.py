@@ -8,6 +8,20 @@ Interface and Classes for using the DataStore
 import logging
 from logging import StreamHandler
 from abc import ABCMeta, abstractmethod
+from ClusterShell.NodeSet import NodeSet, std_group_resolver, set_std_group_resolver, fold, NodeSetParseError
+from ClusterShell.NodeUtils import GroupSource, GroupResolver, GroupResolverConfig
+
+
+class DataStoreGroupSource(GroupSource):
+    def __init__(self, name, datastore, groups=None, allgroups=None):
+        super(DataStoreGroupSource, self).__init__(name, groups, allgroups)
+        self.datastore = datastore
+
+    def resolv_map(self, group):
+        return self.datastore.get_group_devices(group)
+
+    def resolv_list(self):
+        return self.datastore.list_groups()
 
 
 class DataStore(object):
@@ -27,8 +41,17 @@ class DataStore(object):
     LOG_LEVEL_JOURNAL = 15
     LOG_LEVEL_DEBUG = logging.DEBUG
 
+    DeviceListParseError = NodeSetParseError
+
     def __init__(self):
         self.logger = get_logger()
+        self.datastore_group_resolver = self._setup_group_config()
+
+    def _setup_group_config(self):
+        datastore_group_resolver = GroupResolver(default_source=DataStoreGroupSource("DataStoreSource", self))
+        set_std_group_resolver(datastore_group_resolver)
+        return datastore_group_resolver
+
 
     @abstractmethod
     def get_device(self, device_name):
@@ -231,6 +254,93 @@ class DataStore(object):
         :return: value: str or None if nothing was deleted.
         """
         self.logger.debug("DataStore.delete_configuration called: {}".format(key))
+
+    @abstractmethod
+    def list_groups(self):
+        """
+        List the groups known.
+        For example:
+            $ ... group list
+            @all
+            @sms
+            @compute
+            @gpu
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def get_group_devices(self, group):
+        """
+        List all devices that belong to a group.
+        For example:
+            $ ... group list @compute
+            c[1-20]
+        :param group:
+        :return:
+        """
+        pass
+
+    def get_device_groups(self, device_list):
+        """
+        For example:
+            $ ... device groups c1
+            @all
+            @compute
+        :param device_list:
+        :return:
+        """
+        groups = self.list_groups()
+        device_in_groups = list()
+        for group in groups.keys():
+            ns = NodeSet(groups.get(group, []))
+            if device_list in ns:
+                device_in_groups.append(group)
+
+        # return [group for group in groups.keys() if device in groups.get(group, [])]
+        return device_in_groups
+
+    @abstractmethod
+    def add_to_group(self, device_list, group):
+        """
+        Adds the given devices/groups to the group. Creates a group if necessary.
+        :param device_list:
+        :param group:
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def remove_from_group(self, device_list, group):
+        """
+        Removes the given devices/groups from the group. Deletes the group if empty.
+        :param device_list:
+        :param group:
+        :return:
+        """
+        pass
+
+    def expand_device_list(self, device_list):
+        """
+        Expand strings like "device[1-3]" into lists like ["device1", "device2", device3"].
+        Also handles groups like "@compute_nodes".
+        See the range of inputs at: http://clustershell.readthedocs.io/en/latest/tools/nodeset.html
+        :param device_list: A list of devices.
+        :raise DevicelListParseError: When the expression is not parsable.
+        :return:
+        """
+        return list(NodeSet(device_list, resolver=self.datastore_group_resolver))
+
+    @staticmethod
+    def fold_devices(device_list):
+        """
+        Collabse/fold hte given devicelist to the smallest possible one.
+        :param device_list:
+        :return:
+        """
+        if isinstance(device_list, list):
+            device_list = ",".join(device_list)
+        return fold(device_list)
 
     # UTIL FUNCTIONS
     def get_device_types(self):

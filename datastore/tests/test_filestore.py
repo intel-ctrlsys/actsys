@@ -51,7 +51,12 @@ class TestFileStore(unittest.TestCase):
           "port": 22,
           "profile_name": "compute_node"
         }
-      ]
+      ],
+      "groups": {
+        "test": "@test1,c1,n3",
+        "test1": "c99",
+        "test2": "c[1-23]"
+      }
     }"""
     LOG_FILENAME = "unknown, setup in setUPCLass(cls)"
     LOG_FILE = """2017-02-22 09:18:54,432 / INFO / DataStore / BATS / None / Does this work?
@@ -172,7 +177,12 @@ class TestFileStore(unittest.TestCase):
       "type": "pdu",
       "user": "user"
     }
-  ]
+  ],
+  "groups": {
+    "test": "@test1,c1,n3",
+    "test1": "c99",
+    "test2": "c[1-23]"
+  }
 }"""
 
     def setUp(self):
@@ -477,6 +487,42 @@ class TestFileStore(unittest.TestCase):
         os.remove(import_file.name)
 
 
+    def test_device_history(self):
+        with self.assertRaises(DataStoreException):
+            self.fs.get_device_history("foo")
+
+    def test_add_log(self):
+        self.fs.add_log(logging.WARNING, "This is a test")
+        self.fs.add_log(logging.WARNING, "This is a test", "c1")
+
+    def test_list_groups(self):
+        result = self.fs.list_groups()
+        self.assertEqual(result.keys(), ["test","test1","test2"])
+
+    def test_get_group_devices(self):
+        result = self.fs.get_group_devices("test1")
+        self.assertEqual(result, "c99")
+
+    def test_add_to_group(self):
+        result = self.fs.add_to_group("c98", "test1")
+        self.assertEqual(str(result), "c[98-99]")
+
+        result = self.fs.get_group_devices("test1")
+        self.assertEqual(str(result), "c[98-99]")
+
+    def test_remove_from_group(self):
+        result = self.fs.remove_from_group("c23", "test2")
+        self.assertEqual(str(result), "c[1-22]")
+
+        result = self.fs.remove_from_group("c[1-10]", "test2")
+        self.assertEqual(str(result), "c[11-22]")
+
+        result = self.fs.remove_from_group("c[1-50]", "test2")
+        self.assertEqual(str(result), "")
+
+        self.assertEqual(len(list(self.fs.get_group_devices("test2"))), 0)
+
+
 class TestFileStoreEmptyFile(unittest.TestCase):
     FILE_STRING = "unknown, to be constructed in setUpClass(cls)"
     FILE_CONFIG = "{}"
@@ -534,6 +580,26 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         self.assertIsNone(result)
         result = self.fs.delete_configuration("foo")
         self.assertIsNone(result)
+
+    def test_group(self):
+        result = self.fs.remove_from_group("c99", "foo")
+        self.assertEqual(str(result), "")
+
+        result = self.fs.get_group_devices("test1")
+        self.assertEqual(str(result), "")
+        self.assertFalse(result)
+
+        result = self.fs.list_groups()
+        self.assertEqual(result, {})
+        self.assertFalse(result)
+
+
+        result = self.fs.add_to_group("c98", "test1")
+        self.assertEqual(str(result), "c98")
+
+        result = self.fs.get_group_devices("test1")
+        self.assertEqual(str(result), "c98")
+
 
 
 class TestFileStoreWithNoFile(unittest.TestCase):
@@ -636,6 +702,93 @@ class TestFileStoreInvalidLogs(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             result = self.fs.list_logs()
 
+expansion_tests = {
+    "accept_lists": ["node1,node2,node3", ["node1", "node2", "node3"]],
+    "sequential_numbers": ["node[1-3]", ["node1", "node2", "node3"]],
+    "accept_lists2": ["node1,node3", ["node1", "node3"]],
+    "comma_seperated_numbers": ["node[1,3]", ["node1", "node3"]],
+    "zero_padded_numbers": ["node[01-03]", ["node01", "node02", "node03"]],
+    "comma_seperated_lists": ["node[1,45-46,990]", ["node1", "node45", "node46", "node990"]],
+}
+
+fold_tests = {
+    "lists": ["node1,node2", "node[1-2]"],
+    "nosequential_lists": ["node1,node5", "node[1,5]"],
+    "nosequential_lists2": ["node1,node12", "node[1,12]"],
+    "nosequential_lists3": ["node3,node1", "node[1,3]"],
+    "strange_lists": ["node001,node4,node94", "node[001,004,094]"],
+    "mutiple_names": ["nhl1,nfl1,nhl2,nfl2", "nfl[1-2],nhl[1-2]"],
+    "list1": [["n1", "n2", "n3"], "n[1-3]"],
+    "list2": [["n01", "n02", "n03"], "n[01-03]"],
+    "list3": [["n1", "n222", "n2"], "n[1-2,222]"],
+    "list4": [["n1", "ni2", "nl3"], "n1,ni2,nl3"]
+}
+
+
+class TestNodeExpand(unittest.TestCase):
+    FILE_STRING = "unknown, to be constructed in setUpClass(cls)"
+    LOG_FILENAME = "unknown, setup in setUPCLass(cls)"
+    FILE_CONFIG = """{
+      "configuration_variables": {
+      },
+      "device": [
+      ],
+      "profile": [
+      ]
+    }"""
+    LOG_FILE = """2017-02-22 09:18:54,432 / INFO /
+    2015-01-01 10:25:18,042 / ERROR / DataStore / BATS / 1 / Does this work?
+    2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # create a file for the class to use
+        import tempfile
+        temp_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_file.write(cls.FILE_CONFIG)
+        temp_file.close()
+        cls.FILE_STRING = temp_file.name
+
+        temp_log_file = tempfile.NamedTemporaryFile("w", delete=False)
+        temp_log_file.write(cls.LOG_FILE)
+        temp_log_file.close()
+        cls.LOG_FILENAME = temp_log_file.name
+        FileStore(cls.FILE_STRING, None).set_configuration("log_file_path", cls.LOG_FILENAME)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.remove(cls.FILE_STRING)
+        os.remove(cls.LOG_FILENAME)
+
+    def setUp(self):
+        self.fs = FileStore(self.FILE_STRING, None)
+
+    def test_expand(self):
+        for test_key in expansion_tests.keys():
+            test = expansion_tests.get(test_key)
+            self.assertEqual(self.fs.expand_device_list(test[0]), test[1])
+
+    def test_fold(self):
+        for test_key in fold_tests.keys():
+            test = fold_tests.get(test_key)
+            self.assertEqual(self.fs.fold_devices(test[0]), test[1])
+
+    def test_empty_expand(self):
+        self.assertEqual(self.fs.expand_device_list(None), [])
+        self.assertEqual(self.fs.expand_device_list(""), [])
+
+    def test_empty_fold(self):
+        self.assertEqual("", self.fs.fold_devices(None))
+        self.assertEqual("", self.fs.fold_devices(""))
+
+    def test_invalid_expand(self):
+        try:
+            self.fs.expand_device_list("[")
+            self.fail()
+        except self.fs.DeviceListParseError as dlpe:
+            self.assertEqual(dlpe.message,  'missing bracket: "["')
+            pass
 
 if __name__ == '__main__':
     unittest.main()

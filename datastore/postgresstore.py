@@ -10,6 +10,7 @@ import copy
 import logging
 import datetime
 import psycopg2
+from ClusterShell.NodeSet import NodeSet, RESOLVER_NOGROUP
 from .datastore import DataStore, DataStoreException
 from .utilities import DataStoreUtilities
 
@@ -341,6 +342,63 @@ class PostgresStore(DataStore):
             self.logger.info("DataStore.delete_configuration deleted key {}".format(None))
             return None
 
+    def list_groups(self):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(PostgresStore, self).list_groups()
+        self.cursor.execute("SELECT group_name, device_list FROM public.group;")
+        results = self.cursor.fetchall()
+        return SqlParser.get_groups_from_results(results)
+
+    def get_group_devices(self, group):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(PostgresStore, self).get_group_devices(group)
+        self.cursor.execute("SELECT device_list FROM public.group WHERE group_name = %s;", [group])
+        results = self.cursor.fetchall()
+        if results and results[0]:
+            return results[0][0]
+        return None
+
+    def add_to_group(self, device_list, group):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(PostgresStore, self).add_to_group(device_list, group)
+        group_devices = self.get_group_devices(group)
+
+        updated_device_set = NodeSet(group_devices, resolver=RESOLVER_NOGROUP)
+        updated_device_set.add(device_list)
+
+        self.cursor.callproc("public.upsert_group", [group, str(updated_device_set)])
+        result = self.cursor.fetchall()
+        self.connection.commit()
+        self.logger.debug("upsert_group result: {}".format(result))
+        return updated_device_set
+
+    def remove_from_group(self, device_list, group):
+        """
+        See @DataStore for function description. Only implementation details here.
+        """
+        super(PostgresStore, self).remove_from_group(device_list, group)
+        group_devices = self.get_group_devices(group)
+
+        updated_device_set = NodeSet(group_devices, resolver=RESOLVER_NOGROUP)
+        updated_device_set.remove(device_list)
+        if len(updated_device_set) == 0:
+            # Delete the group if its empty.
+            self.cursor.execute("DELETE FROM public.group WHERE group_name = %s;", [group])
+        else:
+            # Modify the group, because its not empty yet.
+            self.cursor.callproc("public.upsert_group", [group, str(updated_device_set)])
+            result = self.cursor.fetchall()
+            self.logger.debug("upsert_group result: {}".format(result))
+
+        self.connection.commit()
+        return updated_device_set
+
     # CANNED QUERIES
     def get_devices_by_type(self, device_type, device_name=None):
         """
@@ -547,6 +605,19 @@ class SqlParser(object):
             })
 
         return configuration_list
+
+    @staticmethod
+    def get_groups_from_results(results):
+        """
+
+        :param results:
+        :return:
+        """
+        groups = dict()
+        for result in results:
+            groups[result[0]] = result[1]
+
+        return groups
 
     @staticmethod
     def prepare_profile_for_query(profile):

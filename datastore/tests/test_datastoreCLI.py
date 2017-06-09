@@ -234,6 +234,91 @@ class TestDataStoreCLI(unittest.TestCase):
         self.assertEqual(result, 0)
 
 
+class TestGroupCLI(unittest.TestCase):
+    group_name = "test"
+    device_list = "c[1-10]"
+    group = {group_name: device_list}
+    group_list = [group, group]
+
+    def setUp(self):
+        self.mockDS = Mock(spec=DataStore)
+        self.dscli = DataStoreCLI(self.mockDS)
+
+    def test_group_get(self):
+        self.mockDS.get_group_devices.return_value = self.device_list
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'get', 'test'])
+            self.assertEqual(output.getvalue(), self.device_list + '\n')
+            self.assertEqual(result, 0)
+        self.mockDS.get_group_devices.assert_called_once_with("test")
+
+    def test_group_expand(self):
+        self.mockDS.expand_device_list.return_value = self.device_list
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'expand', '@test'])
+            self.assertEqual(output.getvalue(), self.device_list + '\n')
+            self.assertEqual(result, 0)
+        self.mockDS.expand_device_list.assert_called_once_with("@test")
+
+    def test_group_fold(self):
+        self.mockDS.fold_devices.return_value = self.device_list
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'fold', 'c1,c2,c3,c4,c5'])
+            self.assertEqual(output.getvalue(), self.device_list + '\n')
+            self.assertEqual(result, 0)
+        self.mockDS.fold_devices.assert_called_once_with("c1,c2,c3,c4,c5")
+
+    def test_group_list(self):
+        self.mockDS.list_groups.return_value = {"a": "1", "b": "1", "c": "1"}
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'list'])
+            self.assertEqual(output.getvalue(),  'a\nb\nc\n')
+            self.assertEqual(result, 0)
+        self.mockDS.list_groups.assert_called_once()
+        self.mockDS.reset_mock()
+
+        self.mockDS.list_groups.return_value = {}
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'list'])
+            self.assertEqual(output.getvalue(), 'No groups found.\n')
+            self.assertEqual(result, 0)
+        self.mockDS.list_groups.assert_called_once()
+
+    def test_group_add(self):
+        self.mockDS.add_to_group.return_value = self.device_list
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'add', self.device_list, self.group_name])
+            self.assertEqual(output.getvalue(), "Group {} has been updated to {}\n".format(self.group_name, self.device_list))
+            self.assertEqual(result, 0)
+        self.mockDS.add_to_group.assert_called_once_with(self.device_list, self.group_name)
+
+    def test_group_remove(self):
+        self.mockDS.remove_from_group.return_value = self.device_list
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'remove', 'foo', self.group_name])
+            self.assertEqual(output.getvalue(), "Group {} has been updated to {}\n".format(self.group_name, self.device_list))
+            self.assertEqual(result, 0)
+        self.mockDS.remove_from_group.assert_called_once_with('foo', self.group_name)
+
+    def test_group_groups(self):
+        self.mockDS.get_device_groups.return_value = ["a", "b"]
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'groups', 'foo'])
+            self.assertEqual(output.getvalue(), "foo is a member of groups:\na\nb\n")
+            self.assertEqual(result, 0)
+        self.mockDS.get_device_groups.assert_called_once_with('foo')
+
+        # No group arg given
+        self.mockDS.get_device_groups.return_value = ["a", "b"]
+        result = self.dscli.parse_and_run(['group', 'groups'])
+        self.assertEqual(result, 1)
+
+        # Device arg not allowed
+        self.mockDS.get_device_groups.return_value = ["a", "b"]
+        result = self.dscli.parse_and_run(['group', 'groups', 'foo', 'bar'])
+        self.assertEqual(result, 1)
+
+
 class TestsDataStoreCLIOptions(unittest.TestCase):
     def test_no_options(self):
         result = DataStoreCLI.parse_options(None)

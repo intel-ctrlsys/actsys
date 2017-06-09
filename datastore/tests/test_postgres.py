@@ -60,6 +60,16 @@ class TestPostgresDB(unittest.TestCase):
         "key": "config",
         "value": "is_mocked"
     }
+    TEST_POSTGRES_GROUPS = [
+        ["group1", "d1"],
+        ["group2", "d2"],
+        ["group3", "d3"]
+    ]
+    TEST_GROUPS = {
+        "group1": "d1",
+        "group2": "d2",
+        "group3": "d3"
+    }
 
     def setUp(self):
         self.postgres = None
@@ -82,6 +92,15 @@ class TestPostgresDB(unittest.TestCase):
         self.postgres.connect()
         setattr(self.postgres, "cursor", None)
         self.postgres.connect()
+        with self.assertRaises(DataStoreException):
+            mock_connect.return_value = None
+            self.postgres.connect()
+
+    def test_del(self, mock_connect):
+        self.set_expected(mock_connect, [])
+        self.postgres.__del__()
+        self.postgres.cursor.close.assert_called_once()
+        self.postgres.connection.close.assert_called_once()
 
     def test_get_device(self, mock_connect):
         self.set_expected(mock_connect, [self.TEST_POSTGRES_DEVICE])
@@ -463,6 +482,37 @@ class TestPostgresDB(unittest.TestCase):
         self.assertListEqual(old_config, [])
         self.assertListEqual(old_devices, [])
         self.assertListEqual(old_profiles, [])
+
+    def test_list_groups(self, mock_connect):
+        self.set_expected(mock_connect, self.TEST_POSTGRES_GROUPS)
+        self.assertEqual(self.postgres.list_groups(), self.TEST_GROUPS)
+
+    def test_get_group_devices(self, mock_connect):
+        self.set_expected(mock_connect, [[self.TEST_POSTGRES_GROUPS[0][1]]])
+        self.assertEqual(self.postgres.get_group_devices(self.TEST_POSTGRES_GROUPS[0][0]), self.TEST_POSTGRES_GROUPS[0][1])
+        self.set_expected(mock_connect, None)
+        self.assertIsNone(self.postgres.get_group_devices("foo"))
+
+        self.set_expected(mock_connect, [])
+        self.assertIsNone(self.postgres.get_group_devices("foo"))
+
+        self.set_expected(mock_connect, [[]])
+        self.assertIsNone(self.postgres.get_group_devices("foo"))
+
+    def test_add_to_group(self, mock_connect):
+        device_list = self.TEST_POSTGRES_GROUPS[0][1]
+        self.set_expected(mock_connect, [[device_list]])
+        result = self.postgres.add_to_group("", "foo")
+        self.assertEqual(str(result), device_list)
+
+    def test_remove_from_group(self, mock_connect):
+        device_list = self.TEST_POSTGRES_GROUPS[0][1]
+        self.set_expected(mock_connect, [[device_list]])
+        result = self.postgres.remove_from_group("", "foo")
+        self.assertEqual(str(result), device_list)
+
+        result = self.postgres.remove_from_group(device_list, "foo")
+        self.assertEqual(len(result), 0)
 
 if __name__ == '__main__':
     unittest.main()
