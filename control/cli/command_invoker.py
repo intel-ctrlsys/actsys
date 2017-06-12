@@ -93,8 +93,9 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(PduMock)
 
         # power control plugins
-        from ..power_control import NodePower, PowerControlMock
+        from ..power_control import NodePower, PowerControlMock, RestPower
         self.manager.register_plugin_class(NodePower)
+        self.manager.register_plugin_class(RestPower)
         self.manager.register_plugin_class(PowerControlMock)
 
         # Resource Manager Plugins

@@ -3,4 +3,5 @@
 # Copyright (c) 2016 Intel Corp.
 #
 from .nodes.node_power import NodePower
+from .rest.rest_power import RestPower
 from .mock.power_control_mock import PowerControlMock

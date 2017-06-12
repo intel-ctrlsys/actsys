@@ -47,16 +47,16 @@ class CommonPowerCommand(Command):
         options = dict()
         options['device_name'] = node.get("device_id", self.device_name)
         options['device_type'] = node.get("device_type")
-        options['bmc_fa_port'] = node.get("bmc_fa_port", None)
         # BMC
         if node and node.get("bmc"):
             bmc = cfg.get_device(node.get("bmc"))
             if bmc is not None:
                 # TODO: check if bmc access_type is not defined.
                 bmc_plugin = mgr.create_instance('bmc', bmc.get("access_type"))
-                bmc_access = RemoteAccessData(bmc.get("ip_address"), bmc.get("port"),
-                                              bmc.get("user"), bmc.get("password"))
-                options['rest_server_port'] = bmc.get("rest_server_port", None)
+                bmc_access = PowerRemoteAccessData(bmc.get("ip_address"), bmc.get("port"),
+                                                   bmc.get("user"), bmc.get("password"),
+                                                   node.get("bmc_fa_port", None),
+                                                   bmc.get("rest_server_port", None))
                 options['bmc'] = (bmc_access, bmc_plugin)
 
         # Device OS
@@ -176,3 +176,10 @@ class CommonPowerCommand(Command):
             return CommandResult(1, 'No PDU or more than one PDU was found for the device\n'
                                     'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
         return CommandResult(0, 'Successfully switched {} {}'.format(self.device_name, new_state))
+
+
+class PowerRemoteAccessData(RemoteAccessData):
+    def __init__(self, address, port, user, identifier, fa_port = None, rest_server_port = None):
+        RemoteAccessData.__init__(self, address, port, user, identifier)
+        self.fa_port = fa_port
+        self.rest_server_port = rest_server_port

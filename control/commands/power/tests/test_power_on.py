@@ -83,14 +83,14 @@ class TestPowerOnCommand(PowerCommandsCommon):
     def test_positive_on_from_on(self):
         self.write_state('On:bmc_on')
         result = self.command.execute()
-        self.assertEqual('Power already on for test_node; use power cycle',
+        self.assertEqual('Success: Device Powered On: test_node',
                          result.message)
-        self.assertEqual(-1, result.return_code)
+        self.assertEqual(0, result.return_code)
 
     def test_failure_to_change_state(self):
         self.command.power_plugin = MockPowerPlugin(**self.options)
         result = self.command.execute()
-        self.assertEqual('Failed to change state to On:bmc_on on device '
+        self.assertEqual('Failed to change state to On on device '
                          'test_node', result.message)
         self.assertEqual(-1, result.return_code)
 

@@ -23,9 +23,9 @@ class OobSensorCommand(Command):
                                'device!')
         self.device_data = node
         self.bmc_data = cfg.get_device(node.get("bmc"))
-        self.plugin_name = node.get("oob_sensor")
+        self.plugin_name = self.bmc_data.get("access_type", None)
         if self.plugin_name is None:
-            raise RuntimeError("No OOB Sensor specified in the configuration file. Cannot perform action")
+            raise RuntimeError("No BMC access_type specified in the configuration file. Cannot perform action")
         return None
 
     def print_table(self, ret_msg):

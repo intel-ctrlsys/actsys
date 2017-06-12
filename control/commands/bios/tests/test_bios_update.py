@@ -42,7 +42,7 @@ class TestBiosUpdateCommand(unittest.TestCase):
             "user": "user",
             "password": "pass",
             "device_type": "node",
-            "bios_controller": "mock",
+            "access_type": "mock",
             "service_list": []
          }
 

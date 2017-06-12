@@ -39,13 +39,6 @@ class PowerOffCommand(CommonPowerCommand):
                 raise RuntimeError('Incorrect arguments passed to '
                                    'turn off a node: {}'.
                                    format(self.device_name))
-
-            # Step 4
-            state = self.power_plugin.get_current_device_power_state()
-            if state == 'Off':
-                return CommandResult(0, 'Success: Power Off {}'.
-                                     format(self.device_name))
-
             # STEP 5
             if not self._update_resource_state("remove"):
                 raise RuntimeError('Failed to inform the resource manager of the state change for '

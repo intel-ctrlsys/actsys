@@ -21,10 +21,10 @@ class BiosCommand(Command):
         self.device = self.configuration.get_device(self.device_name)
         self.bmc = self.configuration.get_device(self.device.get('bmc'))
         device_type = self.device.get("device_type")
-        bios_controller = self.device.get("bios_controller")
+        bios_controller = self.bmc.get("access_type")
         if device_type not in ['compute', 'node']:
             return CommandResult(255, "The device is not a compute node!")
         if bios_controller is None:
-            return CommandResult(255, "Please provide bios controller type in configuration")
+            return CommandResult(255, "Please provide bmc access_type in configuration")
         self.node_controller = self.plugin_manager.create_instance('bmc', bios_controller)
         return None

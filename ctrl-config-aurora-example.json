@@ -38,7 +38,7 @@
       "device_type": "bmc",
       "hostname": "compute-29-nc",      
       "ip_address": "127.0.0.1",
-      "rest_server_port": 34009,
+      "rest_server_port": 5000,
       "profile_name": "bmc_default"
     },
     {
@@ -46,38 +46,26 @@
       "device_type": "bmc",
       "hostname": "compute-30-nc",
       "ip_address": "192.168.2.30",
-      "rest_server_port": 5000,
+      "rest_server_port": 5001,
       "profile_name": "bmc_default"
     }
   ],
   "profile": [
     {
-      "access_type": "ssh",
-      "device_power_control": "bky_power",
-      "oob_sensor": "bky_oob_sensor",
+      "access_type": "mock",
+      "device_power_control": "rest_power",
       "diagnostic": "mock",
       "image": "centos7.2",
-      "os_boot_timeout_seconds": 300,
-      "os_network_to_halt_time": 5,
-      "os_shutdown_timeout_seconds": 150,
-      "password": "password",
-      "port": 22,
       "profile_name": "compute_node",
       "resource_controller": "mock",
       "role": [
         "compute"
       ],
       "type": "node",
-      "user": "user",
-      "wait_time_after_boot_services": 120
+      "user": "user"
     },
     {
-      "access_type": "ipmi_util",
-      "auth_method": "PASSWORD",
-      "channel": 2,
-      "password": "password",
-      "port": 22,
-      "priv_level": "ADMINISTRATOR",
+      "access_type": "bky",
       "profile_name": "bmc_default",
       "type": "bmc",
       "user": "user"

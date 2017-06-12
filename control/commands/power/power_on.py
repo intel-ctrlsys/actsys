@@ -45,7 +45,7 @@ class PowerOnCommand(CommonPowerCommand):
             # STEP 5
             target, force = self._parse_power_arguments('On:bmc_on', {
                 '': 'On:bmc_on',
-                'on': 'On:bmc_on',
+                'on': 'On',
                 'bios': 'On:bios',
                 'efi': 'On:efi',
                 'hdd': 'On:hdd',
@@ -56,12 +56,6 @@ class PowerOnCommand(CommonPowerCommand):
             if target is None:
                 raise RuntimeError('Incorrect arguments passed to '
                                    'turn on a node: {}'.
-                                   format(self.device_name))
-
-            state = self.power_plugin.get_current_device_power_state()
-            if state.startswith('On'):
-                raise RuntimeError('Power already on for {}; use '
-                                   'power cycle'.
                                    format(self.device_name))
             # STEP 6
             if not self.power_plugin.set_device_power_state(target, force):

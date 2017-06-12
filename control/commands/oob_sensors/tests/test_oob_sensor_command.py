@@ -54,11 +54,11 @@ class TestOobSensorCommand(unittest.TestCase):
         self.configuration_manager.get_device.return_value = {
             'device_name': self.node_name,
             "ip_address": "192.168.1.1",
-            "oob_sensor": "mock",
             "port": 22,
             "user": "user",
             "password": "pass",
             "device_type": "node",
+            "access_type": "mock",
             "bmc": self.bmc
          }
         self.configuration_manager1.get_device.return_value = None
@@ -72,7 +72,7 @@ class TestOobSensorCommand(unittest.TestCase):
             pass
 
     def test_execute_no_config_type(self):
-        self.configuration_manager.get_device.return_value["oob_sensor"] = None
+        self.configuration_manager.get_device.return_value["access_type"] = None
         try:
             self.oob_sensor_cmd.setup()
             self.fail('No RuntimeError raised')
@@ -83,7 +83,8 @@ class TestOobSensorCommand(unittest.TestCase):
     def test_execute_all_good(self):
         try:
             self.oob_sensor_cmd.setup()
-        except RuntimeError:
+        except RuntimeError as ex:
+            print(ex)
             self.fail('RuntimeError raised')
 
 
