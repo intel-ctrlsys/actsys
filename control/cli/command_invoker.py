@@ -120,6 +120,9 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(DiagnosticsOnlineCommand)
         self.manager.register_plugin_class(DiagnosticsOfflineCommand)
 
+        from ..diagnostics.mock_diagnostics.mock_diagnostics import MockDiagnostics
+        self.manager.register_plugin_class(MockDiagnostics)
+
         try:
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)

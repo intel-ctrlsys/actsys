@@ -27,7 +27,7 @@ class DiagnosticsCommand(Command):
             raise RuntimeError('Cannot run diagnostics on a non-node type '
                                'device!')
         self.bmc_data = self.configuration.get_device(self.device.get("bmc"))
-        self.diags_plugin_type = self.device.get("diagnostic", None)
+        self.diags_plugin_type = self.device.get("diagnostics", None)
         self.diagnostics_plugin = self.plugin_manager.create_instance('diagnostics', self.diags_plugin_type,
                                                                       **self.options)
         return None
