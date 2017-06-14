@@ -27,7 +27,7 @@ class TestDiagnosticsCLI(unittest.TestCase):
                 self.cli.parse_and_run(command)
 
     def test_online(self):
-        self.cli.parse_and_run(['online', 'test-1'])
+        self.cli.parse_and_run(['online', 'test-1', '--image', 'image_test'])
         self.mock_ci.diagnostics_online.assert_called_once()
 
         with self.assertRaises(SystemExit):
@@ -43,7 +43,7 @@ class TestDiagnosticsCLI(unittest.TestCase):
             self.cli.parse_and_run(['offline'])
 
     def test_argv(self):
-        sys.argv = ['diag', 'online', 'test-1']
+        sys.argv = ['diag', 'online', 'test-1', '--image', 'image_test']
         self.cli.parse_and_run()
         self.mock_ci.diagnostics_online.assert_called_once()
 
@@ -55,5 +55,5 @@ class TestDiagnosticsCLI(unittest.TestCase):
     def test_exception(self):
         self.mock_ci.diagnostics_online = MagicMock(side_effect=KeyError, return_value=3)
 
-        result = self.cli.parse_and_run(['online', 'test-1'])
+        result = self.cli.parse_and_run(['online', 'test-1', '--image', 'image_test'])
         self.assertEqual(result.return_code, 1)

@@ -33,8 +33,10 @@ class DiagnosticsCli(object):
         self.online_parser = self.subparsers.add_parser('online', help='Launch the online diagnostic tests. Ex.: ctrl diag online '
                                                                       'test_device --image test_image --test test_tests')
         self.online_parser.add_argument('device_name', help="The device name of the device you want to launch diagnostics on.")
-        self.online_parser.add_argument('--image', type=str, required=False, help="The diagnostics image to be used.")
-        self.online_parser.add_argument('--test', type=str, required=False, help="The specific diagnostic tests you wish to launch.")
+        self.online_parser.add_argument('--image', type=str, required=True, help="The diagnostics image to be used.")
+        self.online_parser.add_argument('--test', type=str, required=False, help="The specific diagnostic tests you "
+                                        "wish to launch. This input is passed to the Kernel args used while "
+                                        "provisioning, please refer to user guide to provide the options correctly.")
         self.online_parser.set_defaults(execute_function=self.online_execute)
 
     def add_offline_args(self):
