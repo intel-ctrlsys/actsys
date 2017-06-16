@@ -11,7 +11,7 @@ import argparse
 import re
 from dateutil.parser import parse as date_parse
 from . import DataStoreException, DataStore, DataStoreBuilder
-from .utilities import DeviceUtilities
+from .utilities import DeviceUtilities, FileNotFound, NonParsableFile
 
 
 class DataStoreCLI(object):
@@ -140,20 +140,67 @@ class DataStoreCLI(object):
         $
         :return:
         """
-        self.group_parser = self.subparsers.add_parser('group', help="Add/Remove devices to/from groups. List known "
-                                                                     "groups.",
-                                                       description="Handle grouping for ease in using ctrl. Groups"
-                                                                   " manipulated in this way are stored and handled"
-                                                                   " via the DataStore. Groups can also be maintained"
-                                                                   " manually via ClusterShell. See the ClusterShell"
-                                                                   " documentation for advanced group configurations.")
-        self.group_parser.add_argument('action', choices=['get', 'list', 'add', 'remove', 'expand', 'fold', 'groups'])
-        self.group_parser.add_argument('device_list', nargs='?', default=None)
-        self.group_parser.add_argument('group', nargs='?', default=None)
-        self.group_parser.add_argument('--datastore-only', '-d', type=bool, default=False, required=False,
-                                       help="Only use the datastore when retrieving groups, ignore any other"
-                                            " ClusterShell set groups (i.e. SLURM or Genders groups).")
-        self.group_parser.set_defaults(func=self.group_execute)
+        group_parser = self.subparsers.add_parser('group', help="Add/Remove devices to/from groups. List known "
+                                                                "groups.",
+                                                  description="Handle grouping for ease in using ctrl. Groups"
+                                                              " manipulated in this way are stored and handled"
+                                                              " via the DataStore. Groups can also be maintained"
+                                                              " manually via ClusterShell. See the ClusterShell"
+                                                              " documentation for advanced group configurations.")
+        group_subparsers = group_parser.add_subparsers(help='subparser for group')
+        self._add_add_parser(group_subparsers)
+        self._add_remove_parser(group_subparsers)
+        self._add_get_parser(group_subparsers)
+        self._add_list_parser(group_subparsers)
+        self._add_expand_parser(group_subparsers)
+        self._add_fold_parser(group_subparsers)
+        self._add_groups_parser(group_subparsers)
+
+        group_parser.add_argument('--datastore-only', '-d', type=bool, default=False, required=False,
+                                  help="Only use the datastore when retrieving groups, ignore any other"
+                                       " ClusterShell set groups (i.e. SLURM or Genders groups).")
+
+    def _add_add_parser(self, group_parser):
+        add_parser = group_parser.add_parser('add', help='Add device regex to group. Use: group add '
+                                                         'node_regex group_name')
+        add_parser.add_argument('device_list', help='provide comma separated device list or device regex')
+        add_parser.add_argument('group', help='group name where the devices have to be added to')
+        add_parser.set_defaults(func=self.group_add_execute)
+
+    def _add_remove_parser(self, group_parser):
+        remove_parser = group_parser.add_parser('remove', help='Remove device regex from group. Use: group'
+                                                               ' remove node_regex group_name')
+        remove_parser.add_argument('device_list', help='provide comma separated device list or device regex')
+        remove_parser.add_argument('group', help='group name where the devices have to be added to')
+        remove_parser.set_defaults(func=self.group_remove_execute)
+
+    def _add_get_parser(self, group_parser):
+        get_parser = group_parser.add_parser('get', help='Get the device regex from group. Use: group get group_name')
+        get_parser.add_argument('group', help='group name where the devices have to be added to')
+        get_parser.set_defaults(func=self.group_get_execute)
+
+    def _add_list_parser(self, group_parser):
+        list_parser = group_parser.add_parser('list', help='list the groups created so far. Use: group list')
+        list_parser.set_defaults(func=self.group_list_execute)
+
+    def _add_expand_parser(self, group_parser):
+        expand_parser = group_parser.add_parser('expand', help='expand the device regex or/and group into list of '
+                                                               'devices. Use: group expand group_name,device_regex')
+        expand_parser.add_argument('device_list', help='provide comma separated device list or device regex')
+        expand_parser.set_defaults(func=self.group_expand_execute)
+
+    def _add_fold_parser(self, group_parser):
+        fold_parser = group_parser.add_parser('fold', help='fold the device list into device regex Use: group fold'
+                                                           ' device_list')
+        fold_parser.add_argument('device_list', help='provide comma separated device list or device regex')
+        fold_parser.set_defaults(func=self.group_fold_execute)
+
+    def _add_groups_parser(self, group_parser):
+        groups_parser = group_parser.add_parser('groups', help='list the groups where the device regex is available. '
+                                                               'Use: group groups device_regex')
+        groups_parser.add_argument('device_list', help='provide comma separated device list or device regex')
+        groups_parser.set_defaults(func=self.group_groups_execute)
+
 
     def parse_and_run(self, args=None):
         """
@@ -167,7 +214,7 @@ class DataStoreCLI(object):
             args = self.root_parser.parse_args(args)
         try:
             self.retval = args.func(args)
-        except DataStoreException as dse:
+        except (DataStoreException, DataStore.DeviceListParseError) as dse:
             self.root_parser.print_usage()
             print(dse)
             return 1
@@ -424,63 +471,64 @@ class DataStoreCLI(object):
         self.datastore.export_to_file(parsed_args.file_location)
         return 0
 
-    def group_execute(self, parsed_args):
-        """
-
-        :param parsed_args:
-        :return:
-        """
+    def group_add_execute(self, parsed_args):
         device_list = parsed_args.device_list
         group = parsed_args.group
-
-        if parsed_args.action == "get":
-            devices = self.datastore.get_group_devices(device_list)
-            print(devices)
-
-        if parsed_args.action == "expand":
-            print(self.datastore.expand_device_list(device_list))
-
-        if parsed_args.action == "fold":
-            print(self.datastore.fold_devices(device_list))
-
-        if parsed_args.action == "list":
-            groups = self.datastore.list_groups()
-            group_keys = sorted(groups.keys())
-            for group in group_keys:
-                print("{0}".format(group))
-                # TODO: print out the devices too. This can't be done right now or it
-                # will break the clustershell CLI. (i.e. nodeset -s datastore -L)
-                # So an additional arg like --simple should be added to differenciate.
-                # print("{0:10}: {1}".format(group, groups.get(group)))
-
-            if not groups:
-                print("No groups found.")
-
-        if parsed_args.action == "add":
+        try:
             result = self.datastore.add_to_group(device_list, group)
             print("Group {} has been updated to {}".format(group, result))
+        except (FileNotFound, NonParsableFile) as ex:
+            print(str(ex))
+        return 0
 
-        if parsed_args.action == "remove":
+    def group_remove_execute(self, parsed_args):
+        device_list = parsed_args.device_list
+        group = parsed_args.group
+        try:
             result = self.datastore.remove_from_group(device_list, group)
             print("Group {} has been updated to {}".format(group, result))
+        except (FileNotFound, NonParsableFile) as ex:
+            print(str(ex))
+        return 0
 
-        if parsed_args.action == "groups":
-            # TODO: Move 'groups' to device CLI? Which is better `... group groups c10` or `... device groups c10`?
-            if not device_list:
-                self.group_parser.print_usage()
-                print("A device is required to get groups")
-                return 1
-            if group:
-                self.group_parser.print_usage()
-                print("Group argument '{}' is unknown to 'groups' action".format(group))
-                return 1
+    def group_get_execute(self, parsed_args):
+        group = parsed_args.group
+        devices = self.datastore.get_group_devices(group)
+        print(devices)
+        return 0
 
-            # All groups a device belongs too
-            device_groups = self.datastore.get_device_groups(device_list)
-            print("{} is a member of groups:".format(device_list))
-            for group in device_groups:
-                print("{}".format(group))
+    def group_list_execute(self, parsed_args=None):
+        groups = self.datastore.list_groups()
+        group_keys = sorted(groups.keys())
+        for group in group_keys:
+            print("{0}".format(group))
+            # TODO: print out the devices too. This can't be done right now or it
+            # will break the clustershell CLI. (i.e. nodeset -s datastore -L)
+            # So an additional arg like --simple should be added to differenciate.
+            # print("{0:10}: {1}".format(group, groups.get(group)))
 
+        if not groups:
+            print("No groups found.")
+        return 0
+
+    def group_expand_execute(self, parsed_args):
+        device_list = parsed_args.device_list
+        print(self.datastore.expand_device_list(device_list))
+        return 0
+
+    def group_fold_execute(self, parsed_args):
+        device_list = parsed_args.device_list
+        print(self.datastore.fold_devices(device_list))
+        return 0
+
+    def group_groups_execute(self, parsed_args):
+        device_list = parsed_args.device_list
+
+        # All groups a device belongs too
+        device_groups = self.datastore.get_device_groups(device_list)
+        print("{} is a member of groups:".format(device_list))
+        for group in device_groups:
+            print("{}".format(group))
         return 0
 
     @staticmethod

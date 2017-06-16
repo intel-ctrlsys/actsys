@@ -414,7 +414,8 @@ class FileStore(DataStore):
         super(FileStore, self).get_group_devices(group)
         self.logger.debug("Getting for group: {}".format(group))
         groups = self.parsed_file.get(self.GROUPS_KEY, {})
-        return copy.copy(groups.get(group, ""))
+
+        return copy.copy(str(groups.get(group, "")))
 
     def add_to_group(self, device_list, group):
         """
