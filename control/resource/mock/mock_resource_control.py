@@ -10,8 +10,11 @@ import json
 from ...plugin import DeclarePlugin
 from ...cli import CommandInvoker
 from ..resource_control import ResourceControl
+from ..resource_control_common import ResourceControlComm
 from datastore.filestore import FileStore
 from datastore.datastore import logging
+from datastore import DataStore
+from ...utilities.utilities import Utilities
 
 
 @DeclarePlugin('mock', 1000)
@@ -22,14 +25,11 @@ class MockResource(ResourceControl):
         """Constructor that load the mocked resource file if there is any"""
         ResourceControl.__init__(self)
         self.file_path = os.path.join(os.path.sep, 'tmp', 'mock_resource')
+        self.command_invoker = CommandInvoker()
         self.configure_file = CommandInvoker.get_config_file_location()
         self.nodes = None
         self._load_mock_resource_file()
-
-    def _get_correct_configuration_file(self):
-        """Resolve the configuration file if possible."""
-        self.configure_file = CommandInvoker.get_config_file_location()
-        return self.configure_file
+        self.resource_ctrl_helper = ResourceControlComm()
 
     def _read_file(self):
         with open(self.file_path, 'r') as f:
@@ -40,8 +40,7 @@ class MockResource(ResourceControl):
 
     def _write_file(self):
         try:
-            configure_manager = FileStore(
-                self._get_correct_configuration_file(), logging.DEBUG)
+            configure_manager = FileStore(self.configure_file, logging.DEBUG)
         except:
             self.nodes = None
             return
@@ -49,7 +48,7 @@ class MockResource(ResourceControl):
         nodes_metadata = extractor.get_devices_by_type('node')
         self.nodes = {}
         for node in nodes_metadata:
-            self.nodes[node['hostname']] = {'state': 'idle'}
+            self.nodes[node['hostname']] = {'state': 'drain'}
         self._save_mock_resource_file()
 
     def _load_mock_resource_file(self):
@@ -64,134 +63,72 @@ class MockResource(ResourceControl):
         with open(self.file_path, 'w') as f:
             json.dump(self.nodes, f)
 
-    def check_node_state(self, node_name):
+    def check_nodes_state(self, node_list):
         """
-        Mock to check the status of the specified node
+        Mock to check the states of the specified list of nodes
         """
-        if self.nodes is None or not (node_name in self.nodes):
-            return 1, 'Node ' + node_name + ' not found!'
-        return 0, self.nodes[node_name]['state']
+        nodes = self.command_invoker.datastore.expand_device_list(node_list)
+        res_list = list()
+        res_list.append(['NODELIST', 'STATE'])
+        states = {}
+        for node in nodes:
+            current_state = self.nodes[node]['state']
+            node_list = []
+            if current_state in states:
+                node_list = states[current_state]
+            node_list.append(node)
+            states[current_state] = node_list
+        for state, node_list in states.iteritems():
+            res_list.append([DataStore.fold_devices(node_list), state])
+        return 0, os.linesep + Utilities.print_nested_list(res_list)
 
-    def _remove_node_idle(self, node_name):
+    def _parse_columns(self, columns):
+        return columns[0], columns[1]
+
+    def _remove_nodes_idle(self, node_list):
         """
-        Handle the situation where a node is in idle state when removing the
-        node from cluster resource pool
+        Handle the situation where a list of nodes are in idle state when
+        removing the nodes from cluster resource pool
         """
-        self.nodes[node_name]['state'] = 'drain'
-        message = 'Succeeded in removing node ' + node_name + \
-                  ' from the cluster resource pool!'
+        nodes = self.command_invoker.datastore.expand_device_list(node_list)
+        for node in nodes:
+            self.nodes[node]['state'] = 'drain'
         self._save_mock_resource_file()
-        return 0, message
+        return 'Succeeded in removing!'
 
-    def _remove_node_alloc(self, node_name):
+    def remove_nodes_from_resource_pool(self, node_list):
         """
-        Handle the situation where a node is in alloc state when removing the
-        node from cluster resource pool
-        """
-        message = 'Currently, the node ' + node_name + ' is busy ' \
-                  'running job, it cannot be removed from the cluster ' \
-                  'resource pool!'
-        return 3, message
-
-    def _remove_node_drain(self, node_name):
-        """
-        Handle the situation where a node is in drain state when removing the
-        node from cluster resource pool
-        """
-        message = 'The node ' + node_name + ' has already been removed ' \
-                  'from the cluster resource pool!'
-        return 4, message
-
-    def _remove_node_abnormal_state(self, node_name, state):
-        """
-        Handle the situation where a node is in other states when removing the
-        node from cluster resource pool
-        """
-        message = 'The node ' + node_name + ' is in ' + state + ' state, not ' \
-                  'be able to remove it from the cluster resource pool!'
-        return 5, message
-
-    def remove_node_from_resource_pool(self, node_name):
-        """
-        Remove the specified node from the
+        Remove the specified list of nodes from the
         cluster resource pool for mock resource.
         """
-        ret, state = self.check_node_state(node_name)
+        state = self.check_nodes_state(node_list)[1]
+        return self.resource_ctrl_helper.remove_nodes_help(state,
+                                                           self._parse_columns,
+                                                           self._remove_nodes_idle)
 
-        if 1 == ret:
-            return ret, state
-
-        if 'idle' == state:
-            return self._remove_node_idle(node_name)
-
-        if 'alloc' == state:
-            return self._remove_node_alloc(node_name)
-
-        if 'drain' == state:
-            return self._remove_node_drain(node_name)
-
-        return self._remove_node_abnormal_state(node_name, state)
-
-    def _add_node_drain(self, node_name):
+    def _add_nodes_drain(self, node_list):
         """
-        Handle the situation where a node is in drain state when adding the
-        node back to cluster resource pool
+        Handle the situation where a list of nodes are in drain state when
+        adding the nodes back to cluster resource pool
         """
-        self.nodes[node_name]['state'] = 'idle'
-        message = 'Succeeded in adding node ' + node_name + \
-                  ' back to the cluster resource pool!'
+        nodes = self.command_invoker.datastore.expand_device_list(node_list)
+        for node in nodes:
+            self.nodes[node]['state'] = 'idle'
         self._save_mock_resource_file()
-        return 0, message
+        return 'Succeeded in adding!'
 
-    def _add_node_alloc(self, node_name):
+    def add_nodes_to_resource_pool(self, node_list):
         """
-        Handle the situation where a node is in alloc state when adding the
-        node back to cluster resource pool
-        """
-        message = 'Currently, the node ' + node_name + ' is busy ' \
-                  'running job, it is already in the cluster resource pool!'
-        return 7, message
-
-    def _add_node_idle(self, node_name):
-        """
-        Handle the situation where a node is in idle state when adding the
-        node back to cluster resource pool
-        """
-        message = 'The node ' + node_name + ' is already in the cluster ' \
-                  'resource pool!'
-        return 8, message
-
-    def _add_node_abnormal_state(self, node_name, state):
-        """
-        Handle the situation where a node is in other states when adding the
-        node back to cluster resource pool
-        """
-        message = 'The node ' + node_name + ' is in ' + state + ' state, not ' \
-                  'be able to add it back to the cluster resource pool!'
-        return 9, message
-
-    def add_node_to_resource_pool(self, node_name):
-        """
-        Add the specified node back to the cluster resource pool
+        Add the specified list of nodes back to the cluster resource pool
         using mocked resource manager.
         """
-        ret, state = self.check_node_state(node_name)
-        if 1 == ret:
-            return ret, state
+        state = self.check_nodes_state(node_list)[1]
+        return self.resource_ctrl_helper.add_nodes_help(state,
+                                                        self._parse_columns,
+                                                        self._add_nodes_drain)
 
-        if 'drain' == state:
-            return self._add_node_drain(node_name)
-
-        if 'alloc' == state:
-            return self._add_node_alloc(node_name)
-
-        if 'idle' == state:
-            return self._add_node_idle(node_name)
-
-        return self._add_node_abnormal_state(node_name, state)
-
-    def check_resource_manager_installed(self):
+    def check_resource_manager_running(self):
         """
-        The Mocked resource manager is always installed:
+        The Mocked resource manager is always running:
         """
         return True

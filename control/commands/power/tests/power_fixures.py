@@ -52,6 +52,11 @@ class MockConfiguration(object):
             return None
         return getattr(self.data[device_name], param)
 
+    def expand_device_list(self, device_name):
+        device_list = list()
+        device_list.append(device_name)
+        return device_list
+
     def set_device_data(self, device_name, param, value):
         """Dummy setter"""
         if self.data.get(device_name, None) is None:

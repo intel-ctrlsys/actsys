@@ -14,7 +14,7 @@ class TestResourceControl(unittest.TestCase):
     def test_all_tests(self):
         """All tests."""
         interface = ResourceControl()
-        interface.remove_node_from_resource_pool("localhost")
-        interface.add_node_to_resource_pool("localhost")
-        interface.check_node_state("localhost")
-        interface.check_resource_manager_installed()
+        interface.remove_nodes_from_resource_pool("localhost")
+        interface.add_nodes_to_resource_pool("localhost")
+        interface.check_nodes_state("localhost")
+        interface.check_resource_manager_running()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Intel Corp.
+# Copyright (c) 2016-2017 Intel Corp.
 #
 """
 Interface for all resource control plugins.
@@ -15,18 +15,18 @@ class ResourceControl(object):
     def __init__(self):
         pass
 
-    def remove_node_from_resource_pool(self, node_name):
-        """Remove the specified node from the cluster resource pool"""
+    def remove_nodes_from_resource_pool(self, node_list):
+        """Remove the specified list of nodes from the cluster resource pool"""
         pass
 
-    def add_node_to_resource_pool(self, node_name):
-        """Add the specified node to the cluster resource pool"""
+    def add_nodes_to_resource_pool(self, node_list):
+        """Add the specified list of nodes to the cluster resource pool"""
         pass
 
-    def check_node_state(self, node_name):
-        """Check the state of the specified node"""
+    def check_nodes_state(self, node_list):
+        """Check the states of the specified list of nodes"""
         pass
 
-    def check_resource_manager_installed(self):
-        """Check whether the resource manager is installed """
+    def check_resource_manager_running(self):
+        """Check whether the resource manager is running """
         pass

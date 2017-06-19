@@ -355,15 +355,21 @@ class ControlCommandLineInterface(object):
         :return:
         """
         if isinstance(command_result, list):
+            num_device = 0
+            num_failed_device = 0
             num_failures = 0
             for cr in command_result:
+                count = len(self.cmd_invoker.datastore.
+                            expand_device_list(cr.device_name))
+                num_device += count
                 if cr.return_code != 0:
                     print(cr, file=sys.stderr)
+                    num_failed_device += count
                     num_failures += 1
                 else:
                     print(cr)
-            num_commands = len(command_result)
-            print("Result: {}/{} devices were successful".format(num_commands - num_failures, num_commands))
+            print("Result: {}/{} devices were successful".
+                  format(num_device - num_failed_device, num_device))
             return num_failures
         else:
             if command_result.return_code != 0:

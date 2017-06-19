@@ -20,11 +20,11 @@ class TestResourcePoolAddCommand(unittest.TestCase):
     @patch("datastore.DataStore", spec=DataStore)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
     def setUp(self, mock_plugin_manager, mock_logger):
-        self.setup_mock_config()
         self.node_name = "knl-123"
+        self.setup_mock_config()
         self.mock_plugin_manager = mock_plugin_manager
         self.resource_manager_mock = self.mock_plugin_manager.create_instance.return_value
-        self.resource_manager_mock.remove_node_from_resource_pool.return_value = (0, "foo")
+        self.resource_manager_mock.remove_nodes_from_resource_pool.return_value = (0, "foo")
 
         self.config = {
                 'device_name': self.node_name,
@@ -44,6 +44,8 @@ class TestResourcePoolAddCommand(unittest.TestCase):
             "device_type": "node",
             "service_list": []
         }
+        self.configuration_manager.expand_device_list.return_value = \
+            [self.node_name]
 
     def test_execute(self):
         self.assertEqual(self.resource_remove.execute().return_code, 0)

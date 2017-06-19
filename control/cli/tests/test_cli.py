@@ -215,20 +215,17 @@ class CommandExeFactoryTest(TestCase):
         device_name = "compute-29,compute-30"
         sub_command = "add"
         retval = self.command_invoker.resource_add(device_name)
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
 
     def test_resource_remove_invoker(self):
         device_name = "compute-29,compute-30"
         retval = self.command_invoker.resource_remove(device_name)
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
 
     def test_resource_check_invoker(self):
         device_name = "compute-29,compute-30"
         retval = self.command_invoker.resource_check(device_name)
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
 
     def test_service_status(self):
         retval = self.command_invoker.service_status("compute-29")
@@ -494,6 +491,7 @@ class ControlCliParserTest(TestCase):
 
     def test_handle_command_result_multiple(self):
         ctrl_cli_executor = ControlCommandLineInterface()
+        ctrl_cli_executor.cmd_invoker = self.command_invoker
         return_code = ctrl_cli_executor.handle_command_result([CommandResult(0), CommandResult(0)])
         self.assertEqual(return_code, 0)
         return_code = ctrl_cli_executor.handle_command_result([CommandResult(1), CommandResult(0)])

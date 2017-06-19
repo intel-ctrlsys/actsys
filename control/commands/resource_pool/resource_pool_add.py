@@ -25,5 +25,5 @@ class ResourcePoolAddCommand(ResourcePoolCommand):
         if setup_results is not None:
             return setup_results
 
-        rc, message = self.resource_manager.add_node_to_resource_pool(self.device_name)
+        rc, message = self.resource_manager.add_nodes_to_resource_pool(self.device_name)
         return CommandResult(rc, message)

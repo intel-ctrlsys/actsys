@@ -14,7 +14,6 @@ class ResourcePoolCommand(Command):
     def __init__(self, device_name, configuration, plugin_manager, logger=None):
         """Retrieve dependencies and prepare for power on"""
         Command.__init__(self, device_name, configuration, plugin_manager, logger)
-        self.device = None
         self.resource_manager = None
 
     def setup(self):
@@ -25,22 +24,32 @@ class ResourcePoolCommand(Command):
         :raise: ConfigurationNeeded Exception if the config has not been set probperly
         """
 
-        self.device = self.configuration.get_device(self.device_name)
-        if 'compute' != self.device.get("device_type") and 'node' != self.device.get("device_type"):
-            return CommandResult(-1, "The device is not a compute node!")
+        device_list = self.configuration.expand_device_list(self.device_name)
+        for device_list_item in device_list:
+            device = self.configuration.get_device(device_list_item)
+            if 'compute' != device.get("device_type") and \
+               'node' != device.get("device_type"):
+                return CommandResult(-1, "The device " + device_list_item +
+                                     " is not a compute node!")
 
-        resource_controller = self.device.get("resource_controller")
+            resource_controller = device.get("resource_controller")
 
-        if resource_controller is None:
-            return CommandResult(0, "The resource manager is not specified, nothing to do.")
+            if resource_controller is None:
+                return CommandResult(0, "The resource manager for device " +
+                                     device_list_item + " is not specified!")
 
-        try:
-            self.resource_manager = self.plugin_manager.create_instance('resource_control', resource_controller)
-        except:
-            raise ConfigurationNeeded("resource_controller", self.device_name,
-                                      self.plugin_manager.get_sorted_plugins_for_framework("resource_control"))
+            if self.resource_manager is None:
+                try:
+                    self.resource_manager = self.plugin_manager.create_instance(
+                        'resource_control', resource_controller)
+                except:
+                    raise ConfigurationNeeded("resource_controller",
+                                              device_list_item,
+                                              self.plugin_manager.
+                                              get_sorted_plugins_for_framework
+                                              ("resource_control"))
 
-        if not self.resource_manager.check_resource_manager_installed():
-            return CommandResult(-2, "Resource manager is not installed!")
+        if not self.resource_manager.check_resource_manager_running():
+            return CommandResult(-2, "Resource manager is not running!")
 
         return None

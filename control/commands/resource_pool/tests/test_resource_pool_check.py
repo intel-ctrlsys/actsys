@@ -20,11 +20,11 @@ class TestResourcePoolCheckCommand(unittest.TestCase):
     @patch("datastore.DataStore", spec=DataStore)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
     def setUp(self, mock_plugin_manager, mock_logger):
-        self.setup_mock_config()
         self.node_name = "knl-123"
+        self.setup_mock_config()
         self.mock_plugin_manager = mock_plugin_manager
         self.resource_manager_mock = self.mock_plugin_manager.create_instance.return_value
-        self.resource_manager_mock.check_node_state.return_value = (0, "foo")
+        self.resource_manager_mock.check_nodes_state.return_value = (0, "foo")
 
         self.config = {
             'device_name': self.node_name,
@@ -45,16 +45,18 @@ class TestResourcePoolCheckCommand(unittest.TestCase):
             "service_list": [],
             "resource_controller": "mock"
         }
+        self.configuration_manager.expand_device_list.return_value = \
+            [self.node_name]
 
     def test_execute(self):
         self.assertEqual(self.resource_check.execute().return_code, 0)
 
     def test_no_resource_controller(self):
         self.configuration_manager.get_device.return_value.pop('resource_controller', None)
-        self.assertEqual(self.resource_check.execute().message, "The resource manager is not specified, nothing to do.")
+        self.assertEqual(self.resource_check.execute().message, "The resource manager for device knl-123 is not specified!")
 
     def test_execute_wrong_node_type(self):
-        self.resource_manager_mock.check_resource_manager_installed.return_value = False
+        self.resource_manager_mock.check_resource_manager_running.return_value = False
 
         self.assertEqual(-2, self.resource_check.execute().return_code)
 

@@ -8,6 +8,7 @@ Implements a resource_control plugin for Slurm to control compute nodes.
 import os
 from ...plugin import DeclarePlugin
 from ..resource_control import ResourceControl
+from ..resource_control_common import ResourceControlComm
 from ...utilities.utilities import Utilities
 
 
@@ -19,152 +20,71 @@ class SlurmResource(ResourceControl):
         """Constructor that creates an utility and gets configuration"""
         ResourceControl.__init__(self)
         self.utilities = Utilities()
+        self.num_column = 6
+        self.node_column = 5
+        self.state_column = 4
+        self.resource_ctl_helper = ResourceControlComm()
 
-    def _parse_node_state(self, output):
-        lines = output.split(os.linesep)
-        for line in lines:
-            columns = line.split()
-            if len(columns) == 6 and columns[4] != 'n/a' and columns[4] != 'STATE':
-                return columns[4]
+    def check_nodes_state(self, node_list):
+        """
+        Check the states of the specified list of nodes using Slurm command
+        """
+        subprocess_result = self.utilities.execute_subprocess(['sinfo',
+                                                               '-n', node_list])
+        return 0, os.linesep + subprocess_result.stdout
 
-    def check_node_state(self, node_name):
-        """
-        Check the status of the specified node using Slurm command
-        """
-        subprocess_result = self.utilities.execute_subprocess(['sinfo', '-n', node_name])
-        state = self._parse_node_state(subprocess_result.stdout)
-        if state is None:
-            return 1, 'Node ' + node_name + ' not found in SLURM!'
-        return 0, state
+    def _parse_columns(self, columns):
+        if len(columns) != self.num_column:
+            return None, None
+        return columns[self.node_column], columns[self.state_column]
 
-    def _remove_node_idle(self, node_name):
+    def _remove_nodes_idle(self, node_list):
         """
-        Handle the situation where a node is in idle state when removing the
-        node from cluster resource pool
+        Handle the situation where a list of nodes are in idle state when
+        removing the nodes from cluster resource pool
         """
         reason = "For service"
-        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_name,
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_list,
                                                               'state=drain', 'reason=' + reason, '-vvvv'])
         if 'Success' in subprocess_result.stderr:
-            message = 'Succeeded in removing node ' + node_name + ' from the cluster resource pool!'
-            return 0, message
-        message = 'Failed in removing node ' + node_name + ' from the cluster resource pool!'
-        return 2, message
+            return 'Succeeded in removing!'
+        return 'Failed in removing!'
 
-    def _remove_node_alloc(self, node_name):
+    def remove_nodes_from_resource_pool(self, node_list):
         """
-        Handle the situation where a node is in alloc state when removing the
-        node from cluster resource pool
-        """
-        message = 'Currently, the node ' + node_name + ' is busy ' \
-                  'running job, it cannot be removed from the cluster ' \
-                  'resource pool!'
-        return 3, message
-
-    def _remove_node_drain(self, node_name):
-        """
-        Handle the situation where a node is in drain state when removing the
-        node from cluster resource pool
-        """
-        message = 'The node ' + node_name + ' has already been removed ' \
-                  'from the cluster resource pool!'
-        return 4, message
-
-    def _remove_node_abnormal_state(self, node_name, state):
-        """
-        Handle the situation where a node is in other states when removing the
-        node from cluster resource pool
-        """
-        message = 'The node ' + node_name + ' is in ' + state + ' state, not ' \
-                  'be able to remove it from the cluster resource pool!'
-        return 5, message
-
-    def remove_node_from_resource_pool(self, node_name):
-        """
-        Remove the specified node from the
+        Remove the specified list of nodes from the
         cluster resource pool using Slurm command.
         """
-        ret, state = self.check_node_state(node_name)
+        state = self.check_nodes_state(node_list)[1]
+        return self.resource_ctl_helper.remove_nodes_help(state,
+                                                          self._parse_columns,
+                                                          self._remove_nodes_idle)
 
-        if 1 == ret:
-            return ret, state
-
-        if 'idle' == state:
-            return self._remove_node_idle(node_name)
-
-        if 'alloc' == state:
-            return self._remove_node_alloc(node_name)
-
-        if 'drain' == state:
-            return self._remove_node_drain(node_name)
-
-        return self._remove_node_abnormal_state(node_name, state)
-
-    def _add_node_drain(self, node_name):
+    def _add_nodes_drain(self, node_list):
         """
-        Handle the situation where a node is in drain state when adding the
-        node back to cluster resource pool
+        Handle the situation where a list of nodes are in drain state when
+        adding the nodes back to cluster resource pool
         """
         reason = "Done with service"
-        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_name,
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_list,
                                                               'state=undrain', 'reason=' + reason, '-vvvv'])
         if 'Success' in subprocess_result.stderr:
-            message = 'Succeeded in adding node ' + node_name + \
-                      ' back to the cluster resource pool!'
-            return 0, message
-        message = 'Failed in adding node ' + node_name + \
-                  ' back to the cluster resource pool!'
-        return 6, message
+            return 'Succeeded in adding!'
+        return 'Failed in adding!'
 
-    def _add_node_alloc(self, node_name):
+    def add_nodes_to_resource_pool(self, node_list):
         """
-        Handle the situation where a node is in alloc state when adding the
-        node back to cluster resource pool
-        """
-        message = 'Currently, the node ' + node_name + ' is busy ' \
-                  'running job, it is already in the cluster resource pool!'
-        return 7, message
-
-    def _add_node_idle(self, node_name):
-        """
-        Handle the situation where a node is in idle state when adding the
-        node back to cluster resource pool
-        """
-        message = 'The node ' + node_name + ' is already in the cluster resource pool!'
-        return 8, message
-
-    def _add_node_abnormal_state(self, node_name, state):
-        """
-        Handle the situation where a node is in other states when adding the
-        node back to cluster resource pool
-        """
-        message = 'The node ' + node_name + ' is in ' + state + ' state, not ' \
-                  'be able to add it back to the cluster resource pool!'
-        return 9, message
-
-    def add_node_to_resource_pool(self, node_name):
-        """
-        Add the specified node back to the cluster resource pool
+        Add the specified list of nodes back to the cluster resource pool
         using Slurm command.
         """
-        ret, state = self.check_node_state(node_name)
-        if 1 == ret:
-            return ret, state
+        state = self.check_nodes_state(node_list)[1]
+        return self.resource_ctl_helper.add_nodes_help(state,
+                                                       self._parse_columns,
+                                                       self._add_nodes_drain)
 
-        if 'drain' == state:
-            return self._add_node_drain(node_name)
-
-        if 'alloc' == state:
-            return self._add_node_alloc(node_name)
-
-        if 'idle' == state:
-            return self._add_node_idle(node_name)
-
-        return self._add_node_abnormal_state(node_name, state)
-
-    def check_resource_manager_installed(self):
+    def check_resource_manager_running(self):
         """
-        Check whether the Slurm resource manager is installed using the 'sinfo'
+        Check whether the Slurm resource manager is running using the 'sinfo'
         Slurm command:
         """
         try:

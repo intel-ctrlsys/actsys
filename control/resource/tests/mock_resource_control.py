@@ -16,18 +16,20 @@ class MockResourceControl(ResourceControl):
         ResourceControl.__init__(self)
         self.return_value = True
 
-    def remove_node_from_resource_pool(self, node_name):
-        """Remove the specified node from the cluster resource pool"""
-        return 0, 'Succeeded in removing node ' + node_name + ' from the cluster resource pool!'
+    def remove_nodes_from_resource_pool(self, node_list):
+        """Remove the specified list of nodes from the cluster resource pool"""
+        return 0, 'Succeeded in removing nodes ' + node_list + \
+            ' from the cluster resource pool!'
 
-    def add_node_to_resource_pool(self, node_name):
-        """Add the specified node to the cluster resource pool"""
-        return 0, 'Succeeded in adding node ' + node_name + ' back to the cluster resource pool!'
+    def add_nodes_to_resource_pool(self, node_list):
+        """Add the specified list of nodes to the cluster resource pool"""
+        return 0, 'Succeeded in adding node ' + node_list + \
+            ' back to the cluster resource pool!'
 
-    def check_node_state(self, node_name):
-        """Check the state of the specified node"""
+    def check_nodes_state(self, node_list):
+        """Check the state of the specified list of nodes"""
         return self.return_value, "idle"
 
-    def check_resource_manager_installed(self):
-        """Check whether the resource manager is installed """
+    def check_resource_manager_running(self):
+        """Check whether the resource manager is running"""
         return self.return_value

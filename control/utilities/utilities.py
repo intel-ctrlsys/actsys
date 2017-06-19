@@ -71,6 +71,29 @@ class Utilities(object):
             return address.endswith('.1')
         return result == 0
 
+    @staticmethod
+    def print_nested_list(data_list):
+        """
+        Print a list of list with automatic left alignment. For outer layer
+        list, each item is one row; for inner layer list, each item is one
+        column. The columns are aligned on the left.
+        """
+        if data_list is None or len(data_list) == 0:
+            return ''
+        width = list()
+        for column in data_list[0]:
+            width.append(len(column))
+        for i in range(1, len(data_list)):
+            for j in range(0, len(data_list[i])):
+                width[j] = max(width[j], len(data_list[i][j]))
+        res = ''
+        for i in range(0, len(data_list)):
+            for j in range(0, len(data_list[i])):
+                res += ''.join(data_list[i][j].ljust(width[j] + 2))
+            if i != len(data_list) - 1:
+                res += os.linesep
+        return res
+
 
 class SubprocessOutput(object):
 

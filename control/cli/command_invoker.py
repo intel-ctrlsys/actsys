@@ -169,36 +169,52 @@ class CommandInvoker(object):
         if not device_list:
             return CommandResult(1, "No valid devices to run this command on.")
         results = list()
+        valid_node_list = list()
+        invalid_node_list = list()
         for device_name in device_list:
             if not self.device_exists_in_config(device_name):
-                msg = "Device {} skipped, because it is not found in the config file.".format(device_name)
-                self.logger.warning(msg)
-                results.append(CommandResult(1, msg, device_name))
+                invalid_node_list.append(device_name)
                 continue
-
-            # Prepare kwargs
-            kwargs["device_name"] = device_name
-            kwargs["configuration"] = self.datastore
-            kwargs["plugin_manager"] = self.manager
-            kwargs["logger"] = self.logger
-            # End kwargs prep
-
-            cmd_obj = self.manager.create_instance('command', command_map[sub_command], **kwargs)
-            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device_name)
-            try:
-                command_result = cmd_obj.execute()
-            except Exception as ex:
-                command_result = CommandResult(1, ex.message)
-
-            command_result.device_name = device_name
-            self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, device_name, command_result)
-
-            results.append(command_result)
-
+            valid_node_list.append(device_name)
+            if 'resource' not in sub_command:
+                self.create_execute_command(results, device_name,
+                                            command_map[sub_command], **kwargs)
+        if len(invalid_node_list) > 0:
+            node_list = self.datastore.fold_devices(invalid_node_list)
+            msg = "Devices {} skipped due to not found in the config file.".\
+                format(self.datastore.fold_devices(node_list))
+            self.logger.warning(msg)
+            results.append(CommandResult(1, msg, node_list))
+        if 'resource' in sub_command and len(valid_node_list) > 0:
+            devices = self.datastore.fold_devices(valid_node_list)
+            self.create_execute_command(results, devices,
+                                        command_map[sub_command], **kwargs)
         if len(results) == 1:
             return results[0]
 
         return results
+
+    def create_execute_command(self, results,
+                               devices, sub_command, **kwargs):
+        # Prepare kwargs
+        kwargs["device_name"] = devices
+        kwargs["configuration"] = self.datastore
+        kwargs["plugin_manager"] = self.manager
+        kwargs["logger"] = self.logger
+        # End kwargs prep
+
+        cmd_obj = self.manager.create_instance('command', sub_command, **kwargs)
+        self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, devices)
+        try:
+            command_result = cmd_obj.execute()
+        except Exception as ex:
+            command_result = CommandResult(1, ex.message)
+
+        command_result.device_name = devices
+        self.logger.journal(cmd_obj.get_name(),
+                            cmd_obj.command_args, devices, command_result)
+
+        results.append(command_result)
 
     def device_exists_in_config(self, device_name):
         """Check if the device exists in the configuration file or not"""

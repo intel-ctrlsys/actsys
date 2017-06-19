@@ -75,6 +75,18 @@ class TestGetOsUtilities(unittest.TestCase):
         rv1, result = self.utilities.execute_in_shell('ls /someunknownrootfolder')
         self.assertEqual(255, rv1)
 
+    def test_print_nested_list(self):
+        data_list = list()
+        data_list.append(['NODELIST', 'STATE'])
+        data_list.append(['compute-[29-32]', 'drain'])
+        res = Utilities.print_nested_list(data_list)
+        data_list = None
+        res_none = Utilities.print_nested_list(data_list)
+        data_list = list()
+        res_empty = Utilities.print_nested_list(data_list)
+        self.assertTrue('compute-[29-32]  drain' in res)
+        self.assertEquals(res_none, '')
+        self.assertEqual(res_empty, '')
 
 def mocked_call(self, args, stdin=None, stdout=None, stderr=None,
                 shell=False):
