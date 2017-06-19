@@ -186,7 +186,8 @@ class DataStoreCLI(object):
     def _add_expand_parser(self, group_parser):
         expand_parser = group_parser.add_parser('expand', help='expand the device regex or/and group into list of '
                                                                'devices. Use: group expand group_name,device_regex')
-        expand_parser.add_argument('device_list', help='provide comma separated device list or device regex')
+        expand_parser.add_argument('device_list', help='provide comma separated device list or device regex or group '
+                                                       'name')
         expand_parser.set_defaults(func=self.group_expand_execute)
 
     def _add_fold_parser(self, group_parser):

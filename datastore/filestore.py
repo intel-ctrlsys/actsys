@@ -427,7 +427,8 @@ class FileStore(DataStore):
             self.parsed_file[self.GROUPS_KEY] = {}
 
         updated_device_set = NodeSet(self.parsed_file[self.GROUPS_KEY].get(group, None), resolver=RESOLVER_NOGROUP)
-        updated_device_set.add(device_list)
+        device_list = super(FileStore, self).expand_device_list(device_list)
+        updated_device_set.add(','.join(device_list))
         self.parsed_file[self.GROUPS_KEY][group] = str(updated_device_set)
 
         self.save_file()
@@ -446,9 +447,10 @@ class FileStore(DataStore):
 
         updated_device_set = NodeSet(self.parsed_file[self.GROUPS_KEY].get(group, None), resolver=RESOLVER_NOGROUP)
         updated_device_set.difference_update(device_list)
-        if len(updated_device_set) == 0:
-            # Delete the group if its empty.
+        if len(updated_device_set)  == 0 or device_list == '*':
+            # Delete the group if its empty or user provided device_list is '*'
             self.parsed_file[self.GROUPS_KEY].pop(group, None)
+            updated_device_set = ''
         else:
             # Modify the group, because its not empty yet.
             self.parsed_file[self.GROUPS_KEY][group] = str(updated_device_set)

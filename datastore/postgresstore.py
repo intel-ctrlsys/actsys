@@ -370,7 +370,8 @@ class PostgresStore(DataStore):
         group_devices = self.get_group_devices(group)
 
         updated_device_set = NodeSet(group_devices, resolver=RESOLVER_NOGROUP)
-        updated_device_set.add(device_list)
+        device_list = super(PostgresStore, self).expand_device_list(device_list)
+        updated_device_set.add(','.join(device_list))
 
         self.cursor.callproc("public.upsert_group", [group, str(updated_device_set)])
         result = self.cursor.fetchall()
@@ -387,9 +388,10 @@ class PostgresStore(DataStore):
 
         updated_device_set = NodeSet(group_devices, resolver=RESOLVER_NOGROUP)
         updated_device_set.remove(device_list)
-        if len(updated_device_set) == 0:
-            # Delete the group if its empty.
+        if len(updated_device_set) == 0 or device_list == '*':
+            # Delete the group if its empty or user provided device_list is '*'
             self.cursor.execute("DELETE FROM public.group WHERE group_name = %s;", [group])
+            updated_device_set = ''
         else:
             # Modify the group, because its not empty yet.
             self.cursor.callproc("public.upsert_group", [group, str(updated_device_set)])
