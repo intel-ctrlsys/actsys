@@ -3,16 +3,16 @@
 # Copyright (c) 2017 Intel Corp.
 #
 """
-Diagnostics online Plugin
+Diagnostics inband Plugin
 """
 from .. import CommandResult, Command
 from control.plugin import DeclarePlugin
 from .diagnostics_command import DiagnosticsCommand
 
 
-@DeclarePlugin('diagnostics_online', 100)
-class DiagnosticsOnlineCommand(DiagnosticsCommand):
-    """DiagnosticsOnline"""
+@DeclarePlugin('diagnostics_inband', 100)
+class DiagnosticsInBandCommand(DiagnosticsCommand):
+    """Diagnosticsinband"""
     def __init__(self, device_name, configuration, plugin_manager, logger=None, **kwargs):
         DiagnosticsCommand.__init__(self, device_name, configuration, plugin_manager, logger, **kwargs)
 

@@ -14,7 +14,7 @@ from datastore import DataStore
 
 
 class TestDiagnosticsCommand(unittest.TestCase):
-    """Test case for the diagnostics online command"""
+    """Test case for the diagnostics inband command"""
 
     @patch("datastore.DataStore", spec=DataStore)
     @patch("control.plugin.manager.PluginManager", spec=PluginManager)
@@ -54,7 +54,7 @@ class TestDiagnosticsCommand(unittest.TestCase):
         self.configuration_manager.get_device.return_value = {
             'device_name': node_name,
             "ip_address": "192.168.1.1",
-            "diagnostic": "online_diagnostics",
+            "diagnostics": "inband_diagnostics",
             "port": 22,
             "user": "user",
             "password": "pass",

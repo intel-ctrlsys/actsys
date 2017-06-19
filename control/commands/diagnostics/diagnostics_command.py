@@ -3,7 +3,7 @@
 # Copyright (c) 2017 Intel Corp.
 #
 """
-Diagnostics online Plugin
+Diagnostics inband Plugin
 """
 from .. import CommandResult, Command
 

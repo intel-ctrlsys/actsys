@@ -17,8 +17,8 @@ class TestDiagnosticsCLI(unittest.TestCase):
 
     def test_help_msgs(self):
         commands = [
-            ['online', '-h'],
-            ['offline', '-h'],
+            ['inband', '-h'],
+            ['oob', '-h'],
             ['-h']
         ]
 
@@ -26,34 +26,34 @@ class TestDiagnosticsCLI(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.cli.parse_and_run(command)
 
-    def test_online(self):
-        self.cli.parse_and_run(['online', 'test-1', '--image', 'image_test'])
-        self.mock_ci.diagnostics_online.assert_called_once()
+    def test_inband(self):
+        self.cli.parse_and_run(['inband', 'test-1', '--image', 'image_test'])
+        self.mock_ci.diagnostics_inband.assert_called_once()
 
         with self.assertRaises(SystemExit):
             # missing arg <device_name>
-            self.cli.parse_and_run(['online'])
+            self.cli.parse_and_run(['inband'])
 
-    def test_offline(self):
-        self.cli.parse_and_run(['offline', 'test-1'])
-        self.mock_ci.diagnostics_offline.assert_called_once()
+    def test_oob(self):
+        self.cli.parse_and_run(['oob', 'test-1'])
+        self.mock_ci.diagnostics_oob.assert_called_once()
 
         with self.assertRaises(SystemExit):
             # missing arg <device_name>
-            self.cli.parse_and_run(['offline'])
+            self.cli.parse_and_run(['oob'])
 
     def test_argv(self):
-        sys.argv = ['diag', 'online', 'test-1', '--image', 'image_test']
+        sys.argv = ['diag', 'inband', 'test-1', '--image', 'image_test']
         self.cli.parse_and_run()
-        self.mock_ci.diagnostics_online.assert_called_once()
+        self.mock_ci.diagnostics_inband.assert_called_once()
 
-        sys.argv = ['diag', 'online']
+        sys.argv = ['diag', 'inband']
         with self.assertRaises(SystemExit):
             # missing arg <device_name>
             self.cli.parse_and_run()
 
     def test_exception(self):
-        self.mock_ci.diagnostics_online = MagicMock(side_effect=KeyError, return_value=3)
+        self.mock_ci.diagnostics_inband = MagicMock(side_effect=KeyError, return_value=3)
 
-        result = self.cli.parse_and_run(['online', 'test-1', '--image', 'image_test'])
+        result = self.cli.parse_and_run(['inband', 'test-1', '--image', 'image_test'])
         self.assertEqual(result.return_code, 1)

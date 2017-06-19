@@ -117,9 +117,9 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(OobSensorGetTimeCommand)
 
         # Diagnostics plugin
-        from ..commands.diagnostics import DiagnosticsOnlineCommand, DiagnosticsOfflineCommand
-        self.manager.register_plugin_class(DiagnosticsOnlineCommand)
-        self.manager.register_plugin_class(DiagnosticsOfflineCommand)
+        from ..commands.diagnostics import DiagnosticsInBandCommand, DiagnosticsOOBCommand
+        self.manager.register_plugin_class(DiagnosticsInBandCommand)
+        self.manager.register_plugin_class(DiagnosticsOOBCommand)
 
         from ..diagnostics.mock_diagnostics.mock_diagnostics import MockDiagnostics
         self.manager.register_plugin_class(MockDiagnostics)
@@ -157,8 +157,8 @@ class CommandInvoker(object):
                        'provisioner_set': 'provisioner_set',
                        'oob_sensor_get': 'oob_sensor_get',
                        'oob_sensor_get_time': 'oob_sensor_get_time',
-                       'diagnostics_online': 'diagnostics_online',
-                       'diagnostics_offline': 'diagnostics_offline'
+                       'diagnostics_inband': 'diagnostics_inband',
+                       'diagnostics_oob': 'diagnostics_oob'
                        }
         try:
             device_list = self._device_name_check(device_regex)
@@ -315,11 +315,11 @@ class CommandInvoker(object):
         return self.common_cmd_invoker(device_name, "oob_sensor_get_time", sensor_name=sensor_name, duration=duration,
                                        sample_rate=sample_rate)
 
-    def diagnostics_online(self, device_name, test=None, image=None):
-        """Execute the online Diagnostics"""
-        return self.common_cmd_invoker(device_name, "diagnostics_online", test_name=test, diag_image=image)
+    def diagnostics_inband(self, device_name, test=None, image=None):
+        """Execute the inband Diagnostics"""
+        return self.common_cmd_invoker(device_name, "diagnostics_inband", test_name=test, diag_image=image)
 
-    def diagnostics_offline(self, device_name, test=None):
-        """Execute the offline Diagnostics"""
-        return self.common_cmd_invoker(device_name, "diagnostics_offline", test_name=test)
+    def diagnostics_oob(self, device_name, test=None):
+        """Execute the oob Diagnostics"""
+        return self.common_cmd_invoker(device_name, "diagnostics_oob", test_name=test)
 
