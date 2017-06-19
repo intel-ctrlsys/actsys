@@ -18,7 +18,7 @@ class FileStore(DataStore):
     The filestore retireves
     """
     # TODO: test device_id in inserts
-    LOG_FORMAT = "%(asctime)s / %(levelname)s / %(name)s / %(message)s"
+    LOG_FORMAT = "%(asctime)s / %(levelname)s / %(name)s / %(message)s;;"
     DEVICE_KEY = "device"
     CONFIG_KEY = "configuration_variables"
     PROFILE_KEY = "profile"

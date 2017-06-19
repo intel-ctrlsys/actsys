@@ -20,13 +20,13 @@ class TestUtilities(unittest.TestCase):
 
     def test_tail_file(self):
         temp_file = tempfile.NamedTemporaryFile("w", delete=False)
-        temp_file.write("""aligator
-bat
-cat
-dog
-elephant
-flamingo
-gorilla""")
+        temp_file.write("""aligator;;
+bat;;
+cat;;
+dog;;
+elephant;;
+flamingo;;
+gorilla;;""")
         temp_file.close()
         result = DataStoreUtilities.tail_file(temp_file.name, 100)
         self.assertEqual(7, len(result))

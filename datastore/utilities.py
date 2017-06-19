@@ -6,6 +6,7 @@
 Common utilities that DataStore users or implementers need.
 """
 import json
+from os import linesep
 from ClusterShell.NodeSet import expand, fold, grouplist, NodeSetParseError
 
 
@@ -51,6 +52,7 @@ class DataStoreUtilities(object):
     """
     Handy utilities that everyone needs.
     """
+    LINE_DELIMITER = ';;' + linesep
 
     @staticmethod
     def tail_file(filename, lines, formatter=None, log_filter=None):
@@ -66,9 +68,12 @@ class DataStoreUtilities(object):
         num_lines = int(lines)
 
         with open(filename) as opened_file:
-            content = opened_file.read().splitlines()
+            content = opened_file.read().split(DataStoreUtilities.LINE_DELIMITER)
 
+        # delete the empty element introduced by the split function
+        content = filter(None, content)
         count = len(content)
+
         # Handle case when limit is larger than count
         if num_lines >= count:
             num_lines = count

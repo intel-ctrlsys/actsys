@@ -59,18 +59,18 @@ class TestFileStore(unittest.TestCase):
       }
     }"""
     LOG_FILENAME = "unknown, setup in setUPCLass(cls)"
-    LOG_FILE = """2017-02-22 09:18:54,432 / INFO / DataStore / BATS / None / Does this work?
-    2017-01-01 09:18:54,433 / WARNING / DataStore / BATS / None / Does this work?
-    2017-01-01 09:18:54,433 / ERROR / DataStore / BATS / None / Does this work?
-    2017-01-01 09:18:54,433 / CRITICAL / DataStore / BATS / None / Does this work?
-    2017-01-01 09:18:54,434 / INFO / DataStore / None / None / Does this work?
-    2017-01-01 09:18:54,434 / WARNING / DataStore / None / None / Does this work?
-    2017-01-01 09:18:54,434 / ERROR / DataStore / BATS / None / Does this work?
-    2017-01-01 09:18:54,435 / CRITICAL / DataStore / None / None / Does this work?
-    2016-01-01 10:25:18,042 / DEBUG / DataStore / BATS / 1 / Does this work?
-    2016-01-01 10:25:18,042 / WARNING / DataStore / BATS / 2 / Does this work?
-    2015-01-01 10:25:18,042 / ERROR / DataStore / BATS / 1 / Does this work?
-    2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?
+    LOG_FILE = """2017-02-22 09:18:54,432 / INFO / DataStore / BATS / None / Does this work?;;
+    2017-01-01 09:18:54,433 / WARNING / DataStore / BATS / None / Does this work?;;
+    2017-01-01 09:18:54,433 / ERROR / DataStore / BATS / None / Does this work?;;
+    2017-01-01 09:18:54,433 / CRITICAL / DataStore / BATS / None / Does this work?;;
+    2017-01-01 09:18:54,434 / INFO / DataStore / None / None / Does this work?;;
+    2017-01-01 09:18:54,434 / WARNING / DataStore / None / None / Does this work?;;
+    2017-01-01 09:18:54,434 / ERROR / DataStore / BATS / None / Does this work?;;
+    2017-01-01 09:18:54,435 / CRITICAL / DataStore / None / None / Does this work?;;
+    2016-01-01 10:25:18,042 / DEBUG / DataStore / BATS / 1 / Does this work?;;
+    2016-01-01 10:25:18,042 / WARNING / DataStore / BATS / 2 / Does this work?;;
+    2015-01-01 10:25:18,042 / ERROR / DataStore / BATS / 1 / Does this work?;;
+    2017-01-01 10:25:18,042 / ERROR / DataStore / Does this work?;;
 """
     FILE_CONFIG_MOCKED = """{
   "configuration_variables": {
