@@ -391,7 +391,7 @@ class PostgresStore(DataStore):
         if len(updated_device_set) == 0 or device_list == '*':
             # Delete the group if its empty or user provided device_list is '*'
             self.cursor.execute("DELETE FROM public.group WHERE group_name = %s;", [group])
-            updated_device_set = ''
+            updated_device_set = NodeSet()
         else:
             # Modify the group, because its not empty yet.
             self.cursor.callproc("public.upsert_group", [group, str(updated_device_set)])

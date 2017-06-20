@@ -450,7 +450,7 @@ class FileStore(DataStore):
         if len(updated_device_set)  == 0 or device_list == '*':
             # Delete the group if its empty or user provided device_list is '*'
             self.parsed_file[self.GROUPS_KEY].pop(group, None)
-            updated_device_set = ''
+            updated_device_set = NodeSet()
         else:
             # Modify the group, because its not empty yet.
             self.parsed_file[self.GROUPS_KEY][group] = str(updated_device_set)

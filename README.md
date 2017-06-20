@@ -38,7 +38,7 @@ Running the command `datastore -h` or `datastore --help` will show  the help on 
 
 ```
 [user@host]$ datastore --help
-usage: datastore [-h] {device,profile,config,log} ...
+usage: datastore [-h] {device,profile,config,log,export,import,group} ...
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -46,11 +46,15 @@ optional arguments:
 Data Type:
   What datatype to manipulate
 
-  {device,profile,config,log}
+  {device,profile,config,log,export,import,group}
     device              Manipulations for devices
     profile             Manipulations for profiles
     config              Manipulations for configuration
     log                 Manipulations for logs
+    export              Export a configuration from the datastore, to a file.
+    import              Import a configuration into the datastore, overwriting
+                        the current information.
+    group               Add/Remove devices to/from groups. List known groups.
 ```
 
 This same help command can be run for any of the subcommands. For example 'datastore device --help' will produce:
@@ -143,3 +147,40 @@ This section contains ramblings on how we might make DataStore better.
 4. device_configuration - device configuration. May shared among devices. Configuration may only be edited by admins. When a config for a device is edited the config is edited for all of these devices. This makes changes on one device more difficult (the configuration will have to be cloned and modified to edit only 1 out of a group of 10), but changes in aggregate easier.
 
 Problems: State vs configuration. This is not an easy line to draw. For example an IP address may be configured or it may be dynamic and is a state of what the DNS provider gave us. This argument can be extended to more complex ideas like what image does this node have. Its current image is centos7.2 but its configured to centos 7.3, should state and configuration be different?
+
+## Usage for Logical groups
+ctrl datastore group -h
+usage: datastore group [-h] [--datastore-only DATASTORE_ONLY]
+                       {add,remove,get,list,expand,fold,groups} ...
+
+Handle grouping for ease in using ctrl. Groups manipulated in this way are
+stored and handled via the DataStore. Groups can also be maintained manually
+via ClusterShell. See the ClusterShell documentation for advanced group
+configurations.
+
+positional arguments:
+  {add,remove,get,list,expand,fold,groups}
+                        subparser for group
+    add                 Add device regex to group. Use: group add node_regex
+                        group_name
+    remove              Remove device regex from group. Use: group remove
+                        node_regex group_name
+    get                 Get the device regex from group. Use: group get
+                        group_name
+    list                list the groups created so far. Use: group list
+    expand              expand the device regex or/and group into list of
+                        devices. Use: group expand group_name,device_regex.
+                        When using group names to expand, use '@' infront of
+                        groupname. To expand a group with name g1, Use: group
+                        expand @g1
+    fold                fold the device list into device regex Use: group fold
+                        device_list
+    groups              list the groups where the device regex is available.
+                        Use: group groups device_regex
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --datastore-only DATASTORE_ONLY, -d DATASTORE_ONLY
+                        Only use the datastore when retrieving groups, ignore
+                        any other ClusterShell set groups (i.e. SLURM or
+                        Genders groups).
