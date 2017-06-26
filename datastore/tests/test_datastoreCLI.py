@@ -333,6 +333,11 @@ class TestGroupCLI(unittest.TestCase):
         except SystemExit:
             pass
 
+        self.mockDS.get_device_groups.return_value = []
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'groups', 'foo'])
+            self.assertEqual(result, 0)
+
 
 class TestsDataStoreCLIOptions(unittest.TestCase):
     def test_no_options(self):

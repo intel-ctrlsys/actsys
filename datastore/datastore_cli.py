@@ -473,6 +473,11 @@ class DataStoreCLI(object):
         return 0
 
     def group_add_execute(self, parsed_args):
+        """
+        Add nodes to group
+        :param parsed_args:
+        :return:
+        """
         device_list = parsed_args.device_list
         group = parsed_args.group
         try:
@@ -483,6 +488,11 @@ class DataStoreCLI(object):
         return 0
 
     def group_remove_execute(self, parsed_args):
+        """
+        Remove nodes from group
+        :param parsed_args:
+        :return:
+        """
         device_list = parsed_args.device_list
         group = parsed_args.group
         try:
@@ -493,12 +503,22 @@ class DataStoreCLI(object):
         return 0
 
     def group_get_execute(self, parsed_args):
+        """
+        show the nodes in group
+        :param parsed_args:
+        :return:
+        """
         group = parsed_args.group
         devices = self.datastore.get_group_devices(group)
         print(devices)
         return 0
 
     def group_list_execute(self, parsed_args=None):
+        """
+        list the groups
+        :param parsed_args:
+        :return:
+        """
         groups = self.datastore.list_groups()
         group_keys = sorted(groups.keys())
         for group in group_keys:
@@ -513,20 +533,38 @@ class DataStoreCLI(object):
         return 0
 
     def group_expand_execute(self, parsed_args):
+        """
+        Expand the groups
+        :param parsed_args:
+        :return:
+        """
         device_list = parsed_args.device_list
         print(self.datastore.expand_device_list(device_list))
         return 0
 
     def group_fold_execute(self, parsed_args):
+        """
+        Fold the group
+        :param parsed_args:
+        :return:
+        """
         device_list = parsed_args.device_list
         print(self.datastore.fold_devices(device_list))
         return 0
 
     def group_groups_execute(self, parsed_args):
+        """
+        Show which groups the nodes belong to
+        :param parsed_args:
+        :return:
+        """
         device_list = parsed_args.device_list
 
         # All groups a device belongs too
         device_groups = self.datastore.get_device_groups(device_list)
+        if not device_groups:
+            print("{} nodes are not part of same groups".format(device_list))
+            return 0
         print("{} is a member of groups:".format(device_list))
         for group in device_groups:
             print("{}".format(group))

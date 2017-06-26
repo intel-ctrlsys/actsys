@@ -520,6 +520,9 @@ class TestFileStore(unittest.TestCase):
         result = self.fs.remove_from_group("c[1-50]", "test2")
         self.assertEqual(str(result), "")
 
+        result = self.fs.remove_from_group("*", "non_existing")
+        self.assertEqual(str(result), "")
+
         self.assertEqual(len(list(self.fs.get_group_devices("test2"))), 0)
 
 

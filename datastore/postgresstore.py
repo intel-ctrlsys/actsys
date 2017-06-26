@@ -5,6 +5,7 @@
 """
 For handling the DataStore inteerface in postgres
 """
+from __future__ import print_function
 import json
 import copy
 import logging
@@ -385,10 +386,17 @@ class PostgresStore(DataStore):
         """
         super(PostgresStore, self).remove_from_group(device_list, group)
         group_devices = self.get_group_devices(group)
+        if group_devices is None:
+            # Nothing to delete, done!
+            print("Group {} doesn't exist".format(group))
+            return NodeSet()
 
         updated_device_set = NodeSet(group_devices, resolver=RESOLVER_NOGROUP)
+        if device_list == '*':
+            device_list = group_devices
+
         updated_device_set.remove(device_list)
-        if len(updated_device_set) == 0 or device_list == '*':
+        if len(updated_device_set) == 0:
             # Delete the group if its empty or user provided device_list is '*'
             self.cursor.execute("DELETE FROM public.group WHERE group_name = %s;", [group])
             updated_device_set = NodeSet()

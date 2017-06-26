@@ -514,5 +514,12 @@ class TestPostgresDB(unittest.TestCase):
         result = self.postgres.remove_from_group(device_list, "foo")
         self.assertEqual(len(result), 0)
 
+        result = self.postgres.remove_from_group("*", "foo")
+        self.assertEqual(len(result), 0)
+
+        self.set_expected(mock_connect, None)
+        result = self.postgres.remove_from_group("", "non-existent")
+        self.assertEqual(len(result), 0)
+
 if __name__ == '__main__':
     unittest.main()

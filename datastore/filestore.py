@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
+from __future__ import print_function
 import os
 import logging
 import copy
@@ -441,13 +442,15 @@ class FileStore(DataStore):
         """
         super(FileStore, self).remove_from_group(device_list, group)
         groups = self.parsed_file.get(self.GROUPS_KEY, None)
-        if groups is None:
+        if groups is None or group not in groups:
             # Nothing to delete, done!
+            print("Group {} doesn't exist".format(group))
             return NodeSet()
 
         updated_device_set = NodeSet(self.parsed_file[self.GROUPS_KEY].get(group, None), resolver=RESOLVER_NOGROUP)
+
         updated_device_set.difference_update(device_list)
-        if len(updated_device_set)  == 0 or device_list == '*':
+        if len(updated_device_set) == 0 or device_list == '*':
             # Delete the group if its empty or user provided device_list is '*'
             self.parsed_file[self.GROUPS_KEY].pop(group, None)
             updated_device_set = NodeSet()
