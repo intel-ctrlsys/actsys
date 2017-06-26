@@ -270,17 +270,22 @@ class ControlCommandLineInterface(object):
             command_result = self.oobsensor_cmd_execute(local_cmd_args)
         return command_result
 
+    def handle_invalid_timeout(self, message):
+        message += ' Keep executing the command with the default timeout:' + \
+                   str(self.default_timeout)
+        self.cmd_invoker.logger.warning(message)
+        self.timeout = self.default_timeout
+
     def execute_cmd(self, cmd_args, masterparser, unknown_args):
         """Execute the command through an internal function with
         timeout decorator that uses specified timeout value"""
         try:
             self.set_time_out(cmd_args)
         except (ConfigurationNeeded, ValueError) as error:
-            self.cmd_invoker.logger.warning(error.message +
-                                            ' Keep executing the command '
-                                            'with the default timeout:' +
-                                            str(self.default_timeout))
-            self.timeout = self.default_timeout
+            self.handle_invalid_timeout(error.message)
+        if self.timeout < 0:
+            self.handle_invalid_timeout('Timeout value (' + str(self.timeout) +
+                                        ') should not be negative!')
 
         @timeout_decorator.timeout(self.timeout)
         def execute_cmd_internal():
