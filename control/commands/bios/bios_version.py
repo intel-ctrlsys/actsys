@@ -20,9 +20,14 @@ class BiosVersionCommand(BiosCommand):
 
     def execute(self):
         """Execute the command"""
-        self.setup()
         try:
-            ret_msg = self.node_controller.get_version(self.device, self.bmc)
+            self.setup()
+            result = []
+            result_dict = self.node_controller.get_version(self.device_data, self.bmc_data)
+            for key, value in result_dict.iteritems():
+                command_result = CommandResult(0, value)
+                command_result.device_name = key
+                result.append(command_result)
         except Exception as ex:
-            return CommandResult(255, ex.message)
-        return CommandResult(0, ret_msg)
+            return [CommandResult(255, ex.message)]
+        return result

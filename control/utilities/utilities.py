@@ -94,6 +94,17 @@ class Utilities(object):
                 res += os.linesep
         return res
 
+    def remove_duplicates_from_bmc_data(self, bmc_list):
+        return [dict(t) for t in set([tuple(bmc.items()) for bmc in bmc_list])]
+
+    def map_devices_to_bmc(self, device_list, bmc_list, func):
+        for bmc in bmc_list:
+            bmc_device_list = []
+            for device in device_list:
+                if bmc.get('hostname') == device.get('bmc'):
+                    bmc_device_list.append(device)
+            func(bmc_device_list, bmc)
+
 
 class SubprocessOutput(object):
 

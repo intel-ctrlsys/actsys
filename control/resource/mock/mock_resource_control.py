@@ -41,7 +41,7 @@ class MockResource(ResourceControl):
     def _write_file(self):
         try:
             configure_manager = FileStore(self.configure_file, logging.DEBUG)
-        except:
+        except Exception as e:
             self.nodes = None
             return
         extractor = configure_manager
@@ -63,11 +63,10 @@ class MockResource(ResourceControl):
         with open(self.file_path, 'w') as f:
             json.dump(self.nodes, f)
 
-    def check_nodes_state(self, node_list):
+    def check_nodes_state(self, nodes):
         """
         Mock to check the states of the specified list of nodes
         """
-        nodes = self.command_invoker.datastore.expand_device_list(node_list)
         res_list = list()
         res_list.append(['NODELIST', 'STATE'])
         states = {}

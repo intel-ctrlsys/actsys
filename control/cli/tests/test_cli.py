@@ -208,8 +208,8 @@ class CommandExeFactoryTest(TestCase):
         device_name = "compute-29,compute-30"
         sub_command = "off"
         retval = self.command_invoker.power_off_invoker(device_name, sub_command)
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
+        self.assertEqual(retval.return_code, 0)
 
     def test_resource_add_invoker(self):
         device_name = "compute-29,compute-30"
@@ -231,8 +231,8 @@ class CommandExeFactoryTest(TestCase):
         retval = self.command_invoker.service_status("compute-29")
         self.assertEqual(retval.return_code, 0)
         retval = self.command_invoker.service_status("compute-29,compute-30")
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
+        self.assertEqual(retval.return_code, 0)
 
     def test_service_status2(self):
         self.command_invoker.manager = None
@@ -243,23 +243,23 @@ class CommandExeFactoryTest(TestCase):
         retval = self.command_invoker.service_status("compute-29")
         self.assertEqual(retval.return_code, 0)
         retval = self.command_invoker.service_status("compute-29,compute-30")
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
+        self.assertEqual(retval.return_code, 0)
         self.command_invoker.init_manager = old_func
 
     def test_service_on(self):
         retval = self.command_invoker.service_on("compute-29")
         self.assertEqual(retval.return_code, 0)
         retval = self.command_invoker.service_on("compute-29,compute-30")
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
+        self.assertEqual(retval.return_code, 0)
 
     def test_service_off(self):
         retval = self.command_invoker.service_off("compute-29")
         self.assertEqual(retval.return_code, 0)
         retval = self.command_invoker.service_off("compute-29,compute-30")
-        self.assertEqual(retval[0].return_code, 0)
-        self.assertEqual(retval[1].return_code, 0)
+        self.assertEqual(retval.return_code, 0)
+        self.assertEqual(retval.return_code, 0)
 
 
 class ControlCliParserTest(TestCase):
@@ -425,8 +425,8 @@ class ControlCliParserTest(TestCase):
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.power_on_invoker(device_name, sub_command,
                                                        test_args)
-        self.assertNotEqual(retval[0].return_code, 0)
-        self.assertNotEqual(retval[1].return_code, 0)
+        self.assertNotEqual(retval.return_code, 0)
+        self.assertNotEqual(retval.return_code, 0)
 
     def test_z_poff_neg(self):
         args = CommandResult(message='pass', return_code=1)
@@ -434,8 +434,8 @@ class ControlCliParserTest(TestCase):
         sub_command = "off"
         self.command_invoker.manager.create_instance.return_value.execute.return_value.return_code = 1
         retval = self.command_invoker.power_off_invoker(device_name, sub_command)
-        self.assertNotEqual(retval[0].return_code, 0)
-        self.assertNotEqual(retval[1].return_code, 0)
+        self.assertNotEqual(retval.return_code, 0)
+        self.assertNotEqual(retval.return_code, 0)
 
     def test_z_pre_neg(self):
         args = CommandResult(message='pass', return_code=1)

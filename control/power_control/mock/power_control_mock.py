@@ -17,52 +17,61 @@ class PowerControlMock(PowerControl):
     def __init__(self, **kwargs):
         options = kwargs
         PowerControl.__init__(self, options)
-        self.device_name = options['device_name']
-        if options['device_type'] not in ['node', 'compute', 'service',
-                                          'master', 'login']:
-            raise RuntimeError('PowerControlMock invoked with a non-node type!')
-        filename = self.device_name + "." + 'state'
-        self.file_path = os.path.join(os.path.sep, 'tmp', filename)
+        self.device_list = options['device_list']
         self.current_state = "Off"
-        self._load_state()
 
     def set_device_power_state(self, target_state, force_on_failure=False):
         """Set the current power target.  One of 'On', 'Off', 'On:<bios>'"""
-        fmt = 'Bad power command given: {}'
-        parts = target_state.split(':')
-        if parts[0] == 'Off' and len(parts) == 1:
-            self.current_state = 'Off'
-        elif parts[0] == 'On':
-            if len(parts) == 1 and parts[0] == 'On':
-                self.current_state = 'On:bmc_on'
-            elif len(parts) == 2 and parts[1] == 'bmc_on':
-                self.current_state = 'On:bmc_on'
+        result_dict = {}
+        for node in self.device_list:
+            device_name = node.get("device_id")
+            hostname = node['hostname']
+            filename = device_name + "." + 'state'
+            file_path = os.path.join(os.path.sep, 'tmp', filename)
+            self._load_state(file_path)
+            fmt = 'Bad power command given: {}'
+            parts = target_state.split(':')
+            if parts[0] == 'Off' and len(parts) == 1:
+                self.current_state = 'Off'
+            elif parts[0] == 'On':
+                if len(parts) == 1 and parts[0] == 'On':
+                    self.current_state = 'On:bmc_on'
+                elif len(parts) == 2 and parts[1] == 'bmc_on':
+                    self.current_state = 'On:bmc_on'
+                else:
+                    PowerControlMock._check_bmc_state(parts[1])
+                    self.current_state = 'On'
             else:
-                PowerControlMock._check_bmc_state(parts[1])
-                self.current_state = 'On'
-        else:
-            raise RuntimeError(fmt.format(target_state))
-        self._save_state()
-        return True
+                raise RuntimeError(fmt.format(target_state))
+            self._save_state(file_path)
+            result_dict[hostname] = True
+        return result_dict
 
     def get_current_device_power_state(self):
         """Get the current device power state.  Returns one of 'On', 'Off',
            'On:bmc_on'"""
-        self._load_state()
-        return self.current_state
+        result_dict = {}
+        for node in self.device_list:
+            device_name = node.get("device_id")
+            hostname = node['hostname']
+            filename = device_name + "." + 'state'
+            file_path = os.path.join(os.path.sep, 'tmp', filename)
+            self._load_state(file_path)
+            result_dict[hostname] = self.current_state
+        return result_dict
 
-    def _load_state(self):
+    def _load_state(self, file_path):
         """Load state from disk or create default state is it doesn't exist."""
-        if os.path.exists(self.file_path):
-            file_ref = open(self.file_path)
+        if os.path.exists(file_path):
+            file_ref = open(file_path)
             self.current_state = json.load(file_ref)
             file_ref.close()
         else:
-            self._save_state()
+            self._save_state(file_path)
 
-    def _save_state(self):
+    def _save_state(self, file_path):
         """Save the current state to disk."""
-        file_ref = open(self.file_path, 'w')
+        file_ref = open(file_path, 'w')
         json.dump(self.current_state, file_ref)
         file_ref.close()
 

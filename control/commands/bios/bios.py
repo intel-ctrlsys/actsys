@@ -12,19 +12,20 @@ class BiosCommand(Command):
     """Update BIOS firmware on node"""
     def __init__(self, device_name, configuration, plugin_manager, logger=None, **kwargs):
         Command.__init__(self, device_name, configuration, plugin_manager, logger, **kwargs)
-        self.device = None
-        self.bmc = None
+        self.device_data = []
+        self.bmc_data = []
         self.node_controller = None
 
     def setup(self):
         """Setup for Bios Commands"""
-        self.device = self.configuration.get_device(self.device_name)
-        self.bmc = self.configuration.get_device(self.device.get('bmc'))
-        device_type = self.device.get("device_type")
-        bios_controller = self.bmc.get("access_type")
-        if device_type not in ['compute', 'node']:
-            return CommandResult(255, "The device is not a compute node!")
+        for device in self.device_name:
+            node = self.configuration.get_device(device)
+            if node.get("device_type") not in ['node', 'compute', 'service']:
+                raise RuntimeError('Sensor values can not be read for a non-node type '
+                                   'device!')
+            self.device_data.append(node)
+            self.bmc_data.append(self.configuration.get_device(node.get("bmc")))
+        bios_controller = self.bmc_data[0].get("access_type", None)
         if bios_controller is None:
-            return CommandResult(255, "Please provide bmc access_type in configuration")
+            raise RuntimeError("No BMC access_type specified in the configuration file. Cannot perform action")
         self.node_controller = self.plugin_manager.create_instance('bmc', bios_controller)
-        return None

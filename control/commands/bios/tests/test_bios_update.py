@@ -24,9 +24,9 @@ class TestBiosUpdateCommand(unittest.TestCase):
         self.node_name = "knl-123"
         self.mock_plugin_manager = mock_plugin_manager
         self.bios_manager_mock = self.mock_plugin_manager.create_instance.return_value
-        self.bios_manager_mock.bios_update.return_value = "Success"
+        self.bios_manager_mock.bios_update.return_value = {self.node_name:"Success"}
         self.config = {
-                'device_name': self.node_name,
+                'device_name': [self.node_name],
                 'configuration': self.configuration_manager,
                 'plugin_manager': mock_plugin_manager,
                 'logger': mock_logger,
@@ -47,15 +47,15 @@ class TestBiosUpdateCommand(unittest.TestCase):
          }
 
     def test_execute(self):
-        self.assertEqual(self.bios_update.execute().return_code, 0)
+        self.assertEqual(self.bios_update.execute()[0].return_code, 0)
         self.bios_manager_mock.bios_update.side_effect = Exception("Fail")
-        self.assertEqual(self.bios_update.execute().return_code, 255)
+        self.assertEqual(self.bios_update.execute()[0].return_code, 255)
         self.bios_update.image = None
-        self.assertEqual(self.bios_update.execute().return_code, 255)
+        self.assertEqual(self.bios_update.execute()[0].return_code, 255)
 
     def test_execute_wrong_node_type(self):
         self.configuration_manager.get_device.return_value["device_type"] = "xyz"
-        self.assertEqual(255, self.bios_update.execute().return_code)
+        self.assertEqual(255, self.bios_update.execute()[0].return_code)
 
 
 if __name__ == '__main__':

@@ -21,17 +21,19 @@ class OobSensorGetCommand(OobSensorCommand):
     def execute(self):
         """Execute the command"""
         self.setup()
-        final_return = ''
-        self.oob_sensor_plugin = self.plugin_manager.create_instance('bmc', self.plugin_name)
+        result = []
         num_sensors = self.sensor_name.split(',')
         for sensors in num_sensors:
             sensor_value = self.get_sensor_name(sensors)
             try:
-                ret_msg = self.oob_sensor_plugin.get_sensor_value(sensor_value, self.device_data, self.bmc_data)
+                result_dict = self.oob_sensor_plugin.get_sensor_value(sensor_value, self.device_data, self.bmc_data)
+                for key, value in result_dict.iteritems():
+                    p_ret_msg = self.print_table_border('Sensor Name', 'Values', key, sensor_value) + \
+                                self.print_table_border('-', '-') + self.print_table(value)
+                    command_result = CommandResult(0, p_ret_msg)
+                    command_result.device_name = key
+                    result.append(command_result)
             except RuntimeError as ex:
-                final_return += ex.message
+                result.append(CommandResult(255, ex.message))
                 continue
-            p_ret_msg = self.print_table_border('Sensor Name', 'Values', self.device_name, sensor_value) + \
-                        self.print_table_border('-', '-') + self.print_table(ret_msg)
-            final_return += p_ret_msg
-        return CommandResult(0, final_return)
+        return result

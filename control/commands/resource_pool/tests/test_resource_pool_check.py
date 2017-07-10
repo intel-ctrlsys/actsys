@@ -27,7 +27,7 @@ class TestResourcePoolCheckCommand(unittest.TestCase):
         self.resource_manager_mock.check_nodes_state.return_value = (0, "foo")
 
         self.config = {
-            'device_name': self.node_name,
+            'device_name': [self.node_name],
             'configuration': self.configuration_manager,
             'plugin_manager': mock_plugin_manager,
             'logger': mock_logger

@@ -25,17 +25,13 @@ class PowerOnCommand(CommonPowerCommand):
         Power Node On Procedure:
             1. create proper interface plugin instances here!
             2. build configuration object for NodePower!
-            3. if PDUs are off, return failure.
+            3. if PDUs are off, return failure. {Not implemented}
             4. create NodePower plugin instance
             5. if node equals any 'On' state return failure
             6. if any other state, use the NodePower instance to change state
             7. if successful, inform resource manager here
         """
         try:
-            # STEP 3
-            if not self._test_switch_on_state():
-                raise RuntimeError('Hard switches for device {} are off'.
-                                   format(self.node_options['device_name']))
 
             # STEP 4
             if self.power_plugin is None:
@@ -57,14 +53,37 @@ class PowerOnCommand(CommonPowerCommand):
                 raise RuntimeError('Incorrect arguments passed to '
                                    'turn on a node: {}'.
                                    format(self.device_name))
+
+            result = []
+
+            power_dict = self.power_plugin.get_current_device_power_state()
+            for key, value in power_dict.iteritems():
+                if value.startswith('On'):
+                    command_result = CommandResult(-1, 'Power on for {}; Device is already Powered on'.format(key))
+                    command_result.device_name = key
+                    self.device_name.remove(key)
+                    result.append(command_result)
+            if not self.device_name:
+                return result
+            else:
+                self.node_options, plugin_name = self._options_from_node()
+
             # STEP 6
-            if not self.power_plugin.set_device_power_state(target, force):
-                raise RuntimeError('Failed to change state to {} on '
-                                   'device {}'.
-                                   format(target, self.device_name))
+            power_dict = self.power_plugin.set_device_power_state(target, force)
+
+            for key, value in power_dict.iteritems():
+                if value and isinstance(value, bool):
+                    command_result = CommandResult(0, 'Success: Device Powered On: {}'.format(key))
+                    command_result.device_name = key
+                    result.append(command_result)
+                else:
+                    command_result = CommandResult(-1, 'Failed to change state to On on device {}: {}'.format(key,
+                                                                                                              value))
+                    command_result.device_name = key
+                    result.append(command_result)
 
             # If a wait time is set, wait
-            device = self.configuration.get_node(self.device_name)
+            device = self.configuration.get_node(self.device_name[0])
             if getattr(device, 'wait_time_after_boot_services', None) and \
                     getattr(device, 'service_list', None):
                 # We must wait here to allow systemctl time to enable services.
@@ -73,8 +92,10 @@ class PowerOnCommand(CommonPowerCommand):
                 time.sleep(device.wait_time_after_boot_services)
 
             # Start the service for the node
-            if not self._update_services("start"):  # On state
-                raise RuntimeError('Failed to start the services for device {}'.format(self.device_name))
+            service_result_list = self._update_services("start")
+
+            for item in service_result_list:
+                result.append(item)
 
             # Add node to the resource pool
             if not self._update_resource_state("add"):  # On state
@@ -82,10 +103,9 @@ class PowerOnCommand(CommonPowerCommand):
                                    'device {}'.format(self.device_name))
 
         except RuntimeError as err:
-            return CommandResult(message=err.message)
+            return [CommandResult(message=err.message)]
 
-        return CommandResult(0, 'Success: Device Powered On: {}'.
-                             format(self.device_name))
+        return result
 
     def _execute_for_power_switches(self):
         """"""

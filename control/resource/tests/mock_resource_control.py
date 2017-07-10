@@ -18,12 +18,12 @@ class MockResourceControl(ResourceControl):
 
     def remove_nodes_from_resource_pool(self, node_list):
         """Remove the specified list of nodes from the cluster resource pool"""
-        return 0, 'Succeeded in removing nodes ' + node_list + \
+        return 0, 'Succeeded in removing nodes ' + str(node_list) + \
             ' from the cluster resource pool!'
 
     def add_nodes_to_resource_pool(self, node_list):
         """Add the specified list of nodes to the cluster resource pool"""
-        return 0, 'Succeeded in adding node ' + node_list + \
+        return 0, 'Succeeded in adding node ' + str(node_list) + \
             ' back to the cluster resource pool!'
 
     def check_nodes_state(self, node_list):

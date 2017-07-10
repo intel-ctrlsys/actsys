@@ -39,25 +39,48 @@ class PowerOffCommand(CommonPowerCommand):
                 raise RuntimeError('Incorrect arguments passed to '
                                    'turn off a node: {}'.
                                    format(self.device_name))
+            result = []
+
+            power_dict = self.power_plugin.get_current_device_power_state()
+            for key, value in power_dict.iteritems():
+                if value == 'Off':
+                    command_result = CommandResult(-1, 'Power off for {}: Device is already Powered off'.format(key))
+                    command_result.device_name = key
+                    self.device_name.remove(key)
+                    result.append(command_result)
+            if not self.device_name:
+                return result
+            else:
+                self.node_options, plugin_name = self._options_from_node()
+
             # STEP 5
             if not self._update_resource_state("remove"):
                 raise RuntimeError('Failed to inform the resource manager of the state change for '
                                    'device {}'.format(self.device_name))
 
             # STEP 6: Stop node service
-            if not self._update_services("stop"):  # On state
-                raise RuntimeError('Failed to start the services for device {}'.format(self.device_name))
+            service_result_list = self._update_services("stop")  # On state
+            for item in service_result_list:
+                result.append(item)
 
             # STEP 7
             self.logger.debug('Attempting to change state to {} on device {}'.format(target, self.device_name))
-            if not self.power_plugin.set_device_power_state(target, force):
-                raise RuntimeError('Failed to change state to {} on device {}'.format(target, self.device_name))
+            power_dict = self.power_plugin.set_device_power_state(target, force)
+
+            for key, value in power_dict.iteritems():
+                if value and isinstance(value, bool):
+                    command_result = CommandResult(0, 'Success: Power Off {}'.format(key))
+                    command_result.device_name = key
+                    result.append(command_result)
+                else:
+                    command_result = CommandResult(-1, 'Failed to change state to Off on device {}'.format(key))
+                    command_result.device_name = key
+                    result.append(command_result)
 
         except RuntimeError as err:
-            return CommandResult(message=err.message)
+            return [CommandResult(message=err.message)]
 
-        return CommandResult(0, 'Success: Power Off {}'.
-                             format(self.device_name))
+        return result
 
     def _execute_for_power_switches(self):
         """"""

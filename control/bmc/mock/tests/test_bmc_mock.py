@@ -45,29 +45,33 @@ class TestBmcMock(unittest.TestCase):
         if os.path.exists(self.bios_file):
             os.unlink(self.bios_file)
         mock_bmc = BmcMock()
-        self.assertTrue('No image found' in mock_bmc.get_version(self.device, self.bmc))
-        self.assertTrue('Bios for' in mock_bmc.bios_update(self.device, self.bmc, 'test.bin'))
-        self.assertTrue('test.bin' in mock_bmc.get_version(self.device, self.bmc))
+        self.assertTrue('No image found' in mock_bmc.get_version([self.device],
+                                                                 [self.bmc])[self.device['device_name']])
+        self.assertTrue('Bios for' in mock_bmc.bios_update([self.device],
+                                                           [self.bmc], 'test.bin')[self.device['device_name']])
+        self.assertTrue('test.bin' in mock_bmc.get_version([self.device],
+                                                           [self.bmc])[self.device['device_name']])
 
         mock_bmc = BmcMock()
-        self.assertTrue(mock_bmc.get_version(self.device, self.bmc))
+        self.assertTrue(mock_bmc.get_version([self.device], [self.bmc]))
 
     def test_mock_oob_sensor(self):
         node1 = BmcMock()
         try:
-            node1.get_sensor_value("voltage", None, None)
+            node1.get_sensor_value("voltage", [self.device], [None])
             pass
         except RuntimeError:
             self.fail('Exception raised')
 
     def test_mock_oob_sensor_all(self):
         node1 = BmcMock()
-        self.assertEqual({'All sensors': [10]}, node1.get_sensor_value(".*", None, None))
+        self.assertEqual({'All sensors': [10]}, node1.get_sensor_value(".*", [self.device],
+                                                                       [None])[self.device['device_name']])
 
     def test_mock_over_time(self):
         node1 = BmcMock()
         try:
-            node1.get_sensor_value_over_time('voltage', 3, 2, None, None)
+            node1.get_sensor_value_over_time('voltage', 3, 2, [self.device], [None])
             pass
         except RuntimeError:
             self.fail('Exception raised')
@@ -75,7 +79,7 @@ class TestBmcMock(unittest.TestCase):
     def test_mock_oob_sensor_time_all(self):
         node1 = BmcMock()
         try:
-            node1.get_sensor_value(".*", None, None)
+            node1.get_sensor_value(".*", [self.device], [None])
             pass
         except RuntimeError:
             self.fail('Exception raised')

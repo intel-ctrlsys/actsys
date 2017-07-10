@@ -12,21 +12,21 @@ class OobSensorCommand(Command):
         Command.__init__(self, device_name, configuration, plugin_manager, logger, **kwargs)
         self.oob_sensor_plugin = None
         self.plugin_name = None
-        self.device_data = None
-        self.bmc_data = None
+        self.device_data = []
+        self.bmc_data = []
 
     def setup(self):
-        cfg = self.configuration
-        node = cfg.get_device(self.device_name)
-        if node.get("device_type") not in ['node', 'compute', 'service']:
-            raise RuntimeError('Sensor values can not be read for a non-node type '
-                               'device!')
-        self.device_data = node
-        self.bmc_data = cfg.get_device(node.get("bmc"))
-        self.plugin_name = self.bmc_data.get("access_type", None)
+        for device in self.device_name:
+            node = self.configuration.get_device(device)
+            if node.get("device_type") not in ['node', 'compute', 'service']:
+                raise RuntimeError('Sensor values can not be read for a non-node type '
+                                   'device!')
+            self.device_data.append(node)
+            self.bmc_data.append(self.configuration.get_device(node.get("bmc")))
+        self.plugin_name = self.bmc_data[0].get("access_type", None)
         if self.plugin_name is None:
             raise RuntimeError("No BMC access_type specified in the configuration file. Cannot perform action")
-        return None
+        self.oob_sensor_plugin = self.plugin_manager.create_instance('bmc', self.plugin_name)
 
     def print_table(self, ret_msg):
         result = ""

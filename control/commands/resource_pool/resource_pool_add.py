@@ -20,7 +20,6 @@ class ResourcePoolAddCommand(ResourcePoolCommand):
 
     def execute(self):
         """Execute the command"""
-
         setup_results = self.setup()
         if setup_results is not None:
             return setup_results
