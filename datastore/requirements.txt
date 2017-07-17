@@ -1,7 +1,6 @@
 python-dateutil>=2.6.0
 pytz
 psycopg2
-clustershell
 pytest
 pytest-cov
 pylint
