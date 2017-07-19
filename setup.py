@@ -1,30 +1,32 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016-2017 Intel Corp.
+# Copyright (c) 2017 <company or person>
 #
 """
-Setup Module
+setup.py: For installing via pip
 """
+
+import re
 from setuptools import setup, find_packages
 
-description = "A control component for exascale clusters"
-author = "Intel Corporation"
-license = "Apache"
+version = re.search(
+    '^__version__\s*=\s*"(.*)"',
+    open('actsys/actsys.py').read(),
+    re.M
+).group(1)
 
-setup(name='actsys',
-      version='0.1.0',
-      description=description,
-      author=author,
-      license=license,
-      packages=find_packages(),
-      scripts=['ctrl', 'actsys', 'rest_api'],
-      install_requires=['python-dateutil',
-                        'flask',
-                        'flask_restful',
-                        'ctrlsys-datastore',
-                        'timeout-decorator'],
-      test_suite='tests',
-      tests_require=['pytest',
-                     'pytest-cov',
-                     'pylint',
-                     'mock'])
+setup(
+    name="actsys",
+    version=version,
+    description="A simple python...",
+    packages=find_packages(exclude=['docs', 'tests*']),
+    install_requires=[],
+    entry_points={
+        "console_scripts": ['actsys = actsys.__main__:main']
+    },
+    test_suite='tests',
+    tests_require=['pytest',
+                   'pytest-cov',
+                   'pylint',
+                   'mock']
+)
