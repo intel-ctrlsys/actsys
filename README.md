@@ -1,5 +1,5 @@
 # actsys
-A starting spot for actsys. Embracing open source elements.
+Actsys is a unified tool that allows uses to execute administrative and operational commands on clusters and supercomputers. Actsys aims to hide complexities of supercomputers and targets at exascale. 
 
 [![Documentation status](https://readthedocs.org/projects/actsys/badge/?version=latest)](http://actsys.readthedocs.io/en/latest/) [![Build Status](https://travis-ci.org/intel-ctrlsys/actsys.svg?branch=master)](https://travis-ci.org/intel-ctrlsys/actsys) [![codecov](https://codecov.io/gh/intel-ctrlsys/actsys/branch/master/graph/badge.svg)](https://codecov.io/gh/intel-ctrlsys/actsys)
 
@@ -10,6 +10,7 @@ Documentation: http://actsys.readthedocs.io/en/latest/
 ## Structure
 
 This project follows the structure suggested in [Jan-Philip Gehrcke's Blog](https://gehrcke.de/2014/02/distributing-a-python-command-line-application/).
+This project has two main parts, namely ctrl and datastore (The two main directories). Ctrl handles all the command business logic, while datastore manages state data of the cluster, such as configuration, journal logging and logical group. In order for ctrl to work, one needs to install datastore first. Please refer to [ctrl readme](https://github.com/intel-ctrlsys/actsys/blob/master/ctrl/README.md) and [datastore readme](https://github.com/intel-ctrlsys/actsys/blob/master/datastore/README.md) for more details about ctrl and datastore.
 
 ## Versioning
 
@@ -17,7 +18,7 @@ This project uses [Semver](http://semver.org/) as its versioning scheme.
 
 ## Tests
 
-Basic acceptance tests are in the tests folder. You can run these tests by running `python setup.py test`. The unit tests are in line with the code. You can run all the tests with `python -m pytest .`.
+Ctrl and datastore projects include unit tests in their source folders (ctrl/control, datastore/datastore). In ctrl, each component has individual unit tests in their folder. In datastore, all the tests are in the tests folder. To run the tests, go to ctrl or datastore directory and then execute `python -m pytest .`.
 
 The tests are ran automatically when they are submitted to github via [travici.org](https://travis-ci.org/intel-ctrlsys/actsys). Your tests must work here to be considered passing, it doesn't matter if they run on your local machine, if they fail on TravisCI, then they will not be accepted into matser.
 
@@ -25,7 +26,7 @@ Coverage is also determined by TravisCI and reported to [CodeCov](https://codeco
 
 ## Documentation
 
-Documentation is inline (like unit tests) and deployed with [Read the Docs](http://actsys.readthedocs.io/en/latest/). When editing code, please include documentation for your changes. Add any new files to the `mkdocs.yml` file. The documentation is automatically built and installed.
+Documentation is inline and deployed with [Read the Docs](http://actsys.readthedocs.io/en/latest/). When editing code, please include documentation for your changes. Add any new files to the `mkdocs.yml` file. The documentation is automatically built and installed.
 
 The documentation is found here: http://actsys.readthedocs.io/en/latest/
 
