@@ -1,5 +1,5 @@
 # actsys
-Actsys is a unified tool that allows uses to execute administrative and operational commands on clusters and supercomputers. Actsys aims to hide complexities of supercomputers and targets at exascale. 
+Actsys is a unified tool that allows user to execute administrative and operational commands on clusters and supercomputers. Actsys aims to hide complexities of supercomputers and targets at exascale. 
 
 [![Documentation status](https://readthedocs.org/projects/actsys/badge/?version=latest)](http://actsys.readthedocs.io/en/latest/) [![Build Status](https://travis-ci.org/intel-ctrlsys/actsys.svg?branch=master)](https://travis-ci.org/intel-ctrlsys/actsys) [![codecov](https://codecov.io/gh/intel-ctrlsys/actsys/branch/master/graph/badge.svg)](https://codecov.io/gh/intel-ctrlsys/actsys)
 
