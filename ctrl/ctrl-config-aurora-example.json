@@ -1,0 +1,82 @@
+{
+  "configuration_variables": {
+    "log_file_path": "/tmp/ctrl.log",
+    "log_file_max_bytes": 10485760,
+    "provisioning_agent_software": "Warewulf",
+    "cmd_timeout": 1800
+  },
+  "device": [
+    {
+      "bmc": "compute-29-nc",
+      "device_id": 1,
+      "device_type": "node",
+      "hostname": "compute-29",
+      "bmc_fa_port": 1000,
+      "console_port": 9000,
+      "ip_address": "192.168.1.29",
+      "profile_name": "compute_node"
+    },
+    {
+      "bmc": "compute-29-nc",
+      "device_id": 2,
+      "device_type": "node",
+      "hostname": "compute-30",
+      "ip_address": "192.168.1.30",
+      "bmc_fa_port": 1001,
+      "console_port": 9001,
+      "profile_name": "compute_node"
+    },
+    {
+      "bmc": "compute-30-nc",
+      "device_id": 3,
+      "device_type": "node",
+      "hostname": "compute-31",
+      "ip_address": "192.168.1.31",
+      "bmc_fa_port": 1002,
+      "console_port": 9002,
+      "profile_name": "compute_node"
+    },
+    {
+      "device_id": 4,
+      "device_type": "bmc",
+      "hostname": "compute-29-nc",
+      "ip_address": "127.0.0.1",
+      "rest_server_port": 5000,
+      "profile_name": "bmc_default"
+    },
+    {
+      "device_id": 5,
+      "device_type": "bmc",
+      "hostname": "compute-30-nc",
+      "ip_address": "192.168.2.30",
+      "rest_server_port": 5001,
+      "profile_name": "bmc_default"
+    }
+  ],
+  "profile": [
+    {
+      "access_type": "mock",
+      "device_power_control": "rest_power",
+      "diagnostic": "mock",
+      "image": "centos7.2",
+      "profile_name": "compute_node",
+      "resource_controller": "mock",
+      "bios_controller": "bky-bios",
+      "role": [
+        "compute"
+      ],
+      "type": "node",
+      "user": "user"
+    },
+    {
+      "access_type": "bky",
+      "profile_name": "bmc_default",
+      "type": "bmc",
+      "user": "user"
+    },
+    {
+      "port": 411786,
+      "profile_name": "test"
+    }
+  ]
+}
