@@ -1,0 +1,97 @@
+## Generic single-database configuration.
+
+1. Installing Postgres9.6
+    > Follow the instructions on the Postgres website based on the underlying OS:
+        https://wiki.postgresql.org/wiki/Detailed_installation_guides
+            NOTE:
+                Ensure that postgresql96-server, postgresql96-devel, postgresql96-libs and postgresql96-contrib are
+                installed by running
+                $ yum list installed | grep postgresql96
+                in case any of the above mentioned packages are not installed, install them.
+
+2. Verifying the Postgres9.6 installation
+    > Start the Postgres service
+        $ systemctl start postgresql-9.6.service
+        OR
+        $ service postgresql-9.6 start
+            NOTE:
+                Depending on the version, before being able to start the service it may be necessary to execute:
+                    $ /usr/pgsql-9.6/bin/postgresql96-setup initdb
+
+    > Configure PostgreSQL to start automatically when you reboot the server:
+        $ systemctl enable postgresql-9.6.service
+
+
+3. Enabling client authentication
+    > Edit the pg_hba.conf file located in /var/lib/pgsql/9.6/data/, based on the detailed instructions in the file.
+           NOTE:
+                The file can be located in various locations based on the installation
+                    *** A sample entry in pg_hba.conf file ***
+                    --------------------------------------------------------------
+                    | # TYPE    DATABASE     USER        ADDRESS        METHOD   |
+                    |   local   all           postgres                  peer     |
+                    |   local   all           all                       password |
+                    |   host      all         all        0.0.0.0/0      trust    |
+                    --------------------------------------------------------------
+                    NOTE: The above snippet is only an example, it allows access to any host, any
+                    user on any ip address without a secure password authentication, please follow
+                    the detailed instructions in the file to enable password authentication.
+
+    > Enable networking for Postgres
+            - Edit the postgresql.conf located in /var/lib/pgsql/9.6/data/ to enable networking for
+              postgres, uncomment and edit the line
+            --------------------------------------------------------------
+            |listen_addresses = <list of specific ip addresses> or '*'   |
+            --------------------------------------------------------------
+
+    > Restart the postgres service so the above changes take effect
+            $ systemctl restart postgresql-9.6.service
+
+4. Setting up the database
+    > Create a control user, and provide a password when prompted
+            $ sudo -u postgres createuser -P controluser
+
+    > Create a control database
+            $ sudo -u postgres createdb --owner controluser control_db
+
+5. Setting up Alembic
+    > Install SQLAlchemy version 0.9.2 or higher.
+            $ sudo pip install --upgrade SQLAlchemy
+
+    > If you already have Alembic, install Alembic version 0.8.2 or higher.
+            $ sudo pip install --upgrade Alembic
+
+    > In most cases there is a dependency of psycopg2, install the following to avoid an error
+            $ yum install python-psycopg2
+
+    > Set the database connection info in PG_DB_URL environment variable.
+            $ export PG_DB_URL=postgresql://[username[:password]]@host_name[:port]/database_name
+                eg : export PG_DB_URL=postgresql://controluser:controlpassword@localhost:5432/control_db
+                NOTE:
+                    Alternative this can be set it in the schema_migration.ini file or
+                    passed to the "alembic" command using "-x db_url" option.
+
+6. Migrating the code to bring the database to the current schema
+    > Go to the database_schema directory in control
+            $ cd control/datastore/database_schema
+
+    > Run the setup_controldb.py script to set up the database
+            $ python setup_controldb.py --alembic-ini=schema_migration.ini
+
+    > Run the upgrade command in order to upgrade the schema to a specific sha
+            $ alembic -c schema_migration.ini upgrade head
+                NOTE:
+                    The option head, upgrades the schema to the latest available sha. A (higher) sha
+                    or partial sha can be provided to upgrade to a specific version, or relative
+                    upgrades can be carried out by using a '+' followed by a positive integer.
+
+    > Run the downgrade command in order to downgrade the schema to an older sha
+            $ alembic -c schema_migration.ini downgrade base
+                NOTE:
+                    The option base, downgrades the schema to the base version created by running
+                    the setup_controldb.py script, this will delete all the tables from the schema.
+                    A (lower) sha or partial sha can be provided to downgrade to a specific version,
+                    or relative downgrades can be carried out by using a '-' followed by a positive integer.
+
+      ** NOTE : For more information on the migrations refer to the schema migration with alembic
+                document on the wiki. **
