@@ -24,7 +24,7 @@ class PowerControlMock(PowerControl):
         """Set the current power target.  One of 'On', 'Off', 'On:<bios>'"""
         result_dict = {}
         for node in self.device_list:
-            device_name = node.get("device_id")
+            device_name = str(node.get("device_id"))
             hostname = node['hostname']
             filename = device_name + "." + 'state'
             file_path = os.path.join(os.path.sep, 'tmp', filename)

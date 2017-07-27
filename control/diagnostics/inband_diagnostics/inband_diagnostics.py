@@ -3,20 +3,21 @@
 #
 
 """
-Interface for all diagnostic tests plugins.
+Interface for inband diagnostic tests plugins.
 """
 from __future__ import print_function
-from control.console_log.mock_console_log.ipmi_mock import MockConsoleLog
+from control.console_log.ipmi_console_log.ipmi_console_log import IpmiConsoleLog
 from control.diagnostics.diagnostics import Diagnostics
 from control.plugin import DeclarePlugin
 
 
-@DeclarePlugin('mock', 100)
-class MockDiagnostics(Diagnostics):
+@DeclarePlugin('diagnostics_inband', 100)
+class InBandDiagnostics(Diagnostics):
     """This class controls launching the inband diagnostic tests
     This needs the input of a file """
-    mock_provision = False
+    MOCK_PROVISION = False
     Test_Status = {}
+    Return_Code = {}
 
     def __init__(self, **kwargs):
         Diagnostics.__init__(self, **kwargs)
@@ -24,6 +25,12 @@ class MockDiagnostics(Diagnostics):
         self.img = kwargs['diag_image']
         self.old_image = None
         self.kargs = kwargs['test_name']
+        if self.kargs is None:
+            self.kargs = 'DiagReboot=no'
+        if "DiagReboot=yes" not in self.kargs:
+            self.kargs += ' DiagReboot=no'
+        else:
+            self.reboot_true = True
         self.old_kargs = None
         self.console_log = None
         self.device = None
@@ -38,7 +45,7 @@ class MockDiagnostics(Diagnostics):
         self.old_image = self.device.get("image")
         self.old_kargs = self.device.get("provisioner_kernel_args")
 
-        if self.mock_provision is True:
+        if self.MOCK_PROVISION is True:
             self.provisioner.add(self.device)
             self.provisioner.set_image(self.device, img)
 
@@ -74,18 +81,20 @@ class MockDiagnostics(Diagnostics):
         """launches the diagnostic tests"""
         self.device = device
         self.bmc = bmc
+        bmc_ip_address = self.bmc.get("ip_address")
+        bmc_user = self.bmc.get("user_name")
+        bmc_password = self.bmc.get("password")
         self.device_name = self.device.get("hostname")
         if self.device.get("provisioner") in "mock":
-            self.mock_provision = True
+            InBandDiagnostics.MOCK_PROVISION = True
         self.provisioner = self.plugin_manager.create_instance('provisioner', self.device.get("provisioner"))
         self.resource_manager = self.plugin_manager.create_instance('resource_control',
                                                                     self.device.get("resource_controller"))
         power_options = self._pack_options()
-        self.power_manager = self.plugin_manager.create_instance('power_control',
-                                                                 self.device.get("device_power_control"),
-                                                                 **power_options)
+        self.power_manager = self.plugin_manager.create_instance('power_control', self.device.get(
+            "device_power_control"), **power_options)
         self._verify_provisioning(self.device_name, self.img)
-        MockDiagnostics.Test_Status[self.device_name] = 'Running'
+
         # Step 1: Remove node from resource pool
         dev_l = list()
         dev_l.append(self.device_name)
@@ -98,14 +107,17 @@ class MockDiagnostics(Diagnostics):
         else:
             raise Exception("Cannot remove node from resource pool. {}".format(current_state))
         # start console log
-        self.console_log = MockConsoleLog(self.device_name, '127.0.0.1', 'user', 'password')
-        self.console_log.start_log_capture('End of Diagnostics')
+        try:
+            self.console_log = IpmiConsoleLog(self.device_name, bmc_ip_address, bmc_user, bmc_password)
+            self.console_log.start_log_capture('End of Diagnostics')
+        except Exception as ex:
+            raise Exception('Unable to connect to the bmc, update the config file for device {0} and try again. Error '
+                            'received from console log: {1}'.format(self.device_name, ex.message))
 
         # Step 2: Provision diagnostic image
         self._provision_image(self.img, self.kargs)
         self._set_node_state('Off')
         self._set_node_state('On')
-        # Step 3: Run tests and parse log for completion
 
         # Step 4: Provision node back to old image
         if not self.reboot_true:

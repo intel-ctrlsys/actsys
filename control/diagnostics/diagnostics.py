@@ -13,6 +13,7 @@ from control.plugin import DeclareFramework
 class Diagnostics(object):
     """Interface for diagnostics classes."""
     def __init__(self, **options):
+        """Init function"""
         pass
 
     def launch_diags(self, device, bmc):

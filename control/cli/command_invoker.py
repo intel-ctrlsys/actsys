@@ -127,6 +127,9 @@ class CommandInvoker(object):
         from ..diagnostics.mock_diagnostics.mock_diagnostics import MockDiagnostics
         self.manager.register_plugin_class(MockDiagnostics)
 
+        from ..diagnostics.inband_diagnostics.inband_diagnostics import InBandDiagnostics
+        self.manager.register_plugin_class(InBandDiagnostics)
+
         from ..commands.job_launch import JobLaunch, JobCheck, JobRetrieve, JobCancel
         self.manager.register_plugin_class(JobLaunch)
         self.manager.register_plugin_class(JobCheck)
@@ -416,3 +419,4 @@ class CommandInvoker(object):
     def diagnostics_oob(self, device_name, test=None):
         """Execute the oob Diagnostics"""
         return self.common_cmd_invoker(device_name, "diagnostics_oob", test_name=test)
+

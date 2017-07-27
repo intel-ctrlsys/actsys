@@ -33,10 +33,12 @@ class OobSensorCommand(Command):
         """print the output in table format"""
         result = ""
         for key, value in ret_msg.iteritems():
-            key1 = (key[:30] + '..') if len(key) > 30 else key
+            length = len(key)
+            key1 = (key[:30] + '..') if length > 30 else key
             values = list()
             for i_value in value:
-                value1 = round(i_value, 5) if len(str(i_value)) > 5 and type(i_value) == float else i_value
+                length_str = len(str(i_value))
+                value1 = round(i_value, 5) if length_str > 5 and type(i_value) == float else i_value
                 values.append(value1)
             result += "\t\t{:40}{:^15}\n".format(key1, self.print_multiline(values)) + self.print_table_border('', '')
         return result
@@ -44,7 +46,8 @@ class OobSensorCommand(Command):
     @staticmethod
     def get_sensor_name(sensor_name):
         """Get sensor name"""
-        if sensor_name == ' ' or len(sensor_name) == 0:
+        sensor_name_length = len(sensor_name)
+        if sensor_name == ' ' or sensor_name_length == 0:
             raise RuntimeError("Empty string given to sensor_name")
         elif sensor_name.strip().lower() in ['all', '.*', '*']:
             return ''
