@@ -21,3 +21,7 @@ class OsRemoteAccess(object):
     def test_connection(self, remote_access_data):
         """Test is the OS is currently responding to requests."""
         pass
+
+    def execute_multiple_nodes(self, cmd, remote_access_list, capture=False, other=None):
+        """Execute the remote command on multiple nodes"""
+        pass

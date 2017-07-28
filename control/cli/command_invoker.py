@@ -9,9 +9,9 @@ to perform user requested operations.
 from __future__ import print_function
 import os
 import logging
+from datastore import DataStoreBuilder
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
-from datastore import DataStoreBuilder
 
 
 class CommandInvoker(object):
@@ -40,6 +40,7 @@ class CommandInvoker(object):
 
     @classmethod
     def get_config_file_location(cls):
+        """Get the configuration file location"""
         return os.environ.get(cls.POSTGRES_ENV_VAR, None) or \
                              os.environ.get(cls.FILE_LOCATION_ENV_VAR, None) or \
                              cls.CTRL_CONFIG_LOCATION
@@ -49,6 +50,7 @@ class CommandInvoker(object):
         return self.datastore.expand_device_list(device_name)
 
     def init_manager(self):
+        """Register the plugin classes"""
         self.manager = PluginManager()
 
         # Commands
@@ -81,8 +83,9 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(BmcMock)
 
         # os remote access plugins
-        from ..os_remote_access import RemoteSshPlugin, RemoteTelnetPlugin, OsRemoteAccessMock
+        from ..os_remote_access import RemoteSshPlugin, RemoteTelnetPlugin, OsRemoteAccessMock, ParallelSshPlugin
         self.manager.register_plugin_class(RemoteSshPlugin)
+        self.manager.register_plugin_class(ParallelSshPlugin)
         self.manager.register_plugin_class(RemoteTelnetPlugin)
         self.manager.register_plugin_class(OsRemoteAccessMock)
 
@@ -137,11 +140,11 @@ class CommandInvoker(object):
         try:
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)
-        except ImportError as ie:
-            self.logger.info("Could not import additional plugins. Proceeding anyways. Err: {}".format(ie))
+        except ImportError as import_error:
+            self.logger.info("Could not import additional plugins. Proceeding anyways. Err: {}".format(import_error))
 
-    def execute_command_with_device(self, device_regex, results,
-                                    sub_command, plugin_name, **kwargs):
+    def _execute_command_with_device(self, device_regex, results,
+                                     sub_command, plugin_name, **kwargs):
         try:
             device_list = self._device_name_check(device_regex)
         except self.datastore.DeviceListParseError as dlpe:
@@ -159,7 +162,7 @@ class CommandInvoker(object):
                 continue
             valid_node_list.append(device_name)
             if sub_command.startswith(('diagnostics', 'provisioner')):
-                self.create_execute_command(results, device_name, plugin_name, **kwargs)
+                self._create_execute_command(results, device_name, plugin_name, **kwargs)
         if len(invalid_node_list) > 0:
             node_list = self.datastore.fold_devices(invalid_node_list)
             msg = "Devices {} skipped due to not found in the config file.".\
@@ -168,7 +171,7 @@ class CommandInvoker(object):
             results.append(CommandResult(1, msg, node_list))
 
         if not sub_command.startswith(('diagnostics', 'provisioner')) and len(valid_node_list) > 0:
-            self.create_execute_command(results, valid_node_list, plugin_name, **kwargs)
+            self._create_execute_command(results, valid_node_list, plugin_name, **kwargs)
         return None
 
     def common_cmd_invoker(self, device_regex, sub_command, **kwargs):
@@ -204,14 +207,14 @@ class CommandInvoker(object):
                        'job_check': 'job_check',
                        'job_retrieve': 'job_retrieve',
                        'job_cancel': 'job_cancel'
-                       }
+                      }
         results = list()
         if sub_command.startswith('job'):
-            self.create_execute_command(results, device_regex,
-                                        command_map[sub_command], **kwargs)
+            self._create_execute_command(results, device_regex,
+                                         command_map[sub_command], **kwargs)
         else:
-            ret = self.execute_command_with_device(device_regex, results, sub_command,
-                                                   command_map[sub_command], **kwargs)
+            ret = self._execute_command_with_device(device_regex, results, sub_command,
+                                                    command_map[sub_command], **kwargs)
             if ret:
                 return ret
 
@@ -220,8 +223,8 @@ class CommandInvoker(object):
 
         return results
 
-    def create_execute_command(self, results,
-                               devices, sub_command, **kwargs):
+    def _create_execute_command(self, results,
+                                devices, sub_command, **kwargs):
         # Prepare kwargs
         kwargs["device_name"] = devices
         kwargs["configuration"] = self.datastore
@@ -413,4 +416,3 @@ class CommandInvoker(object):
     def diagnostics_oob(self, device_name, test=None):
         """Execute the oob Diagnostics"""
         return self.common_cmd_invoker(device_name, "diagnostics_oob", test_name=test)
-

@@ -23,56 +23,39 @@ class ServicesCommand(Command):
 
     def execute(self):
         """Execute the command"""
-        assert self.command is not []
-        result_list = []
+        try:
+            assert self.command is not []
+            result_list = []
+            remote_access_list = []
+            ipaddress_hostname_dict = {}
 
-        for device in self.device_name:
+            for device in self.device_name:
+                device = self.configuration.get_device(device)
+                remote_access_list.append(RemoteAccessData(device.get("ip_address"), device.get("port"),
+                                                           device.get("user"), device.get("password")))
+                ipaddress_hostname_dict[device.get("ip_address")] = device.get("hostname")
 
-            device = self.configuration.get_device(device)
-            remote_access_data = RemoteAccessData(device.get("ip_address"), device.get("port"),
-                                                  device.get("user"), device.get("password"))
+            device = self.configuration.get_device(self.device_name[0])
             ssh = self.plugin_manager.create_instance('os_remote_access', device.get("access_type"))
-            hostname = device['hostname']
-            if device.get("device_type") not in ['compute', 'node']:
-                command_result = CommandResult(1, '{}: Failure: cannot perform service actions this device '
-                                                  'type ({})'.format(hostname, device.get("device_type")))
-                result_list.append(command_result)
-
-            result_retries = 1
-            result_string = ""
-            result_msg = ""
-            result_code = 0
-
             service_list = device.get("service_list", [])
             for service in service_list:
-                self.logger.debug("Attempting to check for service {} on node {}".format(service,
-                                                                                         device.get("device_id")))
-
+                self.logger.debug("Attempting to check for service {} on nodes {}".format(service,
+                                                                                          self.device_name))
                 self.command.append(service)
-                ssh_result = ssh.execute(list(self.command), remote_access_data, True)
+                ssh_result = ssh.execute_multiple_nodes(list(self.command), remote_access_list, True)
                 self.command.pop()
 
-                if ssh_result.return_code == self.SSH_CONNECTION_ERROR and result_retries < self.SSH_RETRIES:
-                    self.logger.debug("Failed to connect over SSH, retrying...")
-                    service_list.append(service)
-                    result_retries += 1
-                    continue
-                elif ssh_result.return_code != self.SSH_SUCCESS:
-                    result_msg = "{}: Failed: {} - {}".format(hostname, self.command[1], service)
-                    if ssh_result.stdout is not None:
-                        result_msg += "\n {}".format(ssh_result.stdout)
-                    result_code = 1
-                else:
-                    result_msg = "{}: Success: {} - {}".format(hostname, self.command[1], service)
+                for key, value in ssh_result.items():
+                    result_string = str(value)
+                    cmd_result = CommandResult(value.return_code, result_string)
+                    cmd_result.device_name = ipaddress_hostname_dict[key]
+                    result_list.append(cmd_result)
 
-                cr = CommandResult(ssh_result.return_code, result_msg)
-                result_string += str(cr) + '\n'
-
-            if result_string == '':
+            if not service_list:
                 self.logger.info("No services were specified in the configuration file for {}. "
                                  "Was this intended?".format(device.get("device_id")))
                 result_string = 'Success: no services checked'
-
-            command_result = CommandResult(result_code, result_string.rstrip('\n'))
-            result_list.append(command_result)
-        return result_list
+                result_list.append(CommandResult(0, result_string))
+            return result_list
+        except RuntimeError as err:
+            return [CommandResult(message=err.message)]

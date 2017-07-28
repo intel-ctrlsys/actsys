@@ -72,6 +72,16 @@ class TestRemoteSshPlugin(unittest.TestCase):
         result = self.remote.execute(['whoami'], self.access, capture=True)
         self.assertEqual(123, result.return_code)
 
+    @patch.object(Utilities, "execute_subprocess")
+    def test_multiple_nodes_1(self, mock_nc):
+        """Test the RemoteSshPlugin.execute() method."""
+        mock_nc.return_value = SubprocessOutput(0, 'John Doe', "He's the best!")
+        result1 = self.remote.execute_multiple_nodes(['service', 'status', 'firewalld'], [self.access], capture=True)
+        self.assertEqual(result1["127.0.0.1"].return_code, 0)
+        mock_nc.return_value = SubprocessOutput(255, 'John Doe', "He's the best!")
+        result2 = self.remote.execute_multiple_nodes(['service', 'status', 'firewalld'], [self.access], capture=True)
+        self.assertEqual(result2["127.0.0.1"].return_code, 255)
+
 
 if __name__ == '__main__':
     unittest.main()

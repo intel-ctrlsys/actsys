@@ -12,6 +12,7 @@ from .job_launch_comm import JobLaunchCommand
 
 @DeclarePlugin('job_launch', 100)
 class JobLaunch(JobLaunchCommand):
+    """Job launch class"""
     def __init__(self, device_name, configuration, plugin_manager, logger=None,
                  job_script=None, node_count=None, nodes=None,
                  output_file=None):
@@ -29,7 +30,6 @@ class JobLaunch(JobLaunchCommand):
         setup_result = self.setup()
         if setup_result is not None:
             return setup_result
-        rc, message = self.job.launch_batch_job(self.job_script,
-                          node_count=self.node_count, nodes=self.nodes,
-                          output_file=self.output_file)
-        return CommandResult(rc, message)
+        return_code, message = self.job.launch_batch_job(self.job_script, node_count=self.node_count, nodes=self.nodes,
+                                                         output_file=self.output_file)
+        return CommandResult(return_code, message)

@@ -8,10 +8,10 @@ Implements a power_control plugin for controlling nodes.
 from __future__ import print_function
 import time
 import os
-from ...plugin import DeclarePlugin
-from ..power_control import PowerControl
 from control.utilities.remote_access_data import RemoteAccessData
 from control.utilities.utilities import Utilities
+from ...plugin import DeclarePlugin
+from ..power_control import PowerControl
 
 
 @DeclarePlugin('node_power', 100)
@@ -64,6 +64,16 @@ class NodePower(PowerControl):
         self.target_state = None
         self.result_dict = {}
         self.force_on_failure = False
+        self.os_access = None
+        self.os_credentials = None
+        self.force_on_failure = None
+        self.target_state = None
+        self.policy = None
+        self.bmc_credentials = None
+        self.bmc_access = None
+        self.switches = None
+        self.device_name = None
+        self.device_type = None
         self.utils = Utilities()
 
     def get_current_device_power_state(self):
@@ -78,18 +88,18 @@ class NodePower(PowerControl):
         bmc_list = self.__args['bmc_list']
         de_duplicated_bmc_list = self.utils.remove_duplicates_from_bmc_data(bmc_list)
         self.utils.map_devices_to_bmc(device_list, de_duplicated_bmc_list,
-                                      self._get_power_state_all_devices_connected_bmc)
+                                      self._get_power_devices_connected_bmc)
         return self.result_dict
 
-    def _get_power_state_all_devices_connected_bmc(self, device_list, bmc):
+    def _get_power_devices_connected_bmc(self, device_list, bmc):
         for node in device_list:
             hostname = node['hostname']
             try:
                 options = self._options_from_node(node, bmc)
                 self._parse_options(options)
                 self.result_dict[hostname] = self._get_power_state_from_bmc()
-            except RuntimeError as re:
-                self.result_dict[hostname] = re.message
+            except RuntimeError as run_err:
+                self.result_dict[hostname] = run_err.message
 
     def _get_power_state_from_bmc(self):
         self._if_switches_off_exception()
@@ -101,7 +111,6 @@ class NodePower(PowerControl):
         else:
             return 'Off'
 
-
     def set_device_power_state(self, target_state, force_on_failure=False):
         """
         Set the current power target.  One of 'On', 'Off', 'On:<bmc_state>'
@@ -112,18 +121,18 @@ class NodePower(PowerControl):
         bmc_list = self.__args['bmc_list']
         de_duplicated_bmc_list = self.utils.remove_duplicates_from_bmc_data(bmc_list)
         self.utils.map_devices_to_bmc(device_list, de_duplicated_bmc_list,
-                                      self._set_power_state_all_devices_connected_bmc)
+                                      self._set_power_devices_connected_bmc)
         return self.result_dict
 
-    def _set_power_state_all_devices_connected_bmc(self, device_list, bmc):
+    def _set_power_devices_connected_bmc(self, device_list, bmc):
         for node in device_list:
             hostname = node['hostname']
             try:
                 options = self._options_from_node(node, bmc)
                 self._parse_options(options)
                 self.result_dict[hostname] = self._set_power_state_from_bmc()
-            except RuntimeError as re:
-                self.result_dict[hostname] = re.message
+            except RuntimeError as run_err:
+                self.result_dict[hostname] = run_err.message
 
     def _set_power_state_from_bmc(self):
         self._if_switches_off_exception()
@@ -299,8 +308,8 @@ class NodePower(PowerControl):
             os_access = RemoteAccessData(node.get("ip_address"), node.get("port"),
                                          node.get("user"), node.get("password"))
             options['os'] = (os_access, os_plugin)
-        except KeyError as ke:
-            raise RuntimeError("Unable to load access plugin, {}".format(ke.message))
+        except KeyError as key_error:
+            raise RuntimeError("Unable to load access plugin, {}".format(key_error.message))
 
         options['policy'] = {
             'OSShutdownTimeoutSeconds': node.get("os_shutdown_timeout_seconds"),

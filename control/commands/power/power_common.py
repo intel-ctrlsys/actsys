@@ -53,9 +53,6 @@ class CommonPowerCommand(Command):
 
     def _update_resource_state(self, new_state):
         """Inform the resource manager that the node can be added or removed."""
-        if new_state not in ['add', 'remove']:
-            return False
-
         self.logger.debug("{}ing {} from the resource pool.".format(new_state, self.device_name))
         resource_pool = self.plugin_manager.create_instance('command', 'resource_pool_{}'.format(new_state),
                                                             device_name=self.device_name,
@@ -71,9 +68,6 @@ class CommonPowerCommand(Command):
 
     def _update_services(self, new_state):
         """Inform the node systemctl that the services can be started or stopped."""
-        if new_state not in ['start', 'stop']:
-            return False
-
         self.logger.debug("{}ing services for {}".format(new_state, self.device_name))
         service_stop = self.plugin_manager.create_instance('command', 'service_{}'.format(new_state),
                                                            device_name=self.device_name,
@@ -92,11 +86,13 @@ class CommonPowerCommand(Command):
                 target = None
         return target, force
 
-    def _execute_for_node(self):
+    @classmethod
+    def _execute_for_node(cls):
         return CommandResult(message='"CommonPowerCommand._execute_for_node" '
                                      'Not Implemented')
 
-    def _execute_for_power_switches(self):
+    @classmethod
+    def _execute_for_power_switches(cls):
         return CommandResult(message='"CommonPowerCommand._execute_for_power'
                                      '_switches" Not Implemented')
 

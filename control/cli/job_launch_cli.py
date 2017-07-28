@@ -19,7 +19,8 @@ class JobLaunchCli(object):
         self.root_parser = argparse.ArgumentParser(prog='job')
 
         self.subparsers = self.root_parser.add_subparsers(title='Action',
-            description='What to do with job (launch/check/retrieve/cancel)?')
+                                                          description='What to do with job '
+                                                                      '(launch/check/retrieve/cancel)?')
         self.add_launch_args()
         self.add_check_args()
         self.add_retrieve_args()
@@ -33,13 +34,13 @@ class JobLaunchCli(object):
         self.add_parser = self.subparsers.add_parser('launch',
                                                      help='launch a batch job.')
         self.add_parser.add_argument('job_script',
-                                    help='The batch job script to be launched.')
+                                     help='The batch job script to be launched.')
         self.add_parser.add_argument('--node_count', '-N', required=False,
                                      help='Number of nodes required.')
         self.add_parser.add_argument('--nodes', '-n', required=False,
                                      help='The list of nodes required.')
         self.add_parser.add_argument('--output_file', '-o', required=False,
-                                 help='The output file to put the job results.')
+                                     help='The output file to put the job results.')
         self.add_parser.set_defaults(execute_function=self.launch_execute)
 
     def add_check_args(self):
@@ -48,7 +49,7 @@ class JobLaunchCli(object):
         :return:
         """
         self.check_parser = self.subparsers.add_parser('check',
-                                                    help='check job metadata.')
+                                                       help='check job metadata.')
         self.check_parser.add_argument('--job_id', '-j', required=False,
                                        help='The job id to be checked.')
         self.check_parser.add_argument('--state', '-s', required=False,
@@ -61,11 +62,11 @@ class JobLaunchCli(object):
         :return:
         """
         self.retrieve_parser = self.subparsers.add_parser('retrieve',
-                                                    help='Retrieve job output.')
+                                                          help='Retrieve job output.')
         self.retrieve_parser.add_argument('job_id',
                                           help='The job id to be retrieved.')
         self.retrieve_parser.add_argument('--output_file', '-o', required=False,
-                    help='The output file from which to retrieve job result.')
+                                          help='The output file from which to retrieve job result.')
         self.retrieve_parser.set_defaults(execute_function=self.retrieve_execute)
 
     def add_cancel_args(self):
@@ -76,7 +77,7 @@ class JobLaunchCli(object):
         self.cancel_parser = self.subparsers.add_parser('cancel',
                                                         help='cancel a job.')
         self.cancel_parser.add_argument('job_id',
-                                          help='The job id to be cancelled.')
+                                        help='The job id to be cancelled.')
         self.cancel_parser.set_defaults(execute_function=self.cancel_execute)
 
     def parse_and_run(self, args=None):

@@ -13,8 +13,7 @@ class JobLaunchCommand(Command):
                  plugin_manager, logger=None, **kwargs):
         Command.__init__(self, 'UNDEF', configuration, plugin_manager,
                          logger, **kwargs)
-        self.resource_controller = self.configuration.get_profile(
-                        'compute_node')['resource_controller']
+        self.resource_controller = self.configuration.get_profile('compute_node')['resource_controller']
         self.job = None
         self.resource_manager = None
 
@@ -31,8 +30,7 @@ class JobLaunchCommand(Command):
                                       self.plugin_manager.
                                       get_sorted_plugins_for_framework
                                       ("job_launch"))
-        self.resource_manager = self.plugin_manager.create_instance(
-                        'resource_control', self.resource_controller)
+        self.resource_manager = self.plugin_manager.create_instance('resource_control', self.resource_controller)
         if not self.resource_manager.check_resource_manager_running():
             return CommandResult(-2, "Resource manager is not running!")
         return None

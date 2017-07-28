@@ -84,8 +84,7 @@ class PowerCycleCommand(CommonPowerCommand):
                     command_result.device_name = key
                     result.append(command_result)
                 else:
-                    command_result = CommandResult(-1, 'Failed to change state to {} on '
-                                                        'device {}'.format(target, key))
+                    command_result = CommandResult(-1, 'Failed to change state to {} on device {}'.format(target, key))
                     command_result.device_name = key
                     result.append(command_result)
 

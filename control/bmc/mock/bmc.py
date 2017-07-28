@@ -28,16 +28,16 @@ class BmcMock(Bmc):
         if os.path.exists(self.__persistent_bios_file):
             self._load_bios_file()
 
-    def get_chassis_state(self, remote_access):
+    def get_chassis_state(self, remote_access_object):
         """Get the current power state of the node chassis as a boolean."""
-        if remote_access.address in self.__current_states:
-            return self.__current_states[remote_access.address] == 'on'
+        if remote_access_object.address in self.__current_states:
+            return self.__current_states[remote_access_object.address] == 'on'
         else:
-            self.__current_states[remote_access.address] = 'off'
+            self.__current_states[remote_access_object.address] = 'off'
             self._save_bmc_file()
             return False
 
-    def set_chassis_state(self, remote_access, new_state):
+    def set_chassis_state(self, remote_access_object, new_state):
         """Set the chassis to a new state."""
         states = {'off': 'off', 'on': 'on', 'cycle': 'on', 'bios': 'on',
                   'efi': 'on', 'hdd': 'on', 'pxe': 'on', 'cdrom': 'on',
@@ -45,7 +45,7 @@ class BmcMock(Bmc):
         if new_state not in states:
             raise RuntimeError('An illegal BMC state was attempted: %s' %
                                new_state)
-        self.__current_states[remote_access.address] = states[new_state]
+        self.__current_states[remote_access_object.address] = states[new_state]
         self._save_bmc_file()
         return not self.set_failure
 

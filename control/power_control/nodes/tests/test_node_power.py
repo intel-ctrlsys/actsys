@@ -178,7 +178,26 @@ class TestNodePower(unittest.TestCase):
                 'os_network_to_halt_time': .2,
                 'bmc_boot_timeout_seconds': .2,
                 'bmc_chassis_off_wait': .1
-            }],
+            },
+                {
+                    'device_id': 'test_node_1',
+                    'hostname': 'test_node_1',
+                    'device_type': 'node',
+                    'access_type': 'mock',
+                    'bmc': 'test_bmc_1',
+                    'pdu_list': [
+                        (self.switch_access1, self.switch_plugin1, '3'),
+                        (self.switch_access2, self.switch_plugin2, '1')
+                    ],
+                    "ip_address": "127.0.0.1",
+                    "port": 21,
+                    'os_shutdown_timeout_seconds': .2,
+                    'os_boot_timeout_seconds': .2,
+                    'os_network_to_halt_time': .2,
+                    'bmc_boot_timeout_seconds': .2,
+                    'bmc_chassis_off_wait': .1
+                }
+            ],
             'bmc_list': [{
                 'device_name': 'test_node',
                 'hostname': 'test_bmc',

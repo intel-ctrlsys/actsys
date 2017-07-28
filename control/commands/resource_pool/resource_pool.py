@@ -25,8 +25,8 @@ class ResourcePoolCommand(Command):
         """
         for device_list_item in self.device_name:
             device = self.configuration.get_device(device_list_item)
-            if 'compute' != device.get("device_type") and \
-               'node' != device.get("device_type"):
+            if device.get("device_type") != 'compute' and \
+               device.get("device_type") != 'node':
                 return CommandResult(-1, "The device " + device_list_item +
                                      " is not a compute node!")
 

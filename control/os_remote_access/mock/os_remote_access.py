@@ -6,11 +6,11 @@
 Implements the remote access contract using a mock for remote access to the OS
 on a compute node.
 """
-from ...utilities.utilities import Utilities, SubprocessOutput
-from ..os_remote_access import OsRemoteAccess
-from ...plugin import DeclarePlugin
 import json
 import os
+from ...utilities.utilities import SubprocessOutput
+from ..os_remote_access import OsRemoteAccess
+from ...plugin import DeclarePlugin
 
 
 @DeclarePlugin('mock', 1000)
@@ -24,18 +24,27 @@ class OsRemoteAccessMock(OsRemoteAccess):
     def execute(self, cmd, remote_access_data, capture=False, other=None):
         """Execute the remote command"""
         if capture:
-            return SubprocessOutput(0, '', '')
+            output = SubprocessOutput(0, '', '')
         else:
-            return SubprocessOutput(0, None, None)
+            output = SubprocessOutput(0, None, None)
+        return output
+
+    def execute_multiple_nodes(self, cmd, remote_access_list, capture=False, other=None):
+        """Execute the remote command on multiple nodes"""
+        result = {}
+        for remote_access_data in remote_access_list:
+            ssh_result = self.execute(cmd, remote_access_data, capture, other)
+            result[remote_access_data.address] = ssh_result
+        return result
 
     def test_connection(self, remote_access_data):
         """Execute the remote command"""
         if len(self.dfx_result_list) == 0:
-            return False
+            ret_value = False
         else:
-            rv = self.dfx_result_list[0]
+            ret_value = self.dfx_result_list[0]
             self.dfx_result_list = self.dfx_result_list[1:]
-            return rv
+        return ret_value
 
     def _load_test_results(self):
         filename = os.path.join(os.path.sep, 'tmp', 'mock_os_test_results')

@@ -89,7 +89,7 @@ class SlurmJobLaunch(JobLaunch):
             return self.check_job_metadata_common(self.make_sacct_cmd,
                                                   job_id, state, 2)
         self.cmd_invoker.logger.warning('SLURM accounting storage is disabled, '
-                'looking for jobs in pending/running state')
+                                        'looking for jobs in pending/running state')
 
         return self.check_job_metadata_common(self.make_squeue_cmd,
                                               job_id, state, 1)

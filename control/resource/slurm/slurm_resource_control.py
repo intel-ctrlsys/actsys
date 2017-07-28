@@ -45,7 +45,7 @@ class SlurmResource(ResourceControl):
         """
         reason = "For service"
         subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_list,
-                                                              'state=drain', 'reason=' + reason, '-vvvv'])
+                                                               'state=drain', 'reason=' + reason, '-vvvv'])
         if 'Success' in subprocess_result.stderr:
             return 'Succeeded in removing!'
         return 'Failed in removing!'
@@ -67,7 +67,7 @@ class SlurmResource(ResourceControl):
         """
         reason = "Done with service"
         subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_list,
-                                                              'state=undrain', 'reason=' + reason, '-vvvv'])
+                                                               'state=undrain', 'reason=' + reason, '-vvvv'])
         if 'Success' in subprocess_result.stderr:
             return 'Succeeded in adding!'
         return 'Failed in adding!'

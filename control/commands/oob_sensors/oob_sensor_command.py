@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
-
+"""OOB sensors command class"""
 from ..command import Command
 
 class OobSensorCommand(Command):
@@ -16,6 +16,7 @@ class OobSensorCommand(Command):
         self.bmc_data = []
 
     def setup(self):
+        """Setup function for OOB sensors"""
         for device in self.device_name:
             node = self.configuration.get_device(device)
             if node.get("device_type") not in ['node', 'compute', 'service']:
@@ -29,6 +30,7 @@ class OobSensorCommand(Command):
         self.oob_sensor_plugin = self.plugin_manager.create_instance('bmc', self.plugin_name)
 
     def print_table(self, ret_msg):
+        """print the output in table format"""
         result = ""
         for key, value in ret_msg.iteritems():
             key1 = (key[:30] + '..') if len(key) > 30 else key
@@ -41,6 +43,7 @@ class OobSensorCommand(Command):
 
     @staticmethod
     def get_sensor_name(sensor_name):
+        """Get sensor name"""
         if sensor_name == ' ' or len(sensor_name) == 0:
             raise RuntimeError("Empty string given to sensor_name")
         elif sensor_name.strip().lower() in ['all', '.*', '*']:
@@ -50,6 +53,7 @@ class OobSensorCommand(Command):
 
     @staticmethod
     def print_table_border(row, column, device_name=None, sensor_name=None):
+        """Print table border"""
         if device_name is None:
             result = '\t{:-^40} {:-^80}\n'.format(row, column)
         else:
@@ -59,8 +63,9 @@ class OobSensorCommand(Command):
 
     @staticmethod
     def print_multiline(value):
+        """Print multiple lines"""
         list_split = [value[x:x + 10] for x in xrange(0, len(value), 10)]
         result = ''
-        for xs in list_split:
-            result += ' '.join(map(str, xs)) + "\n\n{:40}{:15}".format("", "")
+        for row in list_split:
+            result += ' '.join(map(str, row)) + "\n\n{:40}{:15}".format("", "")
         return result
