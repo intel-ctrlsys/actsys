@@ -99,7 +99,7 @@ class TestSlurmJobLaunch(unittest.TestCase):
         mock_exec_sub.return_value = SubprocessOutput(1, '', 'Error happened!')
         job = SlurmJobLaunch()
         ret = job.cancel_job('1')
-        self.assertEqual(ret, (1, '\nError happened!'))
+        self.assertEqual(ret, (1, 'No jobs found!'))
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_cancel_job_fail(self, mock_exec_sub):
@@ -107,14 +107,6 @@ class TestSlurmJobLaunch(unittest.TestCase):
         job = SlurmJobLaunch()
         ret = job.cancel_job('1')
         self.assertEqual(ret, (1, '\nerror happened!'))
-
-    @patch.object(Utilities, 'execute_subprocess')
-    def test_cancel_job_fail_two(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, '',
-                            'scancel: Cray node selection plugin loaded')
-        job = SlurmJobLaunch()
-        ret = job.cancel_job('1')
-        self.assertEqual(ret, (1, 'Invalid job 1'))
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_cancel_job_succeed(self, mock_exec_sub):

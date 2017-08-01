@@ -59,7 +59,7 @@ class SlurmJobLaunch(JobLaunch):
 
     def make_sacct_cmd(self, job_id, state):
         fields = '--format=User,JobID,NodeList,State,Start,Elapsed,ExitCode'
-        cmd = ['sacct', '--format=' + fields]
+        cmd = ['sacct', fields]
         self.append_options(cmd, job_id, state)
         return cmd
 
@@ -117,12 +117,13 @@ class SlurmJobLaunch(JobLaunch):
     def cancel_job(self, job_id):
         if job_id is None:
             return 1, 'Job id is mandatory!'
+        job_ret = self.check_job_metadata(job_id=job_id)
+        if job_ret[0] != 0:
+            return 1, 'No jobs found!'
         result = self.util.execute_subprocess(['scancel', job_id, '-v'])
         if result.return_code != 0:
             return result.return_code, os.linesep + \
                    self.remove_last_empty_line(result.stderr)
         if 'error' in result.stderr:
             return 1, os.linesep + self.remove_last_empty_line(result.stderr)
-        if 'scancel: Cray node' in  result.stderr:
-            return 1, 'Invalid job ' + job_id
         return result.return_code, 'Job has been cancelled successfully!'
