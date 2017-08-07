@@ -358,10 +358,19 @@ class CommandInvoker(object):
         :param output_fle: output file to put the job results
         :return: CommandResult
         """
+        if nodes is not None:
+            try:
+                node_list = self._device_name_check(nodes)
+            except self.datastore.DeviceListParseError as dlpe:
+                result = CommandResult(1, "Failed to parse valid device name(s) in {}. "
+                                          "Error: {}".format(nodes, dlpe.message))
+                self.logger.warning(result.message)
+        else:
+            node_list = None
         return self.common_cmd_invoker(None, "job_launch",
                                        job_script=job_script,
                                        node_count=node_count,
-                                       nodes=nodes, output_file=output_file)
+                                       nodes=node_list, output_file=output_file)
 
     def job_check(self, job_id=None, state=None):
         """

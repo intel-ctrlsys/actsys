@@ -39,7 +39,7 @@ class MockJobLaunch(JobLaunch):
         elif 'node_count' in job:
             num_node = job['node_count']
         if nodes is not None:
-            nodelist = nodes
+            nodelist = ','.join(nodes)
         elif 'nodes' in job:
             nodelist = job['nodes']
         if num_node is None and nodelist is None:

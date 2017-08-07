@@ -30,7 +30,7 @@ class SlurmResource(ResourceControl):
         Check the states of the specified list of nodes using Slurm command
         """
         subprocess_result = self.utilities.execute_subprocess(['sinfo',
-                                                               '-n', node_list])
+                                                               '-n', ','.join(node_list)])
         return 0, os.linesep + subprocess_result.stdout
 
     def _parse_columns(self, columns):
@@ -44,7 +44,7 @@ class SlurmResource(ResourceControl):
         removing the nodes from cluster resource pool
         """
         reason = "For service"
-        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_list,
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + ','.join(node_list),
                                                                'state=drain', 'reason=' + reason, '-vvvv'])
         if 'Success' in subprocess_result.stderr:
             return 'Succeeded in removing!'
@@ -66,7 +66,7 @@ class SlurmResource(ResourceControl):
         adding the nodes back to cluster resource pool
         """
         reason = "Done with service"
-        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + node_list,
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + ','.join(node_list),
                                                                'state=undrain', 'reason=' + reason, '-vvvv'])
         if 'Success' in subprocess_result.stderr:
             return 'Succeeded in adding!'

@@ -30,7 +30,7 @@ class SlurmJobLaunch(JobLaunch):
         if node_count is not None:
             cmd.insert(1, '-N ' + node_count)
         if nodes is not None:
-            cmd.insert(1, '-w ' + nodes)
+            cmd.insert(1, '-w ' + ','.join(nodes))
         if output_file is not None:
             cmd.insert(1, '-o ' + output_file)
             cmd.insert(1, '-e ' + output_file)
