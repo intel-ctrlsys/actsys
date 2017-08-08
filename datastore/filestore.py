@@ -443,9 +443,7 @@ class FileStore(DataStore):
         super(FileStore, self).remove_from_group(device_list, group)
         groups = self.parsed_file.get(self.GROUPS_KEY, None)
         if groups is None or group not in groups:
-            # Nothing to delete, done!
-            print("Group {} doesn't exist".format(group))
-            return NodeSet()
+            raise RuntimeError("Group {} doesn't exist".format(group))
 
         updated_device_set = NodeSet(self.parsed_file[self.GROUPS_KEY].get(group, None), resolver=RESOLVER_NOGROUP)
 

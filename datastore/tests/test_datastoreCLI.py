@@ -247,9 +247,10 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_group_get(self):
         self.mockDS.get_group_devices.return_value = self.device_list
+        self.mockDS.expand_device_list.return_value = [self.group_name]
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'get', 'test'])
-            self.assertEqual(output.getvalue(), self.device_list + '\n')
+            self.assertEqual(output.getvalue(), "{} - {}\n".format(self.group_name, self.device_list))
             self.assertEqual(result, 0)
         self.mockDS.get_group_devices.assert_called_once_with("test")
 
@@ -302,6 +303,13 @@ class TestGroupCLI(unittest.TestCase):
         with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'remove', 'foo', self.group_name])
             self.assertEqual(output.getvalue(), "Group {} has been updated to {}\n".format(self.group_name, self.device_list))
+            self.assertEqual(result, 0)
+        self.mockDS.remove_from_group.assert_called_once_with('foo', self.group_name)
+
+    def test_unknown_group_remove(self):
+        self.mockDS.remove_from_group.return_value = None
+        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+            result = self.dscli.parse_and_run(['group', 'remove', 'foo', self.group_name])
             self.assertEqual(result, 0)
         self.mockDS.remove_from_group.assert_called_once_with('foo', self.group_name)
 

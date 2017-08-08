@@ -518,8 +518,11 @@ class TestPostgresDB(unittest.TestCase):
         self.assertEqual(len(result), 0)
 
         self.set_expected(mock_connect, None)
-        result = self.postgres.remove_from_group("", "non-existent")
-        self.assertEqual(len(result), 0)
+        try:
+            self.postgres.remove_from_group("", "non_existing")
+            self.fail()
+        except RuntimeError as run_ex:
+            self.assertEqual(str(run_ex), "Group non_existing doesn't exist")
 
 if __name__ == '__main__':
     unittest.main()
