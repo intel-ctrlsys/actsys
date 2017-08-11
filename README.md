@@ -14,7 +14,9 @@ This project has two main parts, namely ctrl and datastore (The two main directo
 
 ## Versioning
 
-This project uses [Semver](http://semver.org/) as its versioning scheme.
+This project uses [Semver](http://semver.org/) as its versioning scheme. Versions are marked with tag and show up in the [releases section of github](https://github.com/intel-ctrlsys/actsys/releases).
+
+To learn how to tag a new version, see the [git tag tutorial](https://git-scm.com/book/en/v2/Git-Basics-Tagging). If you mess up, you can always [delete a tag](https://stackoverflow.com/questions/5480258/how-to-delete-a-git-remote-tag).
 
 ## Tests
 
