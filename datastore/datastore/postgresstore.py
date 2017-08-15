@@ -387,9 +387,7 @@ class PostgresStore(DataStore):
         super(PostgresStore, self).remove_from_group(device_list, group)
         group_devices = self.get_group_devices(group)
         if group_devices is None:
-            # Nothing to delete, done!
-            print("Group {} doesn't exist".format(group))
-            return NodeSet()
+            raise RuntimeError("Group {} doesn't exist".format(group))
 
         updated_device_set = NodeSet(group_devices, resolver=RESOLVER_NOGROUP)
         if device_list == '*':

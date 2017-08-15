@@ -520,8 +520,11 @@ class TestFileStore(unittest.TestCase):
         result = self.fs.remove_from_group("c[1-50]", "test2")
         self.assertEqual(str(result), "")
 
-        result = self.fs.remove_from_group("*", "non_existing")
-        self.assertEqual(str(result), "")
+        try:
+            self.fs.remove_from_group("*", "non_existing")
+            self.fail()
+        except RuntimeError as run_ex:
+            self.assertEqual(str(run_ex), "Group non_existing doesn't exist")
 
         self.assertEqual(len(list(self.fs.get_group_devices("test2"))), 0)
 
@@ -585,8 +588,11 @@ class TestFileStoreEmptyFile(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_group(self):
-        result = self.fs.remove_from_group("c99", "foo")
-        self.assertEqual(str(result), "")
+        try:
+            self.fs.remove_from_group("c99", "foo")
+            self.fail()
+        except RuntimeError as run_ex:
+            self.assertEqual(str(run_ex), "Group foo doesn't exist")
 
         result = self.fs.get_group_devices("test1")
         self.assertEqual(str(result), "")

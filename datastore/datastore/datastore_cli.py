@@ -498,7 +498,7 @@ class DataStoreCLI(object):
         try:
             result = self.datastore.remove_from_group(device_list, group)
             print("Group {} has been updated to {}".format(group, result))
-        except (FileNotFound, NonParsableFile) as ex:
+        except (FileNotFound, NonParsableFile, RuntimeError) as ex:
             print(str(ex))
         return 0
 
@@ -508,9 +508,11 @@ class DataStoreCLI(object):
         :param parsed_args:
         :return:
         """
-        group = parsed_args.group
-        devices = self.datastore.get_group_devices(group)
-        print(devices)
+        group_list = parsed_args.group
+        group_list = self.datastore.expand_device_list(group_list)
+        for group in group_list:
+            devices = self.datastore.get_group_devices(group)
+            print("{} - {}".format(group, devices))
         return 0
 
     def group_list_execute(self, parsed_args=None):
