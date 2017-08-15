@@ -31,75 +31,65 @@ class TestPowerCycleCommand(PowerCommandsCommon):
     def test_positive_on_from_on(self):
         result = self.command.execute()
         self.assertEqual('Success: Device Cycled: test_node',
-                         result.message)
-        self.assertEqual(0, result.return_code)
-
-    def test_step_3_exception(self):
-        self.command.node_options['switches'] = {
-            (object(), object(), object()),
-            (object(), object(), object())
-        }
-        result = self.command.execute()
-        self.assertEqual('Hard switches for device test_node are off',
-                         result.message)
-        self.assertEqual(-1, result.return_code)
+                         result[0].message)
+        self.assertEqual(0, result[0].return_code)
 
     def test_parse_arguments(self):
         self.command.force = None
         self.command.subcommand = 'bad_subcommand'
         result = self.command.execute()
-        self.assertEqual('Incorrect arguments passed to cycle a node: '
-                         'test_node', result.message)
-        self.assertEqual(-1, result.return_code)
+        self.assertEqual("Incorrect arguments passed to cycle a node: "
+                         "['test_node']", result[0].message)
+        self.assertEqual(-1, result[0].return_code)
 
     def test_parse_arguments_2(self):
         self.args = None
         result = self.command.execute()
         self.assertEqual('Success: Device Cycled: test_node',
-                         result.message)
-        self.assertEqual(0, result.return_code)
+                         result[0].message)
+        self.assertEqual(0, result[0].return_code)
 
     def test_parse_arguments_3(self):
         self.command.subcommand = 'unknown'
         result = self.command.execute()
-        self.assertEqual('Incorrect arguments passed to cycle a node: '
-                         'test_node', result.message)
-        self.assertEqual(-1, result.return_code)
+        self.assertEqual("Incorrect arguments passed to cycle a node: "
+                         "['test_node']", result[0].message)
+        self.assertEqual(-1, result[0].return_code)
 
     def test_parse_arguments_4(self):
         self.command.force = True
         result = self.command.execute()
         self.assertEqual('Success: Device Cycled: test_node',
-                         result.message)
-        self.assertEqual(0, result.return_code)
+                         result[0].message)
+        self.assertEqual(0, result[0].return_code)
 
     def test_positive_initial_off(self):
         self.write_state('Off')
         result = self.command.execute()
         self.assertEqual('Power off for test_node; use the power on command',
-                         result.message)
-        self.assertEqual(-1, result.return_code)
+                         result[0].message)
+        self.assertEqual(-1, result[0].return_code)
 
     def test_failure_to_change_state(self):
         self.command.power_plugin = MockPowerPlugin(**self.options)
         result = self.command.execute()
         self.assertEqual('Failed to change state to On:bmc_on on device '
-                         'test_node', result.message)
-        self.assertEqual(-1, result.return_code)
+                         'test_node', result[0].message)
+        self.assertEqual(-1, result[0].return_code)
 
     def test_failure_to_change_state_with_exception(self):
         self.command.power_plugin = MockPowerPluginException(**self.options)
         result = self.command.execute()
-        self.assertEqual('Mock exception', result.message)
-        self.assertEqual(-1, result.return_code)
+        self.assertEqual('Mock exception', result[0].message)
+        self.assertEqual(-1, result[0].return_code)
 
     def test_resource_failure(self):
         cmd = MockStepUpdateResource(**self.command_options)
         cmd.plugin_name = 'mock'
         result = cmd.execute()
-        self.assertEqual('Failed to inform the resource manager of the state '
-                         'change for device test_node', result.message)
-        self.assertEqual(-1, result.return_code)
+        self.assertEqual("Failed to inform the resource manager of the state "
+                         "change for device ['test_node']", result[0].message)
+        self.assertEqual(-1, result[0].return_code)
 
 
 if __name__ == '__main__':

@@ -20,10 +20,9 @@ class ResourcePoolAddCommand(ResourcePoolCommand):
 
     def execute(self):
         """Execute the command"""
-
         setup_results = self.setup()
         if setup_results is not None:
             return setup_results
 
-        rc, message = self.resource_manager.add_nodes_to_resource_pool(self.device_name)
-        return CommandResult(rc, message)
+        ret_code, message = self.resource_manager.add_nodes_to_resource_pool(self.device_name)
+        return CommandResult(ret_code, message)

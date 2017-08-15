@@ -20,7 +20,6 @@ class CommonPowerCommand(Command):
         self.outlet = outlet
         self.force = force
         self.power_plugin = None
-
         # Step 1 & 2
         self.node_options, self.plugin_name = self._options_from_node()
 
@@ -31,73 +30,29 @@ class CommonPowerCommand(Command):
             'node': self._execute_for_node,
             'pdu': self._execute_for_power_switches,
         }
-        return dispatch[self.configuration.get_device(self.device_name).get("device_type")]()
+        return dispatch[self.configuration.get_device(self.device_name[0]).get("device_type")]()
 
     def _options_from_node(self):
         """Return the node power control options based on the node_name and
                    configuration object."""
-        cfg = self.configuration
-        mgr = self.plugin_manager
-        # Device
-        node = cfg.get_device(self.device_name)
-
-        if not node:
-            raise RuntimeError("Device {} was not found in the "
-                               "configuration".format(self.device_name))
-        options = dict()
-        options['device_name'] = node.get("device_id", self.device_name)
-        options['device_type'] = node.get("device_type")
-        # BMC
-        if node and node.get("bmc"):
-            bmc = cfg.get_device(node.get("bmc"))
-            if bmc is not None:
-                # TODO: check if bmc access_type is not defined.
-                bmc_plugin = mgr.create_instance('bmc', bmc.get("access_type"))
-                bmc_access = PowerRemoteAccessData(bmc.get("ip_address"), bmc.get("port"),
-                                                   bmc.get("user"), bmc.get("password"),
-                                                   node.get("bmc_fa_port", None),
-                                                   bmc.get("rest_server_port", None))
-                options['bmc'] = (bmc_access, bmc_plugin)
-
-        # Device OS
+        device_list = []
+        bmc_list = []
+        options = {}
+        node = None
+        power_plugin_name = None
+        for device in self.device_name:
+            node = self.configuration.get_device(device)
+            device_list.append(node)
+            bmc_list.append(self.configuration.get_device(node.get("bmc")))
         if node:
-            # TODO: Check if node access type is not defined
-            try:
-                os_plugin = self.plugin_manager.create_instance('os_remote_access', node.get("access_type"))
-                os_access = RemoteAccessData(node.get("ip_address"), node.get("port"),
-                                             node.get("user"), node.get("password"))
-                options['os'] = (os_access, os_plugin)
-            except KeyError as ke:
-                self.logger.warning("Unable to load access plugin, {}".format(ke.message))
-
-            # TODO: Check if all of these exist, is there a default?!?!?
-            options['policy'] = {
-                'OSShutdownTimeoutSeconds': node.get("os_shutdown_timeout_seconds"),
-                'OSBootTimeoutSeconds': node.get("os_boot_timeout_seconds"),
-                'OSNetworkToHaltTime': node.get("os_network_to_halt_time"),
-                'BMCBootTimeoutSeconds': node.get("bmc_boot_timeout_seconds"),
-                'BMCChassisOffWait': node.get("bmc_chassis_off_wait")
-            }
-        options['switches'] = list()
-        if node.get("pdu_list", None) is not None:
-            options['switches'] = node.get("pdu_list")
-        power_plugin_name = node.get("device_power_control", 'node_power')
-
+            power_plugin_name = node.get("device_power_control", 'node_power')
+        options['device_list'] = device_list
+        options['bmc_list'] = bmc_list
+        options['plugin_manager'] = self.plugin_manager
         return options, power_plugin_name
-
-    def _test_switch_on_state(self):
-        """If hard switches are off turn on or return False."""
-        if self.node_options['switches'] is None or len(self.node_options['switches']) == 0:
-            return True
-        else:
-            # TODO: Implement this step here when PDU code is completed!
-            return False
 
     def _update_resource_state(self, new_state):
         """Inform the resource manager that the node can be added or removed."""
-        if new_state not in ['add', 'remove']:
-            return False
-
         self.logger.debug("{}ing {} from the resource pool.".format(new_state, self.device_name))
         resource_pool = self.plugin_manager.create_instance('command', 'resource_pool_{}'.format(new_state),
                                                             device_name=self.device_name,
@@ -113,21 +68,13 @@ class CommonPowerCommand(Command):
 
     def _update_services(self, new_state):
         """Inform the node systemctl that the services can be started or stopped."""
-        if new_state not in ['start', 'stop']:
-            return False
-
         self.logger.debug("{}ing services for {}".format(new_state, self.device_name))
         service_stop = self.plugin_manager.create_instance('command', 'service_{}'.format(new_state),
                                                            device_name=self.device_name,
                                                            configuration=self.configuration,
                                                            plugin_manager=self.plugin_manager, logger=self.logger)
         service_stop_result = service_stop.execute()
-        if service_stop_result.return_code != 0:
-            err_msg = "Failed power command due to failed service {}.".format(new_state)
-            self.logger.critical(err_msg)
-            return False
-
-        return True
+        return service_stop_result
 
     def _parse_power_arguments(self, default_target, targets):
         target = default_target
@@ -139,47 +86,54 @@ class CommonPowerCommand(Command):
                 target = None
         return target, force
 
-    def _execute_for_node(self):
+    @classmethod
+    def _execute_for_node(cls):
         return CommandResult(message='"CommonPowerCommand._execute_for_node" '
                                      'Not Implemented')
 
-    def _execute_for_power_switches(self):
+    @classmethod
+    def _execute_for_power_switches(cls):
         return CommandResult(message='"CommonPowerCommand._execute_for_power'
                                      '_switches" Not Implemented')
 
     def switch_pdu(self, new_state):
         """Execute PDU commands"""
-        devices = self.configuration.get_pdu(self.device_name)
+        result = []
 
-        if devices is not None and len(devices) == 1:
-            device = devices[0]
-            if self.outlet is None:
-                return CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify outlet\n'
-                                        'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
-            pdu = self.plugin_manager.create_instance('pdu', device.get("access_type"))
-            remote_access = RemoteAccessData(str(device.get("ip_address")), device.get("port"), str(device.get("user")),
-                                             str(device.get("password")))
-            try:
-                outlet_state = pdu.get_outlet_state(remote_access, str(self.outlet))
-            except RuntimeError as pdu_ex:
-                return CommandResult(1, pdu_ex.message)
-            self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, outlet_state))
-            if outlet_state.upper() == new_state.upper():
-                return CommandResult(0, '{} outlet {} was already {}, no change '
-                                        'made.'.format(self.device_name, self.outlet, new_state))
-            try:
-                pdu.set_outlet_state(remote_access, str(self.outlet), new_state)
-                self.logger.info("{} outlet is currently set to state: {}".format(self.device_name, new_state))
-            except RuntimeError as ex:
-                return CommandResult(1, ex.message)
-        else:
-            return CommandResult(1, 'No PDU or more than one PDU was found for the device\n'
-                                    'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n')
-        return CommandResult(0, 'Successfully switched {} {}'.format(self.device_name, new_state))
+        for device in self.device_name:
+            devices = self.configuration.get_pdu(device)
 
+            if devices is not None and len(devices) == 1:
+                device = devices[0]
+                if self.outlet is None:
+                    result.append(CommandResult(1, 'PDU outlet not specified. Please use -o <outlet> to specify'
+                                                ' outlet\n Usage : $ctrl power {on,off} -o <outlet>'
+                                                ' <pdu_name>\n'))
+                    continue
+                pdu = self.plugin_manager.create_instance('pdu', device.get("access_type"))
+                remote_access = RemoteAccessData(str(device.get("ip_address")), device.get("port"),
+                                                 str(device.get("user")),
+                                                 str(device.get("password")))
+                try:
+                    outlet_state = pdu.get_outlet_state(remote_access, str(self.outlet))
+                except RuntimeError as pdu_ex:
+                    result.append(CommandResult(1, pdu_ex.message))
+                    continue
+                self.logger.info("{} outlet is currently set to state: {}".format(device, outlet_state))
+                if outlet_state.upper() == new_state.upper():
+                    result.append(CommandResult(0, '{} outlet {} was already {}, no change '
+                                                'made.'.format(device, self.outlet, new_state)))
+                    continue
+                try:
+                    pdu.set_outlet_state(remote_access, str(self.outlet), new_state)
+                    self.logger.info("{} outlet is currently set to state: {}".format(device, new_state))
+                except RuntimeError as ex:
+                    result.append(CommandResult(1, ex.message))
+                    continue
+            else:
+                result.append(CommandResult(1, 'No PDU or more than one PDU was found for the device\n '
+                                            'Usage : $ctrl power {on,off} -o <outlet> <pdu_name>\n'))
+                continue
+            result.append(CommandResult(0, 'Successfully switched {} {}'.format(device, new_state)))
 
-class PowerRemoteAccessData(RemoteAccessData):
-    def __init__(self, address, port, user, identifier, fa_port = None, rest_server_port = None):
-        RemoteAccessData.__init__(self, address, port, user, identifier)
-        self.fa_port = fa_port
-        self.rest_server_port = rest_server_port
+        return result

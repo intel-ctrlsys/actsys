@@ -22,11 +22,11 @@ class BmcIpmiUtil(Bmc):
         self.name_to_find = 'chassis_power'
         self.mandatory_bmc_wait_seconds = 10
 
-    def get_chassis_state(self, remote_access):
+    def get_chassis_state(self, remote_access_object):
         """Get the current power state of the node chassis as a boolean."""
-        command = self._build_power_command(remote_access.address,
-                                            remote_access.username,
-                                            remote_access.identifier,
+        command = self._build_power_command(remote_access_object.address,
+                                            remote_access_object.username,
+                                            remote_access_object.identifier,
                                             'status')
         subprocess_result = self.utilities.execute_subprocess(command)
         if subprocess_result.return_code != 0 or subprocess_result.stdout is None:
@@ -47,11 +47,11 @@ class BmcIpmiUtil(Bmc):
         sleep(self.mandatory_bmc_wait_seconds)
         return value == 'on'
 
-    def set_chassis_state(self, remote_access, new_state):
+    def set_chassis_state(self, remote_access_object, new_state):
         """Set the chassis to a new state."""
-        command = self._build_power_command(remote_access.address,
-                                            remote_access.username,
-                                            remote_access.identifier,
+        command = self._build_power_command(remote_access_object.address,
+                                            remote_access_object.username,
+                                            remote_access_object.identifier,
                                             new_state)
         result = self.utilities.execute_no_capture(command)
         if result != 0:

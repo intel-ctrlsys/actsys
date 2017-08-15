@@ -28,16 +28,16 @@ class BmcMock(Bmc):
         if os.path.exists(self.__persistent_bios_file):
             self._load_bios_file()
 
-    def get_chassis_state(self, remote_access):
+    def get_chassis_state(self, remote_access_object):
         """Get the current power state of the node chassis as a boolean."""
-        if remote_access.address in self.__current_states:
-            return self.__current_states[remote_access.address] == 'on'
+        if remote_access_object.address in self.__current_states:
+            return self.__current_states[remote_access_object.address] == 'on'
         else:
-            self.__current_states[remote_access.address] = 'off'
+            self.__current_states[remote_access_object.address] = 'off'
             self._save_bmc_file()
             return False
 
-    def set_chassis_state(self, remote_access, new_state):
+    def set_chassis_state(self, remote_access_object, new_state):
         """Set the chassis to a new state."""
         states = {'off': 'off', 'on': 'on', 'cycle': 'on', 'bios': 'on',
                   'efi': 'on', 'hdd': 'on', 'pxe': 'on', 'cdrom': 'on',
@@ -45,7 +45,7 @@ class BmcMock(Bmc):
         if new_state not in states:
             raise RuntimeError('An illegal BMC state was attempted: %s' %
                                new_state)
-        self.__current_states[remote_access.address] = states[new_state]
+        self.__current_states[remote_access_object.address] = states[new_state]
         self._save_bmc_file()
         return not self.set_failure
 
@@ -61,20 +61,26 @@ class BmcMock(Bmc):
         json.dump(self.__current_states, file_obj)
         file_obj.close()
 
-    def get_version(self, device, bmc):
+    def get_version(self, device_list, bmc_list):
         """Bios version"""
-        node_name = device.get('device_name')
-        if node_name in self.__current_image_list:
-            return self.__current_image_list[node_name]
-        else:
-            return 'No image found on node {0}'.format(node_name)
+        result_dict = {}
+        for device in device_list:
+            node_name = device.get('device_name')
+            if node_name in self.__current_image_list:
+                result_dict[node_name] = self.__current_image_list[node_name]
+            else:
+                result_dict[node_name] = 'No image found on node {0}'.format(node_name)
+        return result_dict
 
-    def bios_update(self, device, bmc, image):
+    def bios_update(self, device_list, bmc_list, image):
         """Update Bios"""
-        node_name = device.get('device_name')
-        self.__current_image_list[node_name] = image
-        self._save_bios_file()
-        return "Bios for {0} updated with {1}".format(node_name, image)
+        result_dict = {}
+        for device in device_list:
+            node_name = device.get('device_name')
+            self.__current_image_list[node_name] = image
+            self._save_bios_file()
+            result_dict[node_name] = "Bios for {0} updated with {1}".format(node_name, image)
+        return result_dict
 
     def _load_bios_file(self):
         """Loads the bios image file from disk."""
@@ -88,22 +94,30 @@ class BmcMock(Bmc):
         json.dump(self.__current_image_list, file_obj)
         file_obj.close()
 
-    def get_sensor_value(self, sensor_name, device, bmc):
-        result = dict()
+    def get_sensor_value(self, sensor_name, device_list, bmc_list):
+        result_dict = {}
+        sensor_samples = dict()
         sample = list()
         sample.append(10)
-        sensor_name_f = self._get_sensor_name(sensor_name)
-        result[sensor_name_f] = sample
-        return result
+        for device in device_list:
+            node_name = device.get('device_name')
+            sensor_name_f = self._get_sensor_name(sensor_name)
+            sensor_samples[sensor_name_f] = sample
+            result_dict[node_name] = sensor_samples
+        return result_dict
 
-    def get_sensor_value_over_time(self, sensor_name, duration, sample_rate, device, bmc):
+    def get_sensor_value_over_time(self, sensor_name, duration, sample_rate, device_list, bmc_list):
+        result_dict = {}
         sensor_name_f = self._get_sensor_name(sensor_name)
-        result = dict()
+        sensor_samples = dict()
         sample = []
-        for i in range(0, duration*sample_rate):
-            sample.append(10)
-        result[sensor_name_f] = sample
-        return result
+        for device in device_list:
+            node_name = device.get('device_name')
+            for i in range(0, duration*sample_rate):
+                sample.append(10)
+            sensor_samples[sensor_name_f] = sample
+            result_dict[node_name] = sensor_samples
+        return result_dict
 
     @staticmethod
     def _get_sensor_name(sensor_name):

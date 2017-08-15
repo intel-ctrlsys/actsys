@@ -23,12 +23,14 @@ class TestOobSensorGetTimeCommand(TestOobSensorCommand):
                                                                  self.mock_plugin_manager, None, 'temp', '3.2', '1.2')
 
     def test_ret_msg(self):
-        self.assertEqual(self.oob_sensor_get_time.execute().return_code, 0)
-        self.assertEqual(self.oob_sensor_get_time_float.execute().return_code, 0)
-        self.oob_manager_mock.get_sensor_value_over_time.return_value = {u'temp': [0.0, 0.88765444, 0.0, 0.0, 0.0, 0.88765444, 0.0, 0.0, 0.0, 0.88765444, 0.0, 0.0]}
-        self.assertEqual(self.oob_sensor_get_time_float.execute().return_code, 0)
+        self.assertEqual(self.oob_sensor_get_time.execute()[0].return_code, 0)
+        self.assertEqual(self.oob_sensor_get_time_float.execute()[0].return_code, 0)
+        self.oob_manager_mock.get_sensor_value_over_time.return_value = {"node": {u'temp': [0.0, 0.88765444, 0.0, 0.0, 0.0,
+                                                                                   0.88765444, 0.0, 0.0, 0.0,
+                                                                                   0.88765444, 0.0, 0.0]}}
+        self.assertEqual(self.oob_sensor_get_time_float.execute()[0].return_code, 0)
         self.oob_manager_mock.get_sensor_value_over_time.side_effect = RuntimeError
-        self.assertEqual(self.oob_sensor_get_time.execute().return_code, 0)
+        self.assertEqual(self.oob_sensor_get_time.execute()[0].return_code, 255)
 
     def test_error_raised(self):
         with self.assertRaises(RuntimeError):

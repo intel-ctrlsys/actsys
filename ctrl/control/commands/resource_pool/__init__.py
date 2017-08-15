@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2016 Intel Corp.
 #
+"""Resource module"""
 from .resource_pool import ResourcePoolCommand
 from .resource_pool_remove import ResourcePoolRemoveCommand
 from .resource_pool_add import ResourcePoolAddCommand

@@ -71,7 +71,7 @@ class MockPowerPlugin(PowerControlMock):
         super(MockPowerPlugin, self).__init__(**options)
 
     def set_device_power_state(self, target_state, force_on_failure=False):
-        return False
+        return {"test_node": False}
 
 
 class MockPowerPluginException(PowerControlMock):
@@ -109,7 +109,7 @@ class PowerCommandsCommon(unittest.TestCase):
         self.configuration = MockConfiguration()
         self.setUpConfiguration()
         self.command_options = {
-            'device_name': self.node_name,
+            'device_name': [self.node_name],
             'configuration': self.configuration,
             'plugin_manager': self.manager,
             'logger': MagicMock(spec=DataStoreLogger),
@@ -117,18 +117,22 @@ class PowerCommandsCommon(unittest.TestCase):
             "force": False
         }
         self.options = {
-            'device_name': self.node_name,
-            'device_type': 'node',
-            'os': (object(), object()),
-            'bmc': (object(), object()),
-            'switches': [],
-            'policy': {
-                'OSShutdownTimeoutSeconds': 150,
-                'OSBootTimeoutSeconds': 300,
-                'OSNetworkToHaltTime': 5,
-                'BMCBootTimeoutSeconds': 10,
-                'BMCChassisOffWait': 3
-            }
+            'device_list': [{
+                'device_name': self.node_name,
+                'device_id': self.node_name,
+                'hostname': self.node_name,
+                'device_type': 'node',
+                'os': (object(), object()),
+                'bmc': (object(), object()),
+                'switches': [],
+                'policy': {
+                    'OSShutdownTimeoutSeconds': 150,
+                    'OSBootTimeoutSeconds': 300,
+                    'OSNetworkToHaltTime': 5,
+                    'BMCBootTimeoutSeconds': 10,
+                    'BMCChassisOffWait': 3
+                }
+            }]
         }
 
     def tearDown(self):
@@ -150,7 +154,7 @@ class PowerCommandsCommon(unittest.TestCase):
         self._setter('remote_access', os_info)
         self._setter('device_type', 'node')
         self._setter('device_power_control', 'mock')
-        self._setter('bmc_device_name', 'bmc_test_node')
+        self._setter('bmc', 'bmc_test_node')
         self._setter('switches', [])
 
         # BMC
@@ -160,6 +164,7 @@ class PowerCommandsCommon(unittest.TestCase):
         setter('bmc_test_node', 'access_type', 'mock')
 
         setter(self.node_name, 'device_id', self.node_name)
+        setter(self.node_name, 'hostname', self.node_name)
         setter(self.node_name, 'access_type', 'mock')
         setter(self.node_name, 'service_list', ['slurm'])
         setter(self.node_name, 'resource_controller', 'mock')

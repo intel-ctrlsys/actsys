@@ -15,6 +15,7 @@ class TestInterface(unittest.TestCase):
         """All tests."""
         interface = OsRemoteAccess()
         interface.execute([], None)
+        interface.execute_multiple_nodes([], [], None)
         interface.test_connection([])
 
 

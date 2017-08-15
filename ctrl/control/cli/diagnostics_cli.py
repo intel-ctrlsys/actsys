@@ -20,8 +20,8 @@ class DiagnosticsCli(object):
         self.root_parser = argparse.ArgumentParser(prog='diag')
 
         self.subparsers = self.root_parser.add_subparsers(title='Action',
-                                                          description='What kind of diagnostic tests (in-band/out-of-band)'
-                                                                      ' do you want to run?')
+                                                          description='What kind of diagnostic tests '
+                                                                      '(in-band/out-of-band) do you want to run?')
         self.add_inband_args()
         self.add_oob_args()
 
@@ -30,9 +30,11 @@ class DiagnosticsCli(object):
 
         :return:
         """
-        self.inband_parser = self.subparsers.add_parser('inband', help='Launch the in band diagnostic tests. Ex.: ctrl diag inband '
-                                                                      'test_device --image test_image --test test_tests')
-        self.inband_parser.add_argument('device_name', help="The device name of the device you want to launch diagnostics on.")
+        self.inband_parser = self.subparsers.add_parser('inband', help='Launch the in band diagnostic tests. '
+                                                                       'Ex.: ctrl diag inband test_device --image '
+                                                                       'test_image --test test_tests')
+        self.inband_parser.add_argument('device_name', help="The device name of the device you want to launch "
+                                                            "diagnostics on.")
         self.inband_parser.add_argument('--image', type=str, required=True, help="The diagnostics image to be used.")
         self.inband_parser.add_argument('--test', type=str, required=False, help="The specific diagnostic tests you "
                                         "wish to launch. This input is passed to the Kernel args used while "
@@ -44,10 +46,12 @@ class DiagnosticsCli(object):
 
         :return:
         """
-        self.oob_parser = self.subparsers.add_parser('oob', help='Launch the out-of-band diagnostic tests. Ex.: ctrl diag oob '
-                                                                      'test_device --test test_tests')
-        self.oob_parser.add_argument('device_name', help="The device name of the device you want to launch diagnostics on.")
-        self.oob_parser.add_argument('--test', type=str, required=False, help="The specific diagnostic tests you wish to launch.(Ex. IFST/Ping)")
+        self.oob_parser = self.subparsers.add_parser('oob', help='Launch the out-of-band diagnostic tests. Ex.: ctrl '
+                                                                 'diag oob test_device --test test_tests')
+        self.oob_parser.add_argument('device_name', help="The device name of the device you want to launch "
+                                                         "diagnostics on.")
+        self.oob_parser.add_argument('--test', type=str, required=False, help="The specific diagnostic tests you "
+                                                                              "wish to launch.(Ex. IFST/Ping)")
         self.oob_parser.set_defaults(execute_function=self.oob_execute)
 
     def parse_and_run(self, args=None):
@@ -82,4 +86,3 @@ class DiagnosticsCli(object):
         :return: CommandResult
         """
         return self.command_invoker.diagnostics_oob(parsed_args.device_name, parsed_args.test)
-

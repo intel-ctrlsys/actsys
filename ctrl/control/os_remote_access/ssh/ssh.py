@@ -14,6 +14,9 @@ from ...plugin import DeclarePlugin
 @DeclarePlugin('ssh', 100)
 class RemoteSshPlugin(OsRemoteAccess):
     """SSH remote OS access implementation."""
+    SSH_CONNECTION_ERROR = 255
+    SSH_RETRIES = 1
+    SSH_SUCCESS = 0
 
     def __init__(self, connect_timeout=4):
         OsRemoteAccess.__init__(self)
@@ -29,8 +32,25 @@ class RemoteSshPlugin(OsRemoteAccess):
 
     def test_connection(self, remote_access_data):
         """Test for ssh access."""
-        rv = self._execute_ssh(['echo', '-n', '""'], remote_access_data).return_code == 0
-        return rv
+        return_value = self._execute_ssh(['echo', '-n', '""'], remote_access_data).return_code == 0
+        return return_value
+
+    def execute_multiple_nodes(self, cmd, remote_access_list, capture=False, other=None):
+        """Execute the remote command on multiple nodes"""
+        result = {}
+        result_retries = 0
+        for remote_access_data in remote_access_list:
+            ssh_result = self.execute(cmd, remote_access_data, capture, other)
+            if ssh_result.return_code == self.SSH_CONNECTION_ERROR and result_retries < self.SSH_RETRIES:
+                remote_access_list.append(remote_access_data)
+                result_retries += 1
+                continue
+            elif ssh_result.return_code != self.SSH_SUCCESS:
+                result_msg = "Failed: {} - {}: {}".format(cmd[1], cmd[2], str(ssh_result))
+            else:
+                result_msg = "Success: {} - {}".format(cmd[1], cmd[2])
+            result[remote_access_data.address] = SubprocessOutput(ssh_result.return_code, result_msg, None)
+        return result
 
     def _build_command(self, command, remote_access_data):
         """Make the ssh command"""

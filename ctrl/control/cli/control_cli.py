@@ -19,6 +19,7 @@ from .command_invoker import CommandInvoker
 from ..commands import CommandResult, ConfigurationNeeded
 from .provision_cli import ProvisionCli
 from .diagnostics_cli import DiagnosticsCli
+from .job_launch_cli import JobLaunchCli
 
 
 class ControlArgParser(object):
@@ -124,6 +125,8 @@ class ControlArgParser(object):
                                            ' over, both values must be integers greater than 1'
                                }
                            ])
+        self.ctrl_subparser.add_parser('job', help='Launching, checking, '
+                                                   'retrieving and canceling job', add_help=False)
 
     def add_subparser(self, parser_name, parser_help, subcommand_choices=list(),
                       subcommand_help=None, arg_list_kwargs=list(), require_device_name=True):
@@ -244,7 +247,7 @@ class ControlCommandLineInterface(object):
             else:
                 sample_rate = cmd_args.get_overtime[0]
                 duration = cmd_args.get_overtime[1]
-                return self.cmd_invoker.oob_sensor_get_over_time(cmd_args.device_name, cmd_args.sensor_name,duration,
+                return self.cmd_invoker.oob_sensor_get_over_time(cmd_args.device_name, cmd_args.sensor_name, duration,
                                                                  sample_rate)
         else:
             return CommandResult(1, "Invalid sensor command entered")
@@ -301,7 +304,9 @@ class ControlCommandLineInterface(object):
                 if cmd_args.subparser_name == 'diag':
                     diagnostic_result = DiagnosticsCli(self.cmd_invoker).parse_and_run(unknown_args)
                     return self.handle_command_result(diagnostic_result)
-
+                if cmd_args.subparser_name == 'job':
+                    job_result = JobLaunchCli(self.cmd_invoker).parse_and_run(unknown_args)
+                    return self.handle_command_result(job_result)
                 command_result = self._execute_local_command(masterparser.get_all_args())
 
             except timeout_decorator.TimeoutError:

@@ -22,19 +22,19 @@ class Bmc(object):
         """Set the target chassis state for a node."""
         pass
 
-    def get_version(self, node, bmc):
+    def get_version(self, device_list, bmc_list):
         """Read the bios image info for a compute node"""
         pass
 
-    def bios_update(self, node, bmc, image):
+    def bios_update(self, device_list, bmc_list, image):
         """Update bios on a compute node"""
         pass
 
-    def get_sensor_value(self, sensor_name, device_data, node_data):
+    def get_sensor_value(self, sensor_name, device_list, bmc_list):
         """Read the sensor values for a compute node"""
         pass
 
-    def get_sensor_value_over_time(self, sensor_name, duration, sample_rate, device_data, node_data):
+    def get_sensor_value_over_time(self, sensor_name, duration, sample_rate, device_list, bmc_list):
         """Read the sensor values of a compute node  over specified
         time duration at specified sample rate"""
         pass

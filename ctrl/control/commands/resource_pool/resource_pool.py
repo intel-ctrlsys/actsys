@@ -23,12 +23,10 @@ class ResourcePoolCommand(Command):
         :return:
         :raise: ConfigurationNeeded Exception if the config has not been set probperly
         """
-
-        device_list = self.configuration.expand_device_list(self.device_name)
-        for device_list_item in device_list:
+        for device_list_item in self.device_name:
             device = self.configuration.get_device(device_list_item)
-            if 'compute' != device.get("device_type") and \
-               'node' != device.get("device_type"):
+            if device.get("device_type") != 'compute' and \
+               device.get("device_type") != 'node':
                 return CommandResult(-1, "The device " + device_list_item +
                                      " is not a compute node!")
 

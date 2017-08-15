@@ -46,7 +46,7 @@ class PduRaritanPX35180CR(PDUInterface):
         pdu_remote_access = RemoteSshPlugin()
         ssh_cmd = pdu_remote_access._build_command([], remote_access_data)
         full_command = 'echo ' + cmd + ' | ' + ' '.join(ssh_cmd)
-        rv, stdout = self.utilities.execute_in_shell(full_command)
-        if rv != 0:
+        return_value, stdout = self.utilities.execute_in_shell(full_command)
+        if return_value != 0:
             raise RuntimeError('Failed to execute command %s' % cmd)
         return stdout

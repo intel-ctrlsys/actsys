@@ -24,6 +24,8 @@ class TestOobSensorCommand(unittest.TestCase):
 
         self.mock_plugin_manager = mock_plugin_manager
         self.oob_manager_mock = self.mock_plugin_manager.create_instance.return_value
+        self.oob_manager_mock.get_sensor_value.return_value = {self.node_name: {'sensor': 'Success'}}
+        self.oob_manager_mock.get_sensor_value_over_time.return_value = {self.node_name: {'sensor': 'Success'}}
         self.config = {
                 'hostname': self.node_name,
                 'configuration': self.configuration_manager,
@@ -83,8 +85,7 @@ class TestOobSensorCommand(unittest.TestCase):
     def test_execute_all_good(self):
         try:
             self.oob_sensor_cmd.setup()
-        except RuntimeError as ex:
-            print(ex)
+        except RuntimeError:
             self.fail('RuntimeError raised')
 
 

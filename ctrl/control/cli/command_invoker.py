@@ -9,9 +9,9 @@ to perform user requested operations.
 from __future__ import print_function
 import os
 import logging
+from datastore import DataStoreBuilder
 from ..plugin.manager import PluginManager
 from ..commands import CommandResult
-from datastore import DataStoreBuilder
 
 
 class CommandInvoker(object):
@@ -40,6 +40,7 @@ class CommandInvoker(object):
 
     @classmethod
     def get_config_file_location(cls):
+        """Get the configuration file location"""
         return os.environ.get(cls.POSTGRES_ENV_VAR, None) or \
                              os.environ.get(cls.FILE_LOCATION_ENV_VAR, None) or \
                              cls.CTRL_CONFIG_LOCATION
@@ -49,6 +50,7 @@ class CommandInvoker(object):
         return self.datastore.expand_device_list(device_name)
 
     def init_manager(self):
+        """Register the plugin classes"""
         self.manager = PluginManager()
 
         # Commands
@@ -81,8 +83,9 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(BmcMock)
 
         # os remote access plugins
-        from ..os_remote_access import RemoteSshPlugin, RemoteTelnetPlugin, OsRemoteAccessMock
+        from ..os_remote_access import RemoteSshPlugin, RemoteTelnetPlugin, OsRemoteAccessMock, ParallelSshPlugin
         self.manager.register_plugin_class(RemoteSshPlugin)
+        self.manager.register_plugin_class(ParallelSshPlugin)
         self.manager.register_plugin_class(RemoteTelnetPlugin)
         self.manager.register_plugin_class(OsRemoteAccessMock)
 
@@ -124,11 +127,55 @@ class CommandInvoker(object):
         from ..diagnostics.mock_diagnostics.mock_diagnostics import MockDiagnostics
         self.manager.register_plugin_class(MockDiagnostics)
 
+        from ..diagnostics.inband_diagnostics.inband_diagnostics import InBandDiagnostics
+        self.manager.register_plugin_class(InBandDiagnostics)
+
+        from ..commands.job_launch import JobLaunch, JobCheck, JobRetrieve, JobCancel
+        self.manager.register_plugin_class(JobLaunch)
+        self.manager.register_plugin_class(JobCheck)
+        self.manager.register_plugin_class(JobRetrieve)
+        self.manager.register_plugin_class(JobCancel)
+
+        from ..job_launch import SlurmJobLaunch, MockJobLaunch
+        self.manager.register_plugin_class(SlurmJobLaunch)
+        self.manager.register_plugin_class(MockJobLaunch)
+
         try:
             from ctrl_plugins import add_plugins_to_manager
             add_plugins_to_manager(self.manager)
-        except ImportError as ie:
-            self.logger.info("Could not import additional plugins. Proceeding anyways. Err: {}".format(ie))
+        except ImportError as import_error:
+            self.logger.info("Could not import additional plugins. Proceeding anyways. Err: {}".format(import_error))
+
+    def _execute_command_with_device(self, device_regex, results,
+                                     sub_command, plugin_name, **kwargs):
+        try:
+            device_list = self._device_name_check(device_regex)
+        except self.datastore.DeviceListParseError as dlpe:
+            result = CommandResult(1, "Failed to parse valid device name(s) in {}. "
+                                      "Error: {}".format(device_regex, dlpe.message))
+            self.logger.warning(result.message)
+            return result
+        if not device_list:
+            return CommandResult(1, "No valid devices to run this command on.")
+        valid_node_list = list()
+        invalid_node_list = list()
+        for device_name in device_list:
+            if not self.device_exists_in_config(device_name):
+                invalid_node_list.append(device_name)
+                continue
+            valid_node_list.append(device_name)
+            if sub_command.startswith(('diagnostics', 'provisioner')):
+                self._create_execute_command(results, device_name, plugin_name, **kwargs)
+        if len(invalid_node_list) > 0:
+            node_list = self.datastore.fold_devices(invalid_node_list)
+            msg = "Devices {} skipped due to not found in the config file.".\
+                format(self.datastore.fold_devices(node_list))
+            self.logger.warning(msg)
+            results.append(CommandResult(1, msg, node_list))
+
+        if not sub_command.startswith(('diagnostics', 'provisioner')) and len(valid_node_list) > 0:
+            self._create_execute_command(results, valid_node_list, plugin_name, **kwargs)
+        return None
 
     def common_cmd_invoker(self, device_regex, sub_command, **kwargs):
         """Common Function to execute the user requested command"""
@@ -158,51 +205,35 @@ class CommandInvoker(object):
                        'oob_sensor_get': 'oob_sensor_get',
                        'oob_sensor_get_time': 'oob_sensor_get_time',
                        'diagnostics_inband': 'diagnostics_inband',
-                       'diagnostics_oob': 'diagnostics_oob'
-                       }
-        try:
-            device_list = self._device_name_check(device_regex)
-        except self.datastore.DeviceListParseError as dlpe:
-            result = CommandResult(1, "Failed to parse valid device name(s) in {}. Error: {}".format(device_regex, dlpe.message))
-            self.logger.warning(result.message)
-            return result
-        if not device_list:
-            return CommandResult(1, "No valid devices to run this command on.")
+                       'diagnostics_oob': 'diagnostics_oob',
+                       'job_launch': 'job_launch',
+                       'job_check': 'job_check',
+                       'job_retrieve': 'job_retrieve',
+                       'job_cancel': 'job_cancel'
+                      }
         results = list()
-        valid_node_list = list()
-        invalid_node_list = list()
-        for device_name in device_list:
-            if not self.device_exists_in_config(device_name):
-                invalid_node_list.append(device_name)
-                continue
-            valid_node_list.append(device_name)
-            if 'resource' not in sub_command:
-                self.create_execute_command(results, device_name,
-                                            command_map[sub_command], **kwargs)
-        if len(invalid_node_list) > 0:
-            node_list = self.datastore.fold_devices(invalid_node_list)
-            msg = "Devices {} skipped due to not found in the config file.".\
-                format(self.datastore.fold_devices(node_list))
-            self.logger.warning(msg)
-            results.append(CommandResult(1, msg, node_list))
-        if 'resource' in sub_command and len(valid_node_list) > 0:
-            devices = self.datastore.fold_devices(valid_node_list)
-            self.create_execute_command(results, devices,
-                                        command_map[sub_command], **kwargs)
+        if sub_command.startswith('job'):
+            self._create_execute_command(results, device_regex,
+                                         command_map[sub_command], **kwargs)
+        else:
+            ret = self._execute_command_with_device(device_regex, results, sub_command,
+                                                    command_map[sub_command], **kwargs)
+            if ret:
+                return ret
+
         if len(results) == 1:
             return results[0]
 
         return results
 
-    def create_execute_command(self, results,
-                               devices, sub_command, **kwargs):
+    def _create_execute_command(self, results,
+                                devices, sub_command, **kwargs):
         # Prepare kwargs
         kwargs["device_name"] = devices
         kwargs["configuration"] = self.datastore
         kwargs["plugin_manager"] = self.manager
         kwargs["logger"] = self.logger
         # End kwargs prep
-
         cmd_obj = self.manager.create_instance('command', sub_command, **kwargs)
         self.logger.journal(cmd_obj.get_name(), cmd_obj.command_args, devices)
         try:
@@ -210,11 +241,18 @@ class CommandInvoker(object):
         except Exception as ex:
             command_result = CommandResult(1, ex.message)
 
-        command_result.device_name = devices
+        if not isinstance(command_result, list):
+            if devices is None:
+                command_result.device_name = 'Result'
+            else:
+                command_result.device_name = \
+                    self.datastore.fold_devices(devices)
+            results.append(command_result)
+        else:
+            for item in command_result:
+                results.append(item)
         self.logger.journal(cmd_obj.get_name(),
                             cmd_obj.command_args, devices, command_result)
-
-        results.append(command_result)
 
     def device_exists_in_config(self, device_name):
         """Check if the device exists in the configuration file or not"""
@@ -309,6 +347,58 @@ class CommandInvoker(object):
         return self.common_cmd_invoker(device_name, "provisioner_set", ip_address=ip_address, hw_address=hw_address,
                                        net_interface=net_interface, image=image, bootstrap=bootstrap, files=files,
                                        kernel_args=kernel_args)
+
+    def job_launch(self, job_script, node_count=None,
+                   nodes=None, output_file=None):
+        """
+        Launch a batch job
+        :param job_script: the batch job script to be launched
+        :param node_counts: number of nodes for this job
+        :param nodes: list of nodes for this job
+        :param output_fle: output file to put the job results
+        :return: CommandResult
+        """
+        if nodes is not None:
+            try:
+                node_list = self._device_name_check(nodes)
+            except self.datastore.DeviceListParseError as dlpe:
+                result = CommandResult(1, "Failed to parse valid device name(s) in {}. "
+                                          "Error: {}".format(nodes, dlpe.message))
+                self.logger.warning(result.message)
+        else:
+            node_list = None
+        return self.common_cmd_invoker(None, "job_launch",
+                                       job_script=job_script,
+                                       node_count=node_count,
+                                       nodes=node_list, output_file=output_file)
+
+    def job_check(self, job_id=None, state=None):
+        """
+        Check job metadata
+        :param job_id: the id of job to be checked
+        :param state: check jobs with certain state
+        :return: CommandResult
+        """
+        return self.common_cmd_invoker(None, "job_check",
+                                       job_id=job_id, state=state)
+
+    def job_retrieve(self, job_id, output_file=None):
+        """
+        Retrieve job results
+        :param job_id: the id of job to be retrieved
+        :param output_file: the file from which to retrieve the results
+        :return: CommandResult
+        """
+        return self.common_cmd_invoker(None, "job_retrieve", job_id=job_id,
+                                       output_file=output_file)
+
+    def job_cancel(self, job_id):
+        """
+        Cancel a job
+        :param job_id: the id of job to be canceled
+        :return: CommandResult
+        """
+        return self.common_cmd_invoker(None, "job_cancel", job_id=job_id)
 
     def oob_sensor_get(self, device_name, sensor_name):
         """

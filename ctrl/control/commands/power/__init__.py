@@ -2,7 +2,8 @@
 #
 # Copyright (c) 2016 Intel Corp.
 #
-from .power_common import *
-from .power_off import *
-from .power_on import *
-from .power_cycle import *
+"""Power operations"""
+from .power_common import CommonPowerCommand
+from .power_off import PowerOffCommand
+from .power_on import PowerOnCommand
+from .power_cycle import PowerCycleCommand

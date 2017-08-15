@@ -21,6 +21,12 @@ class TestRemoteAccessData(unittest.TestCase):
         self.assertEqual('127.0.0.1:22', data.get_authority())
         self.assertEqual('some_user:some_id', data.get_credentials())
 
+        data1 = RemoteAccessData('127.0.0.1', 22, 'some_user', 'some_id')
+        self.assertEqual(data, data1)
+
+        data2 = RemoteAccessData('127.0.0.2', 22, 'some_user', 'some_id')
+        self.assertNotEqual(data, data2)
+
 
 if __name__ == '__main__':
     unittest.main()

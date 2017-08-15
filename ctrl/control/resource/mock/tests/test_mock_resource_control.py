@@ -62,7 +62,8 @@ class TestMockResourceControl(unittest.TestCase):
             },
         }
         self.create_mock_resource_file(nodes)
-        self._remove_from_resource_pool_stub(0, "node[01-05]", "Succeeded in removing!")
+        self._remove_from_resource_pool_stub(0, ["node01", "node02", "node03", "node04", "node05"],
+                                             "Succeeded in removing!")
 
     def _add_to_resource_pool_stub(self, rc_expected,
                                    node_list, message_expected):
@@ -89,4 +90,4 @@ class TestMockResourceControl(unittest.TestCase):
             },
         }
         self.create_mock_resource_file(nodes)
-        self._add_to_resource_pool_stub(0, "node[01-05]", "Succeeded in adding!")
+        self._add_to_resource_pool_stub(0, ["node01", "node02", "node03", "node04", "node05"], "Succeeded in adding!")

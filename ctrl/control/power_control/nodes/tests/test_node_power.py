@@ -7,6 +7,8 @@ Test the node_power plugin implementation.
 """
 import unittest
 import time
+import os
+import json
 from ....os_remote_access.mock.os_remote_access import OsRemoteAccessMock
 from ....utilities.utilities import Utilities, SubprocessOutput
 from ....plugin.manager import PluginManager
@@ -112,6 +114,9 @@ class MockNodePower(NodePower):
         super(MockNodePower, self).__init__(**options)
         self.shutdown_succeed = None
         self.graceful_fail = False
+        self.bmc_access = MockBmcAccess()
+        self.bmc_credentials = RemoteAccessData('127.0.0.2', 0, 'admin', None)
+        self.os_credentials = RemoteAccessData('127.0.0.1', 22, 'admin', None)
 
     def wait_for_chassis_state(self, state, timeout):
         """Test access to _wait_for_chassis_state()"""
@@ -128,6 +133,12 @@ class MockNodePower(NodePower):
         else:
             return NodePower._graceful_os_halt(self)
 
+    def bmc_access_state_stack(self, state_list):
+        self.bmc_access.state_stack = state_list
+
+    def os_access_set_dfx_test_stack(self, state_list):
+        with open('/tmp/mock_os_test_results', 'w+') as fd:
+            json.dump(state_list, fd)
 
 class TestNodePower(unittest.TestCase):
     """Test the NodePower class."""
@@ -149,21 +160,52 @@ class TestNodePower(unittest.TestCase):
         self.switch_plugin1 = MockSwitch()
         self.switch_plugin2 = MockSwitch()
         self.__options = {
-            'device_name': 'test_node',
-            'device_type': 'node',
-            'os': (self.os_access, self.os_plugin),
-            'bmc': (self.bmc_access, self.bmc_plugin),
-            'switches': [
-                (self.switch_access1, self.switch_plugin1, '3'),
-                (self.switch_access2, self.switch_plugin2, '1')
+            'plugin_manager': self.manager,
+            'device_list': [{
+                'device_id': 'test_node',
+                'hostname': 'test_node',
+                'device_type': 'node',
+                'access_type': 'mock',
+                'bmc': 'test_bmc',
+                'pdu_list': [
+                    (self.switch_access1, self.switch_plugin1, '3'),
+                    (self.switch_access2, self.switch_plugin2, '1')
+                ],
+                "ip_address": "127.0.0.1",
+                "port": 21,
+                'os_shutdown_timeout_seconds': .2,
+                'os_boot_timeout_seconds': .2,
+                'os_network_to_halt_time': .2,
+                'bmc_boot_timeout_seconds': .2,
+                'bmc_chassis_off_wait': .1
+            },
+                {
+                    'device_id': 'test_node_1',
+                    'hostname': 'test_node_1',
+                    'device_type': 'node',
+                    'access_type': 'mock',
+                    'bmc': 'test_bmc_1',
+                    'pdu_list': [
+                        (self.switch_access1, self.switch_plugin1, '3'),
+                        (self.switch_access2, self.switch_plugin2, '1')
+                    ],
+                    "ip_address": "127.0.0.1",
+                    "port": 21,
+                    'os_shutdown_timeout_seconds': .2,
+                    'os_boot_timeout_seconds': .2,
+                    'os_network_to_halt_time': .2,
+                    'bmc_boot_timeout_seconds': .2,
+                    'bmc_chassis_off_wait': .1
+                }
             ],
-            'policy': {
-                'OSShutdownTimeoutSeconds': 4.2,
-                'OSBootTimeoutSeconds': 4.2,
-                'OSNetworkToHaltTime': 1.2,
-                'BMCBootTimeoutSeconds': 1.2,
-                'BMCChassisOffWait': 1.2
-            }
+            'bmc_list': [{
+                'device_name': 'test_node',
+                'hostname': 'test_bmc',
+                'device_type': 'bmc',
+                'access_type': 'mock',
+                "ip_address": "127.0.0.2",
+                "port": 21
+            }],
         }
 
         self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
@@ -171,6 +213,9 @@ class TestNodePower(unittest.TestCase):
 
     def tearDown(self):
         time.sleep = self._real_sleep
+        file_path = os.path.join(os.path.sep, 'tmp', 'mock_os_test_results')
+        if os.path.exists(file_path):
+            os.unlink(file_path)
 
     def _my_sleep(self, seconds):
         self._real_sleep(float(seconds) / 100.0)
@@ -185,7 +230,7 @@ class TestNodePower(unittest.TestCase):
     def test_get_current_device_power_state(self):
         self.__utilities.returned_value = True
         result = self.controller.get_current_device_power_state()
-        self.assertEqual('Off', result)
+        self.assertEqual('Off', result['test_node'])
 
     def test_set_device_power_state(self):
         result = self.controller.set_device_power_state('On:bios')
@@ -201,57 +246,54 @@ class TestNodePower(unittest.TestCase):
         self.assertTrue(result)
 
     def test__parse_options(self):
-        self.__options['device_type'] = 'network_switch'
-        with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power', **self.__options)
-        self.__options['device_type'] = 'node'
-        self.__options['os'] = (None, self.os_plugin)
-        with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power', **self.__options)
-        self.__options['os'] = (self.os_access, None)
-        with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power', **self.__options)
-        self.__options['os'] = (self.os_access, self.os_plugin)
-        self.__options['bmc'] = (None, self.bmc_plugin)
-        with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power', **self.__options)
-        self.__options['bmc'] = (self.bmc_access, None)
-        with self.assertRaises(RuntimeError):
-            self.manager.create_instance('power_control', 'node_power', **self.__options)
-        self.__options['bmc'] = (self.bmc_access, self.bmc_plugin)
-        self.__options['switches'] = None
-        self.__options['policy'] = None
-        self.manager.create_instance('power_control', 'node_power', **self.__options)
-        self.__options['policy'] = {}
-        self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.__options['device_list'][0]['device_type'] = 'network_switch'
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        result=self.controller.get_current_device_power_state()
+        self.assertEqual('NodePower controller used on a non-node type device!',
+                         result[self.__options['device_list'][0]['hostname']])
 
-    def test_switches_exceptions(self):
-        self.switch_plugin2.state = False
-        with self.assertRaises(RuntimeError):
-            self.controller.get_current_device_power_state()
+        self.__options['device_list'][0]['device_type'] = 'node'
+
+        del self.__options['device_list'][0]['os_shutdown_timeout_seconds']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+
+        del self.__options['device_list'][0]['os_boot_timeout_seconds']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+
+        del self.__options['device_list'][0]['os_network_to_halt_time']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+
+        del self.__options['device_list'][0]['bmc_boot_timeout_seconds']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+
+        del self.__options['device_list'][0]['bmc_chassis_off_wait']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+
+        del self.__options['device_list'][0]['pdu_list']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+
+        del self.__options['device_list'][0]['device_id']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+
+        del self.__options['plugin_manager']
+        self.controller = self.manager.create_instance('power_control', 'node_power', **self.__options)
+        self.controller.get_current_device_power_state()
+        self.controller.set_device_power_state('On')
 
     def test_set_with_off(self):
         result = self.controller.set_device_power_state('Off')
-        self.assertTrue(result)
-        result = self.controller.set_device_power_state('On:bmc_on')
-        self.assertTrue(result)
-        self.os_plugin.stack = [(255, None)]
-        result = self.controller.set_device_power_state('Off')
-        self.assertFalse(result)
-        self.os_plugin.dfx_test_stack = [False, True]
-        result = self.controller.set_device_power_state('On:bmc_on')
-        self.assertTrue(result)
-        self.bmc_plugin.set_failure = True
-        self.os_plugin.dfx_test_stack = [True, False]
-        result = self.controller.set_device_power_state('Off')
-        self.assertFalse(result)
-        self.bmc_plugin.set_failure = False
+        self.assertTrue(result['test_node'])
 
     def test_wait_for_chassis_state(self):
-        mock_bmc = MockBmcAccess()
-        self.__options['bmc'] = (self.bmc_access, mock_bmc)
         power = MockNodePower(**self.__options)
-        mock_bmc.state_stack = [False, True]
+        power.bmc_access_state_stack([False, True])
         result = power.wait_for_chassis_state(True, 3)
         self.assertTrue(result)
 
@@ -282,35 +324,31 @@ class TestNodePower(unittest.TestCase):
         self.assertTrue(power.set_device_power_state('On:efi'))
         mock_os.dfx_test_stack = [False]
         result = power.get_current_device_power_state()
-        self.assertEqual('On', result)
+        self.assertEqual('On', result['test_node'])
         mock_os.dfx_test_stack = [False]
         self.assertTrue(power.set_device_power_state('Off'))
 
     def test_target_off_force(self):
-        mock_os = MockOsAccess()
-        self.__options['os'] = (self.os_access, mock_os)
         power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
-        self.os_plugin.dfx_test_stack = [True]
+        power.os_access_set_dfx_test_stack([True])
         result = power.get_current_device_power_state()
-        self.assertEqual('On:bmc_on', result)
-        self.os_plugin.dfx_test_stack = [True]
+        self.assertEqual('On:bmc_on', result['test_node'])
+        power.os_access_set_dfx_test_stack([True])
         self.assertTrue(power.set_device_power_state('Off', True))
 
     def test_target_on_force(self):
-        mock_os = MockOsAccess()
-        self.__options['os'] = (self.os_access, mock_os)
         power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
-        self.os_plugin.dfx_test_stack = [True]
+        power.os_access_set_dfx_test_stack([True])
         result = power.get_current_device_power_state()
-        self.assertEqual('On:bmc_on', result)
-        mock_os.stack = [False, False]
+        self.assertEqual('On:bmc_on', result['test_node'])
+        power.os_access_set_dfx_test_stack([False, False])
         self.graceful_fail = True
-        self.os_plugin.dfx_test_stack = [True, False]
-        self.assertTrue(power.set_device_power_state('On:bmc_on', True))
+        power.os_access_set_dfx_test_stack([True, False])
+        self.assertFalse(power.set_device_power_state('On:bmc_on', True)['test_node'])
 
     def test__do_bmc_power_state(self):
         mock_os = MockOsAccess()
@@ -321,17 +359,16 @@ class TestNodePower(unittest.TestCase):
         power.utilities = self.__utilities
         mock_bmc.state_stack = [False, False]
         mock_bmc.set_failure = True
-        self.assertFalse(power.set_device_power_state('On:bmc_on'))
+        self.assertFalse(power.set_device_power_state('On:bmc_on')['test_node'])
+
 
     def test_target_on_shutdown_failed(self):
-        mock_os = MockOsAccess()
-        self.__options['os'] = (self.os_access, mock_os)
         power = MockNodePower(**self.__options)
         power.utilities = self.__utilities
         self.assertTrue(power.set_device_power_state('On:bmc_on'))
-        self.os_plugin.dfx_test_stack = [True]
+        power.os_access_set_dfx_test_stack([True])
         result = power.get_current_device_power_state()
-        self.assertEqual('On:bmc_on', result)
+        self.assertEqual('On:bmc_on', result['test_node'])
         self.graceful_fail = True
-        self.os_plugin.dfx_test_stack = [True]
-        self.assertFalse(power.set_device_power_state('On:bmc_on'))
+        power.os_access_set_dfx_test_stack([True])
+        self.assertFalse(power.set_device_power_state('On:bmc_on')['test_node'])

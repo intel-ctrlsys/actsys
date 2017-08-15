@@ -14,7 +14,6 @@ class Utilities(object):
     """Class to hold low level system call helpers and mock-able objects."""
     def __init__(self):
         self.logger = get_logger()
-        pass
 
     def execute_no_capture(self, command):
         """
@@ -38,7 +37,6 @@ class Utilities(object):
         pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = pipe.communicate()
         result = SubprocessOutput(pipe.returncode, stdout, stderr)
-        self.logger.debug(result)
         return result
 
     def execute_in_shell(self, command):
@@ -94,9 +92,22 @@ class Utilities(object):
                 res += os.linesep
         return res
 
+    def remove_duplicates_from_bmc_data(self, bmc_list):
+        """Remove any duplicate bmc structures from the list"""
+        return [dict(t) for t in set([tuple(bmc.items()) for bmc in bmc_list])]
+
+    def map_devices_to_bmc(self, device_list, bmc_list, func):
+        """For each BMC, find the devices connected to the BMC"""
+        for bmc in bmc_list:
+            bmc_device_list = []
+            for device in device_list:
+                if bmc.get('hostname') == device.get('bmc'):
+                    bmc_device_list.append(device)
+            func(bmc_device_list, bmc)
+
 
 class SubprocessOutput(object):
-
+    """Subprocess output class"""
     def __init__(self, return_code, stdout, stderr):
         self.return_code = return_code
         self.stdout = stdout
