@@ -3,13 +3,10 @@
 [run]
 branch=True
 omit=
-    */test/*
-    */special_plugins/*
     */.local/lib/*
     run-coverage.py
-    all-tests.py
-    */tests/*
+    */test/*
+    */bat/*
     */__init__.py
     /usr/lib/python*/
     /usr/local/lib/python*
-    *tests*
