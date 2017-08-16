@@ -1,0 +1,21 @@
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Coverage reports
+.cache
+.coverage
+.html
+.idea
+.pylint.out
+.test.log
+ctrl-results.xml
+coverage-report.xml
+
+# Build
+dist/
+build/
+*.egg-info
+MANIFEST

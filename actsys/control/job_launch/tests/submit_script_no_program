@@ -1,0 +1,4 @@
+{
+  "num_node": 5,
+  "nodes": "test-node[1-5]"
+}
