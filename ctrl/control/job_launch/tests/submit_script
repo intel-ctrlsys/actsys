@@ -1,5 +1,0 @@
-{
-  "node_count": 5,
-  "nodes": "test-node[1-5]",
-  "program": "cat"
-}
