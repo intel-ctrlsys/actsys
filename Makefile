@@ -2,30 +2,34 @@
 PYLINT_ERR_LEVEL=8
 html_coverage_dir=.html
 xml_coverage_file=coverage-report.xml
-xml_report=ctrl-results.xml
+xml_report=test-results.xml
 pip_install_dir=dist
 
 all: test pylint coverage build
 
 install_requirements:
-	sudo -E pip2 install -r requirements.txt
+	$(MAKE) -C actsys install_requirements
+	$(MAKE) -C datastore install_requirements
 
 test: install_requirements
-	python2 -m pytest . --junit-xml=$(xml_report)
+	$(MAKE) -C actsys test xml_report=$(xml_report)
+	$(MAKE) -C datastore test xml_report=$(xml_report)
 
 pylint: install_requirements
-	pylint2 --rcfile=pylintrc --ignore-patterns=test* control || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
+	$(MAKE) -C actsys pylint PYLINT_ERR_LEVEL=$(PYLINT_ERR_LEVEL)
+	$(MAKE) -C datastore pylint PYLINT_ERR_LEVEL=$(PYLINT_ERR_LEVEL)
 
 coverage: install_requirements
-	python2 -m pytest . --cov-config .coveragerc --cov=control --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
+	$(MAKE) -C actsys coverage xml_coverage_file=$(xml_coverage_file) html_coverage_dir=$(html_coverage_dir)
+	$(MAKE) -C datastore coverage xml_coverage_file=$(xml_coverage_file) html_coverage_dir=$(html_coverage_dir)
 
 rpm:
-	python2 setup.py bdist_rpm
+	$(MAKE) -C actsys rpm
+	$(MAKE) -C datastore rpm
 
 build:
-	python2 setup.py sdist --dist-dir $(pip_install_dir)
-	python2 setup.py bdist_wheel --dist-dir $(pip_install_dir)
-	python2 setup.py bdist_rpm
+	$(MAKE) -C actsys build pip_install_dir=$(pip_install_dir)
+	$(MAKE) -C datastore build pip_install_dir=$(pip_install_dir)
 
 dist: build
 	-

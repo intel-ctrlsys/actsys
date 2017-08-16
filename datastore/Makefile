@@ -8,24 +8,24 @@ pip_install_dir=dist
 all: test pylint coverage build
 
 install_requirements:
-	sudo -E pip install -r requirements.txt
+	sudo -E pip2 install -r requirements.txt
 
 test: install_requirements
-	python -m pytest . --junit-xml=$(xml_report)
+	python2 -m pytest . --junit-xml=$(xml_report)
 
 pylint: install_requirements
 	pylint --rcfile=pylintrc --ignore-patterns=test* datastore || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
 
 coverage: install_requirements
-	python -m pytest . --cov-config .coveragerc --cov=datastore --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
+	python2 -m pytest . --cov-config .coveragerc --cov=datastore --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
 
 rpm:
-	python setup.py bdist_rpm
+	python2 setup.py bdist_rpm
 
 build:
-	python setup.py sdist --dist-dir $(pip_install_dir)
-	python setup.py bdist_wheel --dist-dir $(pip_install_dir)
-	python setup.py bdist_rpm
+	python2 setup.py sdist --dist-dir $(pip_install_dir)
+	python2 setup.py bdist_wheel --dist-dir $(pip_install_dir)
+	python2 setup.py bdist_rpm
 
 dist: build
 	-
