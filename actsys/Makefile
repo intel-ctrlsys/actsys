@@ -42,7 +42,7 @@ help:
 	@echo "	build/dist"
 	@echo "		Build this component and put a *.tar.gz, *.rpm and *.whl file in the dist folder."
 	@echo "	test"
-	@echo "		Run a all tests in this project."
+	@echo "		Run all tests in this project."
 	@echo "	pylint"
 	@echo "		Run a pylint check."
 	@echo "	coverage"

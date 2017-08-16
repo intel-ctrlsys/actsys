@@ -2,7 +2,7 @@
 PYLINT_ERR_LEVEL=8
 html_coverage_dir=.html
 xml_coverage_file=coverage-report.xml
-xml_report=datastore-results.xml
+xml_report=oobrestclient-results.xml
 pip_install_dir=dist
 
 all: test pylint coverage build
@@ -14,10 +14,10 @@ test: install_requirements
 	python2 -m pytest . --junit-xml=$(xml_report)
 
 pylint: install_requirements
-	pylint --rcfile=pylintrc --ignore-patterns=test* datastore || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
+	pylint --rcfile=pylintrc --ignore-patterns=test* oobrestclient || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
 
 coverage: install_requirements
-	python2 -m pytest . --cov-config .coveragerc --cov=datastore --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
+	python2 -m pytest . --cov-config .coveragerc --cov=oobrestclient --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
 
 rpm:
 	python2 setup.py bdist_rpm

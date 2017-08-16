@@ -10,26 +10,38 @@ all: test pylint coverage build
 install_requirements:
 	$(MAKE) -C actsys install_requirements
 	$(MAKE) -C datastore install_requirements
+	$(MAKE) -C oobrestserver install_requirements
+	$(MAKE) -C oobrestclient install_requirements
 
 test: install_requirements
 	$(MAKE) -C actsys test xml_report=$(xml_report)
 	$(MAKE) -C datastore test xml_report=$(xml_report)
+	$(MAKE) -C oobrestserver test xml_report=$(xml_report)
+	$(MAKE) -C oobrestclient test xml_report=$(xml_report)
 
 pylint: install_requirements
 	$(MAKE) -C actsys pylint PYLINT_ERR_LEVEL=$(PYLINT_ERR_LEVEL)
 	$(MAKE) -C datastore pylint PYLINT_ERR_LEVEL=$(PYLINT_ERR_LEVEL)
+	$(MAKE) -C oobrestserver pylint PYLINT_ERR_LEVEL=$(PYLINT_ERR_LEVEL)
+	$(MAKE) -C oobrestclient pylint PYLINT_ERR_LEVEL=$(PYLINT_ERR_LEVEL)
 
 coverage: install_requirements
 	$(MAKE) -C actsys coverage xml_coverage_file=$(xml_coverage_file) html_coverage_dir=$(html_coverage_dir)
 	$(MAKE) -C datastore coverage xml_coverage_file=$(xml_coverage_file) html_coverage_dir=$(html_coverage_dir)
+	$(MAKE) -C oobrestserver coverage xml_coverage_file=$(xml_coverage_file) html_coverage_dir=$(html_coverage_dir)
+	$(MAKE) -C oobrestclient coverage xml_coverage_file=$(xml_coverage_file) html_coverage_dir=$(html_coverage_dir)
 
 rpm:
 	$(MAKE) -C actsys rpm
 	$(MAKE) -C datastore rpm
+	$(MAKE) -C oobrestserver rpm
+	$(MAKE) -C oobrestclient rpm
 
 build:
 	$(MAKE) -C actsys build pip_install_dir=$(pip_install_dir)
 	$(MAKE) -C datastore build pip_install_dir=$(pip_install_dir)
+	$(MAKE) -C oobrestserver build pip_install_dir=$(pip_install_dir)
+	$(MAKE) -C oobrestclient build pip_install_dir=$(pip_install_dir)
 
 dist: build
 	-
