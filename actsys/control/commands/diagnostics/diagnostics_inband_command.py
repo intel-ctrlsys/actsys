@@ -5,8 +5,8 @@
 """
 Diagnostics inband Plugin
 """
-from .. import CommandResult, Command
-from control.plugin import DeclarePlugin
+from ...plugin import DeclarePlugin
+from .. import CommandResult
 from .diagnostics_command import DiagnosticsCommand
 
 

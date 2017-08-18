@@ -85,14 +85,22 @@ class InBandDiagnostics(Diagnostics):
         bmc_user = self.bmc.get("user_name")
         bmc_password = self.bmc.get("password")
         self.device_name = self.device.get("hostname")
-        if self.device.get("provisioner") in "mock":
-            InBandDiagnostics.MOCK_PROVISION = True
+
+        if self.device.get("provisioner") is None or self.device.get("resource_controller") is None or \
+                        self.device.get("device_power_control") is None:
+            raise Exception("You are missing provisioner or resource_control or device_power_control keys in your "
+                            "config file. Please edit the file and try again.")
+
         self.provisioner = self.plugin_manager.create_instance('provisioner', self.device.get("provisioner"))
         self.resource_manager = self.plugin_manager.create_instance('resource_control',
                                                                     self.device.get("resource_controller"))
         power_options = self._pack_options()
         self.power_manager = self.plugin_manager.create_instance('power_control', self.device.get(
             "device_power_control"), **power_options)
+
+        if self.device.get("provisioner") in "mock":
+            InBandDiagnostics.MOCK_PROVISION = True
+
         self._verify_provisioning(self.device_name, self.img)
 
         # Step 1: Remove node from resource pool

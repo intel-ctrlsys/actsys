@@ -5,11 +5,11 @@
 """
 Diagnostics inband Plugin
 """
-from .. import CommandResult, Command
+from .. import Command
 
 
 class DiagnosticsCommand(Command):
-
+    """"Diagnostics command interfaces"""""
     def __init__(self, device_name, configuration, plugin_manager, logger=None, **kwargs):
         Command.__init__(self, device_name, configuration, plugin_manager, logger, **kwargs)
         self.plugin_name = None
@@ -22,6 +22,7 @@ class DiagnosticsCommand(Command):
         self.options['plugin_manager'] = self.plugin_manager
 
     def setup(self):
+        """Setup function to setup for diagnostics command"""
         self.device = self.configuration.get_device(self.device_name)
         if self.device.get("device_type") not in ['node', 'compute', 'service']:
             raise RuntimeError('Cannot run diagnostics on a non-node type '
