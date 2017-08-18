@@ -106,13 +106,12 @@ class ControlArgParser(object):
 
         self.add_subparser('sensor', 'Get specified sensor value on specified nodes/group of nodes',
                            ['get'], 'Select option to get sensor values'
-                                    'Ex: 1. {0} --sensor-name temp 2. {1} --sensor-name temp --get-overtime 2 3'.
+                                    'Ex: 1. {0} sensor-name temp 2. {1} sensor-name temp --get-overtime 2 3'.
                            format(self.CLI_COMMAND, self.CLI_COMMAND),
                            [
                                {
-                                   'name': '--sensor-name',
+                                   'name': 'sensor_name',
                                    'nargs': '?',
-                                   'required': True,
                                    'help': 'Provide a specific sensor, a comma seperated list of multiple sensors '
                                            'or .*/all for all sensors'
                                },

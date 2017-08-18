@@ -75,8 +75,12 @@ class MockDiagnostics(Diagnostics):
         self.device = device
         self.bmc = bmc
         self.device_name = self.device.get("hostname")
-        if self.device.get("provisioner") in "mock":
-            self.mock_provision = True
+
+        if self.device.get("provisioner") is None or self.device.get("resource_controller") is None or \
+                        self.device.get("device_power_control") is None:
+            raise Exception("You are missing the provisioner or resource_controller or device_power_control key in your"
+                            " config file. Please edit the file and try again.")
+
         self.provisioner = self.plugin_manager.create_instance('provisioner', self.device.get("provisioner"))
         self.resource_manager = self.plugin_manager.create_instance('resource_control',
                                                                     self.device.get("resource_controller"))
@@ -84,6 +88,9 @@ class MockDiagnostics(Diagnostics):
         self.power_manager = self.plugin_manager.create_instance('power_control',
                                                                  self.device.get("device_power_control"),
                                                                  **power_options)
+        if self.device.get("provisioner") in "mock":
+            self.mock_provision = True
+
         self._verify_provisioning(self.device_name, self.img)
         MockDiagnostics.Test_Status[self.device_name] = 'Running'
         # Step 1: Remove node from resource pool

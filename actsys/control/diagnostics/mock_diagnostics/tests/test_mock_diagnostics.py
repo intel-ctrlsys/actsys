@@ -14,6 +14,7 @@ from control.provisioner.provisioner import Provisioner
 from control.resource.resource_control import ResourceControl
 from control.power_control.power_control import PowerControl
 
+
 class TestsMockDiagnostics(unittest.TestCase):
     """Unit tests for Mock Diagnostics"""
 
@@ -46,6 +47,17 @@ class TestsMockDiagnostics(unittest.TestCase):
             "rest_server_port": "5000",
             "user": "root",
             "bios_images": "/tmp/images"
+        }
+        self.device1 = {
+            "hostname": "test1",
+            "ip_address": "192.168.1.1",
+            "image": "old_img.bin",
+            "provisioner_kernel_args": "old_diag",
+            "console_port": "1000",
+            "node_power": "mock",
+            "device_type": "node",
+            "pdu_list": "switch1",
+            "bmc": self.bmc
         }
 
         self.device = {
@@ -90,6 +102,15 @@ class TestsMockDiagnostics(unittest.TestCase):
                                             plugin_manager=self.mock_plugin_manager)
         with self.assertRaises(Exception):
             diags_mock_plugin.launch_diags(self.device, self.bmc)
+
+    def test_no_required_keys_exception(self):
+        """tests exceptions"""
+        self.reset_for_test()
+        diags_mock_plugin = MockDiagnostics(diag_image=self.image_name1, test_name=self.test_name,
+                                              plugin_manager=self.mock_plugin_manager)
+        with self.assertRaises(Exception):
+            diags_mock_plugin.launch_diags(self.device1, self.bmc)
+
 
     @patch.object(MockConsoleLog, 'start_log_capture')
     def test_provisioner_failures(self, console_mock):
