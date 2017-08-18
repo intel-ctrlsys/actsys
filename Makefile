@@ -7,9 +7,27 @@ pip_install_dir=dist
 
 all: test pylint coverage build
 
+install_dev:
+	$(MAKE) -C datastore install_dev
+	$(MAKE) -C actsys install_dev
+	$(MAKE) -C oobrestserver install_dev
+	$(MAKE) -C oobrestclient install_dev
+
+install:
+	$(MAKE) -C datastore install
+	$(MAKE) -C actsys install
+	$(MAKE) -C oobrestserver install
+	$(MAKE) -C oobrestclient install
+
+uninstall:
+	$(MAKE) -C datastore uninstall
+	$(MAKE) -C actsys uninstall
+	$(MAKE) -C oobrestserver uninstall
+	$(MAKE) -C oobrestclient uninstall
+
 install_requirements:
-	$(MAKE) -C actsys install_requirements
 	$(MAKE) -C datastore install_requirements
+	$(MAKE) -C actsys install_requirements
 	$(MAKE) -C oobrestserver install_requirements
 	$(MAKE) -C oobrestclient install_requirements
 
@@ -50,8 +68,12 @@ clean:
 	find . -name '*.pyc' -exec rm --force {} +
 	find . -name '*.pyo' -exec rm --force {} +
 	find . -name '*~' -exec rm --force {} +
-	rm $(xml_report) $(xml_coverage_file)
-	rm -r $(html_coverage_dir)
+	find . -name $(xml_report) -exec rm --force {} +
+	find . -name $(xml_coverage_file) -exec rm --force {} +
+	$(MAKE) -C datastore clean
+	$(MAKE) -C actsys clean
+	$(MAKE) -C oobrestserver clean
+	$(MAKE) -C oobrestclient clean
 
 help:
 	@echo "Supported actions are:"

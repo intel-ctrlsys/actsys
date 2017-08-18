@@ -7,6 +7,16 @@ pip_install_dir=dist
 
 all: test pylint coverage build
 
+install_dev:
+	sudo -E pip install -e .
+
+install:
+	python2 setup.py sdist
+	sudo -E pip2 install dist/*.tar.gz
+
+uninstall:
+	sudo -E pip2 uninstall ctrlsys-datastore
+
 install_requirements:
 	sudo -E pip2 install -r requirements.txt
 
@@ -34,8 +44,8 @@ clean:
 	find . -name '*.pyc' -exec rm --force {} +
 	find . -name '*.pyo' -exec rm --force {} +
 	find . -name '*~' -exec rm --force {} +
-	rm $(xml_report) $(xml_coverage_file)
-	rm -r $(html_coverage_dir)
+	rm -f $(xml_report) $(xml_coverage_file)
+	rm -rf $(html_coverage_dir)
 
 help:
 	@echo "Supported actions are:"

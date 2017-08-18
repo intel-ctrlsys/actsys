@@ -7,6 +7,16 @@ pip_install_dir=dist
 
 all: test pylint coverage build
 
+install_dev:
+	sudo -E pip install -e .
+
+install:
+	python2 setup.py sdist
+	sudo -E pip2 install dist/*.tar.gz
+
+uninstall:
+	sudo -E pip2 uninstall oob_rest_server
+
 install_requirements:
 	sudo -E pip2 install -r requirements.txt
 
@@ -14,7 +24,7 @@ test: install_requirements
 	python2 -m pytest . --junit-xml=$(xml_report)
 
 pylint: install_requirements
-	pylint2 --rcfile=pylintrc --ignore-patterns=test* oobrestserver || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
+	pylint --rcfile=pylintrc --ignore-patterns=test* oobrestserver || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
 
 coverage: install_requirements
 	python2 -m pytest . --cov-config .coveragerc --cov=oobrestserver --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
@@ -34,8 +44,8 @@ clean:
 	find . -name '*.pyc' -exec rm --force {} +
 	find . -name '*.pyo' -exec rm --force {} +
 	find . -name '*~' -exec rm --force {} +
-	rm $(xml_report) $(xml_coverage_file)
-	rm -r $(html_coverage_dir)
+	rm -f $(xml_report) $(xml_coverage_file)
+	rm -rf $(html_coverage_dir)
 
 help:
 	@echo "Supported actions are:"
