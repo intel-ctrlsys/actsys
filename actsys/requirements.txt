@@ -2,8 +2,6 @@ pytest
 pytest-cov
 pylint
 mock
-flask
-flask_restful
 ctrlsys-datastore
 timeout-decorator
 parallel-ssh
