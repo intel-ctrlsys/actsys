@@ -6,11 +6,11 @@ from setuptools import setup
 from setuptools import find_packages
 
 
-setup(name="oob_rest_server",
+setup(name="oobrestserver",
       version="0.1.0",
       packages=find_packages(),
       install_requires=['cherrypy'],
-      entry_points={'console_scripts': ['oob-rest=app.__main__:main']},
+      entry_points={'console_scripts': ['oobrestserver=oobrestserver.__main__:main']},
       author="Jonathan Smith",
       author_email="jonathan.d.smith@intel.com",
       description="REST API server for server board OOB operations")

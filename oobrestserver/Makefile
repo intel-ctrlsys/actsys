@@ -15,7 +15,7 @@ install:
 	sudo -E pip2 install dist/*.tar.gz
 
 uninstall:
-	sudo -E pip2 uninstall oob_rest_server
+	sudo -E pip2 uninstall oobrestserver
 
 install_requirements:
 	sudo -E pip2 install -r requirements.txt

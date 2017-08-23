@@ -4,7 +4,7 @@ Installation script for the NC REST Client API Wrapper
 
 from setuptools import setup
 
-setup(name="oob_rest_client",
+setup(name="oobrestclient",
       version="0.3.0",
       packages=['oobrestclient'],
       install_requires=['requests'],
