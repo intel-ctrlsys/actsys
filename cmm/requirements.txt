@@ -1,0 +1,7 @@
+inquirer
+ipython
+pytest
+pytest-cov
+pylint
+mock
+iPython

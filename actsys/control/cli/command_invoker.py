@@ -31,12 +31,20 @@ class CommandInvoker(object):
         self.invoker_ret_val = 0
         self.failed_device_name = list()
 
-        datastore_location = self.get_config_file_location()
-        self.datastore = DataStoreBuilder.get_datastore_from_string(datastore_location, screen_log_level)
+        self.datastore_location = self.get_config_file_location()
+        self.datastore = DataStoreBuilder.get_datastore_from_string(self.datastore_location, screen_log_level)
 
         self.logger = self.datastore.get_logger()
 
         self.manager = None
+
+    def launch_cmm(self):
+        try:
+            from cmm import start_ipython_shell
+        except ImportError:
+            return CommandResult(-1, "Unable to import CMM. To use CMM, first install it."
+                                     " See the Readme.md for more details.")
+        start_ipython_shell(self.datastore_location)
 
     @classmethod
     def get_config_file_location(cls):

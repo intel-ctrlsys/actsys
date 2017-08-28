@@ -128,7 +128,8 @@ class ControlArgParser(object):
         self.add_subparser('service', 'Check, start or stop services specified in the configuration file',
                            ['status', 'start', 'stop'], 'Select an action to perform')
 
-        self.ctrl_subparser.add_parser('datastore', help="Device and configuration manipulations", add_help=False)
+        self.ctrl_subparser.add_parser('datastore', help="Raw access to the database and its contects", add_help=False)
+        self.ctrl_subparser.add_parser('cmm', help="Configuration Manifest Management (CMM) is a user friendly way to update your configuration.", add_help=False)
         self.ctrl_subparser.add_parser('provision', help="Adding, setting and removing provisioning "
                                                          "options for devices", add_help=False)
         self.ctrl_subparser.add_parser('diag', help="Launching diagnostic tests on devices", add_help=False)
@@ -342,6 +343,8 @@ class ControlCommandLineInterface(object):
                     provisioner_result = ProvisionCli(self.cmd_invoker).parse_and_run(
                         unknown_args)
                     return self.handle_command_result(provisioner_result)
+                if cmd_args.subparser_name == 'cmm':
+                    return self.cmd_invoker.launch_cmm()
                 if cmd_args.subparser_name == 'diag':
                     diagnostic_result = DiagnosticsCli(self.cmd_invoker).parse_and_run(unknown_args)
                     return self.handle_command_result(diagnostic_result)
