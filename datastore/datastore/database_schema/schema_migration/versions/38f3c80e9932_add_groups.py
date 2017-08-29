@@ -1,4 +1,4 @@
-"""empty message
+"""Adding groups for devices
 
 Revision ID: 38f3c80e9932
 Revises: 8d64bce23c6b

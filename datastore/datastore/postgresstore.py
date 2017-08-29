@@ -348,7 +348,7 @@ class PostgresStore(DataStore):
         See @DataStore for function description. Only implementation details here.
         """
         super(PostgresStore, self).list_groups()
-        self.cursor.execute("SELECT group_name, device_list FROM public.group;")
+        self.cursor.execute("SELECT group_name, device_list FROM public.device_group;")
         results = self.cursor.fetchall()
         return SqlParser.get_groups_from_results(results)
 
@@ -357,7 +357,7 @@ class PostgresStore(DataStore):
         See @DataStore for function description. Only implementation details here.
         """
         super(PostgresStore, self).get_group_devices(group)
-        self.cursor.execute("SELECT device_list FROM public.group WHERE group_name = %s;", [group])
+        self.cursor.execute("SELECT device_list FROM public.device_group WHERE group_name = %s;", [group])
         results = self.cursor.fetchall()
         if results and results[0]:
             return results[0][0]
@@ -396,7 +396,7 @@ class PostgresStore(DataStore):
         updated_device_set.remove(device_list)
         if len(updated_device_set) == 0:
             # Delete the group if its empty or user provided device_list is '*'
-            self.cursor.execute("DELETE FROM public.group WHERE group_name = %s;", [group])
+            self.cursor.execute("DELETE FROM public.device_group WHERE group_name = %s;", [group])
             updated_device_set = NodeSet()
         else:
             # Modify the group, because its not empty yet.
