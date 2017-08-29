@@ -20,6 +20,37 @@ from ..commands import CommandResult, ConfigurationNeeded
 from .provision_cli import ProvisionCli
 from .diagnostics_cli import DiagnosticsCli
 from .job_launch_cli import JobLaunchCli
+from .interactive_commands import CtrlPrompt
+from sys import argv, exit, stderr
+from IPython import start_ipython
+from traitlets.config.loader import Config
+
+class InteractiveCli(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=None, const=None, default=None, type=None, choices=None, required=False, help=None, metavar=None):
+        argparse.Action.__init__(self, option_strings=option_strings, dest=dest, nargs=nargs, const=const, default=default, type=type, choices=choices, required=required, help=help, metavar=metavar)
+
+    def __call__(self, *args, **kwargs):
+        print ("........Initializing Interactive cli........")
+        cfg = Config()
+        cfg.IPCompleter.merge_completions = False
+        cfg.TerminalInteractiveShell.prompts_class = CtrlPrompt
+        cfg.InteractiveShellApp.exec_lines = ['import control.cli.interactive_commands\n']
+        cfg.TerminalInteractiveShell.banner1 = '\x1b[2J\x1b[H\n' \
+                                               '*************************************************************\n' \
+                                               'ActSys via IPython Shell'
+        cfg.TerminalInteractiveShell.banner2 = '\nActSys specific commands you can use are:\n' \
+                                               '\tpower     Power on/off/cycle\n' \
+                                               '\tresource  Add or remove resource from resource pool\n' \
+                           '\tprocess   Process list/kill on a node in a cluster\n' \
+                           '\tget       Get powercap/freq value of a node\n' \
+                           '\tset       Set powercap/freq value of a node\n' \
+                           '\tservice   Check, start or stop services specified in the configuration file\n' \
+                           '\tbios      Update or get version of bios on specified nodes/group\n' \
+                           '\tsensor    Get specifiged sensor value on specified nodes/group\n' \
+                                               'For help on these commands type <command_name>?. For example to get\n' \
+                                               'help on power type "power?" and enter it.\n'
+        start_ipython(argv=argv[1:], config=cfg)
+        exit(0)
 
 
 class ControlArgParser(object):
@@ -158,6 +189,7 @@ class ControlArgParser(object):
         self.ctrl_parser.add_argument("-V", "--version", action="version", version='0.1.0',
                                       help='Provides the version of the tool')
         self.ctrl_parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
+        self.ctrl_parser.add_argument("-i", action=InteractiveCli, nargs=0, help="Start in interactive mode")
         self.ctrl_parser.add_argument("-t", "--timeout", type=float,
                                       help="Provides a timeout for the command")
 
@@ -166,6 +198,7 @@ class ControlArgParser(object):
             return self.ctrl_parser.parse_args(args)
         else:
             return self.ctrl_parser.parse_args()
+
 
 
 class ControlCommandLineInterface(object):

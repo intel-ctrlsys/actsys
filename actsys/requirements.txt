@@ -5,3 +5,4 @@ mock
 ctrlsys-datastore
 timeout-decorator
 parallel-ssh
+ipython
