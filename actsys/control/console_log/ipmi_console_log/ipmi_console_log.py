@@ -33,7 +33,7 @@ class IpmiConsoleLog(object):
                                      self.password, '-o', '/tmp/output'], stdout=PIPE, stderr=STDOUT, stdin=PIPE)
         except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknow exceptions
             self.logger.debug("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
-                              + ex.message, self.node_name)
+                              + str(ex), self.node_name)
 
         while self.consolelog.poll() is None:
             buffer_v = self.consolelog.stdout.readline()
@@ -52,7 +52,7 @@ class IpmiConsoleLog(object):
         except Exception as ex:  # catching all Exceptions as threads could fail with some unknown exceptions
             self.logger.debug("Unable to create new thread. Console logs "
                               "will not be collected\n Received Error:"
-                              + ex.message, self.node_name)
+                              + str(ex), self.node_name)
         return console_lines
 
     def stop_log_capture(self):

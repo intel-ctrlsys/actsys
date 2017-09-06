@@ -25,7 +25,7 @@ class TestOobSensorGetTimeCommand(TestOobSensorCommand):
     def test_ret_msg(self):
         self.assertEqual(self.oob_sensor_get_time.execute()[0].return_code, 0)
         self.assertEqual(self.oob_sensor_get_time_float.execute()[0].return_code, 0)
-        self.oob_manager_mock.get_sensor_value_over_time.return_value = {"node": {u'temp': [0.0, 0.88765444, 0.0, 0.0, 0.0,
+        self.oob_manager_mock.get_sensor_value_over_time.return_value = {"node": {'temp': [0.0, 0.88765444, 0.0, 0.0, 0.0,
                                                                                    0.88765444, 0.0, 0.0, 0.0,
                                                                                    0.88765444, 0.0, 0.0]}}
         self.assertEqual(self.oob_sensor_get_time_float.execute()[0].return_code, 0)

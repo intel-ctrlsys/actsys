@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2016 Intel Corp.
 #
-from __future__ import print_function
+
 import sys
 from unittest import TestCase
 

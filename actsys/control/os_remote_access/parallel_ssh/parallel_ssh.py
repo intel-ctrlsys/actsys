@@ -43,17 +43,17 @@ class ParallelSshPlugin(OsRemoteAccess):
         result = {}
         if output is None:
             raise RuntimeError("Failed to run command in parallel")
-        for host, host_output in output.items():
+        for host, host_output in list(output.items()):
             host_stdout = ""
             host_stderr = ""
             if host_output.exit_code == 0:
                 host_stdout = "Success: {} - {}".format(cmd[1], cmd[2])
             else:
                 for line in host_output.stdout:
-                    host_stderr += "{}\n".format(str(line.encode('utf-8')))
+                    host_stderr += "{}\n".format(line)
                 for line in host_output.stderr:
-                    host_stderr += "{}\n".format(str(line.encode('utf-8')))
+                    host_stderr += "{}\n".format(line)
                 if host_output.exception:
-                    host_stderr += "{}\n".format(str(host_output.exception.encode('utf-8')))
+                    host_stderr += "{}\n".format(host_output.exception)
             result[host] = SubprocessOutput(host_output.exit_code, host_stdout, host_stderr)
         return result

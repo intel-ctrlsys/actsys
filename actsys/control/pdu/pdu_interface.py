@@ -10,9 +10,8 @@ from ..plugin import DeclareFramework
 
 
 @DeclareFramework('pdu')
-class PDUInterface(object):
+class PDUInterface(object, metaclass=ABCMeta):
     """Interface class for PDU classes."""
-    __metaclass__ = ABCMeta
 
     valid_states = ['On', 'Off', 'on', 'off']
 

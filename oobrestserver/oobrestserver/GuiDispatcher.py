@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Sample of a GUI page generator to demonstrate the ease of adding a GUI."""
 
+
 import json
 
 import cherrypy
@@ -21,12 +22,9 @@ class GuiDispatcher(object):
         return self
 
     @cherrypy.tools.accept(media='text/plain')
-    def GET(self):
-        """Find the dispatcher you want, get it's GET data, and pretty-print"""
-        if not self.vpath:
-            return "welcome to the gui pages"
+    def GET(self, **kwargs):
         dispatcher = self.dispatcher
         while self.vpath:
             dispatcher = dispatcher._cp_dispatch(self.vpath)
-        document = "<pre>" + json.dumps(dispatcher.GET(), indent=4) + '</pre>'
+        document = "<pre>" + json.dumps(dispatcher.GET(**kwargs), indent=4) + '</pre>'
         return document

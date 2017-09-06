@@ -5,7 +5,7 @@
 """
 For handling the DataStore inteerface in postgres
 """
-from __future__ import print_function
+
 import json
 import copy
 import logging

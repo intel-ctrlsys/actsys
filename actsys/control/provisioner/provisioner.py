@@ -10,10 +10,7 @@ from ..plugin import DeclareFramework
 
 
 @DeclareFramework('provisioner')
-class Provisioner(object):
-    __metaclass__ = ABCMeta
-
-    # Configuration variables used
+class Provisioner(object, metaclass=ABCMeta):
     PROVISIONER_KEY = "provisioner"
     PROVISIONER_IMAGE_KEY = "image"
     PROVISIONER_BOOTSTRAP_KEY = "provisioner_bootstrap"

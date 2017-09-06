@@ -13,9 +13,7 @@ from ..plugin import DeclareFramework
 
 
 @DeclareFramework('job_launch')
-class JobLaunch(object):
-    __metaclass__ = ABCMeta
-
+class JobLaunch(object, metaclass=ABCMeta):
     @abstractmethod
     def launch_batch_job(self, job_script,
                          node_count=None, nodes=None, output_file=None):

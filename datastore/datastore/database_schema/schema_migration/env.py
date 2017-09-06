@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2017 Intel Corporation. All rights reserved
 #
-from __future__ import with_statement
+
 import logging
 from alembic import context
 from sqlalchemy import create_engine, pool

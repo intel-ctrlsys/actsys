@@ -24,11 +24,10 @@ class DataStoreGroupSource(GroupSource):
         return self.datastore.list_groups()
 
 
-class DataStore(object):
+class DataStore(object, metaclass=ABCMeta):
     """
     Data Store interface.
     """
-    __metaclass__ = ABCMeta
     LOG_FORMAT = "%(asctime)s / %(levelname)s / %(name)s / %(device_name)s / %(message)s"
     LOG_LEVEL = logging.DEBUG
 
@@ -134,7 +133,7 @@ class DataStore(object):
 
     def get_profile_names(self):
         profiles = self.list_profiles()
-        return map(lambda x: x.get("profile_name"), profiles)
+        return [x.get("profile_name") for x in profiles]
 
     @abstractmethod
     def list_profiles(self, filters=None):
@@ -292,7 +291,7 @@ class DataStore(object):
         """
         groups = self.list_groups()
         device_in_groups = list()
-        for group in groups.keys():
+        for group in list(groups.keys()):
             ns = NodeSet(groups.get(group, []))
             if device_list in ns:
                 device_in_groups.append(group)
@@ -418,7 +417,7 @@ class DataStore(object):
             if profile is None:
                 continue
 
-            for key in profile.keys():
+            for key in list(profile.keys()):
                 if key == "profile_name":
                     continue
                 device_key_value = device.get(key, None)

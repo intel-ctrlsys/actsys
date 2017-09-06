@@ -54,7 +54,7 @@ class PowerCycleCommand(CommonPowerCommand):
             result = []
 
             power_dict = self.power_plugin.get_current_device_power_state()
-            for key, value in power_dict.iteritems():
+            for key, value in power_dict.items():
                 if value == 'Off':
                     command_result = CommandResult(-1, 'Power off for {}; use the power on command'.format(key))
                     command_result.device_name = key
@@ -78,7 +78,7 @@ class PowerCycleCommand(CommonPowerCommand):
                 raise RuntimeError('Failed to inform the resource manager of the state change for '
                                    'device {}'.format(self.device_name))
 
-            for key, value in power_dict.iteritems():
+            for key, value in power_dict.items():
                 if value and isinstance(value, bool):
                     command_result = CommandResult(0, 'Success: Device Cycled: {}'.format(key))
                     command_result.device_name = key
@@ -89,6 +89,6 @@ class PowerCycleCommand(CommonPowerCommand):
                     result.append(command_result)
 
         except RuntimeError as err:
-            return [CommandResult(message=err.message)]
+            return [CommandResult(message=str(err))]
 
         return result

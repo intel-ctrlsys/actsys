@@ -77,7 +77,7 @@ class MockResource(ResourceControl):
                 node_list = states[current_state]
             node_list.append(node)
             states[current_state] = node_list
-        for state, node_list in states.iteritems():
+        for state, node_list in states.items():
             res_list.append([DataStore.fold_devices(node_list), state])
         return 0, os.linesep + Utilities.print_nested_list(res_list)
 

@@ -24,10 +24,10 @@ class BiosVersionCommand(BiosCommand):
             self.setup()
             result = []
             result_dict = self.node_controller.get_version(self.device_data, self.bmc_data)
-            for key, value in result_dict.iteritems():
+            for key, value in result_dict.items():
                 command_result = CommandResult(0, value)
                 command_result.device_name = key
                 result.append(command_result)
         except Exception as ex:
-            return [CommandResult(255, ex.message)]
+            return [CommandResult(255, str(ex))]
         return result

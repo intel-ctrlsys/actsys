@@ -32,7 +32,7 @@ class OobSensorCommand(Command):
     def print_table(self, ret_msg):
         """print the output in table format"""
         result = ""
-        for key, value in ret_msg.iteritems():
+        for key, value in ret_msg.items():
             length = len(key)
             key1 = (key[:30] + '..') if length > 30 else key
             values = list()
@@ -67,7 +67,7 @@ class OobSensorCommand(Command):
     @staticmethod
     def print_multiline(value):
         """Print multiple lines"""
-        list_split = [value[x:x + 10] for x in xrange(0, len(value), 10)]
+        list_split = [value[x:x + 10] for x in range(0, len(value), 10)]
         result = ''
         for row in list_split:
             result += ' '.join(map(str, row)) + "\n\n{:40}{:15}".format("", "")

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Contains Authenticator for use by the REST server"""
-
+"""
+Provides the Authenticator class, supporting all authentication services used
+by the server.
+"""
 import hashlib
 import hmac
 import os
@@ -9,7 +11,10 @@ import re
 
 
 class Authenticator(object):
-    """Manages and persists credentials and performs authentication"""
+    """
+    Provides basic authentication services with respect to the usernames and
+    salted, hashed passwords stored in a given file.
+    """
 
     def __init__(self):
         self.users = {}
@@ -19,18 +24,18 @@ class Authenticator(object):
             pickle.dump(self.users, auth_file)
 
     def load(self, auth_file_name):
-        with open(auth_file_name, 'r') as auth_file:
+        with open(auth_file_name, 'rb') as auth_file:
             self.users = pickle.load(auth_file)
 
     @staticmethod
     def create_empty_auth_file(auth_file_name):
         with open(auth_file_name, 'wb') as auth_file:
             pickle.dump({}, auth_file)
-        os.chmod(os.path.abspath(auth_file_name), 0600)
+        os.chmod(os.path.abspath(auth_file_name), 0o600)
 
     @staticmethod
     def compute_hash(password, salt):
-        return hashlib.pbkdf2_hmac('sha256', password, salt, 5000)
+        return hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 5000)
 
     def add_user(self, user_name, password):
         """Add a new username:password to the authenticator"""
@@ -68,6 +73,10 @@ class Authenticator(object):
 
     @staticmethod
     def check_password_complexity(password):
+        try:
+            password.encode('utf-8')
+        except (AttributeError, UnicodeEncodeError):
+            return False
         return re.search('[A-Z]', password) and \
                re.search('[a-z]', password) and \
                re.search('[0-9]', password) and \

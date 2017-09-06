@@ -27,10 +27,10 @@ class BiosUpdateCommand(BiosCommand):
             if self.image is None:
                 return [CommandResult(255, "Please provide BIOS image. See usage")]
             result_dict = self.node_controller.bios_update(self.device_data, self.bmc_data, self.image)
-            for key, value in result_dict.iteritems():
+            for key, value in result_dict.items():
                 command_result = CommandResult(0, value)
                 command_result.device_name = key
                 result.append(command_result)
         except Exception as ex:
-            return [CommandResult(255, ex.message)]
+            return [CommandResult(255, str(ex))]
         return result

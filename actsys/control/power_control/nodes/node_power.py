@@ -5,7 +5,7 @@
 """
 Implements a power_control plugin for controlling nodes.
 """
-from __future__ import print_function
+
 import time
 import os
 from control.utilities.remote_access_data import RemoteAccessData
@@ -99,7 +99,7 @@ class NodePower(PowerControl):
                 self._parse_options(options)
                 self.result_dict[hostname] = self._get_power_state_from_bmc()
             except RuntimeError as run_err:
-                self.result_dict[hostname] = run_err.message
+                self.result_dict[hostname] = str(run_err)
 
     def _get_power_state_from_bmc(self):
         self._if_switches_off_exception()
@@ -132,7 +132,7 @@ class NodePower(PowerControl):
                 self._parse_options(options)
                 self.result_dict[hostname] = self._set_power_state_from_bmc()
             except RuntimeError as run_err:
-                self.result_dict[hostname] = run_err.message
+                self.result_dict[hostname] = str(run_err)
 
     def _set_power_state_from_bmc(self):
         self._if_switches_off_exception()
@@ -165,8 +165,7 @@ class NodePower(PowerControl):
             raise RuntimeError('The device_name passed was None!')
         self.device_type = options.get('device_type', None)
         if self.device_type not in ['node', 'compute', 'service']:
-            raise(RuntimeError('NodePower controller used on a non-node type '
-                               'device!'))
+            raise RuntimeError('NodePower controller used on a non-node type device!')
         self.os_credentials, self.os_access = options['os']
 
         self.bmc_credentials, self.bmc_access = options['bmc']
@@ -309,7 +308,7 @@ class NodePower(PowerControl):
                                          node.get("user"), node.get("password"))
             options['os'] = (os_access, os_plugin)
         except KeyError as key_error:
-            raise RuntimeError("Unable to load access plugin, {}".format(key_error.message))
+            raise RuntimeError("Unable to load access plugin, {}".format(str(key_error)))
 
         options['policy'] = {
             'OSShutdownTimeoutSeconds': node.get("os_shutdown_timeout_seconds"),

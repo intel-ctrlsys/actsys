@@ -1,9 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import sys
-from app.__main__ import main
+from oobrestserver.__main__ import main
 
 if __name__ == "__main__":
-    sys.exit(main() or 0)
+    sys.exit(main())
 

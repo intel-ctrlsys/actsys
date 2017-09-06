@@ -5,7 +5,7 @@
 """
 CLI commands specifically for diagnostics.
 """
-from __future__ import print_function
+
 import argparse
 from ..commands import CommandResult
 
@@ -68,7 +68,7 @@ class DiagnosticsCli(object):
             return args.execute_function(args)
         except Exception as exception:
             self.root_parser.print_usage()
-            print(type(exception), exception.message)
+            print(type(exception), str(exception))
             return CommandResult(1, exception)
 
     def inband_execute(self, parsed_args):

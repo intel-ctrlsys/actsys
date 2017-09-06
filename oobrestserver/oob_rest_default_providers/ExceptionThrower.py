@@ -4,11 +4,10 @@ class ExceptionThrower(object):
     def __init__(self):
         self.config = {
             "exception": {
-                '#getter': ExceptionThrower.fail_read,
+                '#getter': self.fail_read,
                 '#units': 'string'
             }
         }
 
-    @staticmethod
-    def fail_read():
+    def fail_read(self):
         raise Exception('Example Exception')

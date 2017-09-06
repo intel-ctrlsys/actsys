@@ -5,8 +5,8 @@ import uuid
 
 from cherrypy.test import helper
 
-from  ..Application import Application
-from ..Authenticator import Authenticator
+from  oobrestserver.Application import Application
+from oobrestserver.Authenticator import Authenticator
 
 
 class TestServer(helper.CPWebCase):
@@ -24,14 +24,14 @@ class TestServer(helper.CPWebCase):
         config = {
             "node1": {
                 "FooString": {
-                    "#obj": ["DefaultProviders.StringDevice", "Foo"]
+                    "#obj": ["oob_rest_default_providers.StringDevice", "Foo"]
                 },
                 "HelloDevice": {
-                    "#obj": ["DefaultProviders.HelloSensor"]
+                    "#obj": ["oob_rest_default_providers.HelloSensor"]
                 },
                 "folder": {
                     "InsideString": {
-                        "#obj": ["DefaultProviders.StringDevice", "Inside"]
+                        "#obj": ["oob_rest_default_providers.StringDevice", "Inside"]
                     }
                 }
             }
@@ -43,8 +43,9 @@ class TestServer(helper.CPWebCase):
         auth.add_user('test_user', 'Test_Pass_01')
         auth.save(filename)
         TestServer.app.enable_auth(filename)
-        os.remove(os.path.abspath(filename))
         TestServer.app.mount()
+        os.remove(os.path.abspath(filename))
+
 
     def test_auth_file_created(self):
         my_app = Application({})
@@ -63,7 +64,8 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('401 Unauthorized')
     
     def test_auth(self):
-        b64_value = base64.b64encode('test_user:Test_Pass_01')
+        b64_value = base64.b64encode('test_user:Test_Pass_01'.encode('utf-8'))
         self.getPage('/api/node1/FooString/string/',
-                     headers=[('Authorization', 'Basic %s' % b64_value)])
+                     headers=[('Authorization',
+                               'Basic %s' % b64_value.decode('utf-8'))])
         self.assertStatus('200 OK')

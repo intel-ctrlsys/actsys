@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Intel Corp.
+# Copyright (c) 2017 Intel Corp.
 #
 """
 Test the RemoteSshPlugin.
@@ -21,6 +21,7 @@ class MockRunOutput(object):
         self.stderr = stderr
         self.exception = exception
         self.exit_code = exit_code
+
 
 class TestRemoteSshPlugin(unittest.TestCase):
     """Test case for the RemoteSshPlugin class."""
@@ -58,7 +59,7 @@ class TestRemoteSshPlugin(unittest.TestCase):
     @patch.object(ParallelSSHClient, "run_command")
     def test_execute_run_exception_1(self, mock_ssh, mock_join):
         """Test the RemoteSshPlugin.execute() method."""
-        mock_ssh.return_value = {"localhost": MockRunOutput(exception="exception occurred")}
+        mock_ssh.return_value = {"localhost": MockRunOutput(exception='exception occurred')}
         result1 = self.remote.execute_multiple_nodes(['whoami'], [self.access])
         self.assertEqual(result1["localhost"].stderr, "exception occurred\n")
 

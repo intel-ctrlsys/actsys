@@ -117,7 +117,7 @@ class CommonPowerCommand(Command):
                 try:
                     outlet_state = pdu.get_outlet_state(remote_access, str(self.outlet))
                 except RuntimeError as pdu_ex:
-                    result.append(CommandResult(1, pdu_ex.message))
+                    result.append(CommandResult(1, str(pdu_ex)))
                     continue
                 self.logger.info("{} outlet is currently set to state: {}".format(device, outlet_state))
                 if outlet_state.upper() == new_state.upper():
@@ -128,7 +128,7 @@ class CommonPowerCommand(Command):
                     pdu.set_outlet_state(remote_access, str(self.outlet), new_state)
                     self.logger.info("{} outlet is currently set to state: {}".format(device, new_state))
                 except RuntimeError as ex:
-                    result.append(CommandResult(1, ex.message))
+                    result.append(CommandResult(1, str(ex)))
                     continue
             else:
                 result.append(CommandResult(1, 'No PDU or more than one PDU was found for the device\n '

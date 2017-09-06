@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
-from __future__ import print_function
+
 import os
 import logging
 import copy
@@ -366,7 +366,7 @@ class FileStore(DataStore):
         super(FileStore, self).list_configuration()
         result = list()
         config = self.parsed_file.get(self.CONFIG_KEY, {})
-        for key in config.keys():
+        for key in list(config.keys()):
             result.append({"key": key, "value": config.get(key)})
         return result
 

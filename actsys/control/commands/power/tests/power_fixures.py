@@ -48,7 +48,7 @@ class MockConfiguration(object):
 
     def get_device_data(self, device_name, param):
         """Dummy getter"""
-        if not self.data.has_key(device_name):
+        if device_name not in self.data:
             return None
         return getattr(self.data[device_name], param)
 

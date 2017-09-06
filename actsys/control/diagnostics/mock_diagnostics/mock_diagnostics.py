@@ -5,7 +5,7 @@
 """
 Interface for all diagnostic tests plugins.
 """
-from __future__ import print_function
+
 from control.console_log.mock_console_log.ipmi_mock import MockConsoleLog
 from control.diagnostics.diagnostics import Diagnostics
 from control.plugin import DeclarePlugin
@@ -47,7 +47,7 @@ class MockDiagnostics(Diagnostics):
             img_list = self.provisioner.list_images()
         except Exception as ex:
             raise Exception(
-                "Error: Failed to read data from provisioner because {0}. No tests will be run.".format(ex.message))
+                "Error: Failed to read data from provisioner because {0}. No tests will be run.".format(str(ex)))
 
         if device not in device_list or img not in img_list:
             raise Exception(
@@ -62,7 +62,7 @@ class MockDiagnostics(Diagnostics):
             self.provisioner.set_kernel_args(self.device, args)
         except Exception as ex:
             raise Exception("Failed to set image {0} or test {1}. Provisioner returned error {2}. "
-                            "Cannot run diagnostics. ".format(img, args, ex.message))
+                            "Cannot run diagnostics. ".format(img, args, str(ex)))
 
     def _set_node_state(self, state):
         result = self.power_manager.set_device_power_state(state)

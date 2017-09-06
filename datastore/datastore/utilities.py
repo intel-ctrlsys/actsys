@@ -71,7 +71,7 @@ class DataStoreUtilities(object):
             content = opened_file.read().split(DataStoreUtilities.LINE_DELIMITER)
 
         # delete the empty element introduced by the split function
-        content = filter(None, content)
+        content = [_f for _f in content if _f]
         count = len(content)
 
         # Handle case when limit is larger than count

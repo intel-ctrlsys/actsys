@@ -1,0 +1,3 @@
+
+class NoConfigPlugin(object):
+    pass

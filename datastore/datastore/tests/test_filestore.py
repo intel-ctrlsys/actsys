@@ -5,7 +5,7 @@
 """
 Tests for the FileStore class
 """
-from __future__ import print_function
+
 import unittest
 import json
 import tempfile
@@ -497,7 +497,7 @@ class TestFileStore(unittest.TestCase):
 
     def test_list_groups(self):
         result = self.fs.list_groups()
-        self.assertEqual(result.keys(), ["test","test1","test2"])
+        self.assertEqual(sorted(list(result.keys())), sorted(["test", "test1", "test2"]))
 
     def test_get_group_devices(self):
         result = self.fs.get_group_devices("test1")
@@ -774,12 +774,12 @@ class TestNodeExpand(unittest.TestCase):
         self.fs = FileStore(self.FILE_STRING, None)
 
     def test_expand(self):
-        for test_key in expansion_tests.keys():
+        for test_key in list(expansion_tests.keys()):
             test = expansion_tests.get(test_key)
             self.assertEqual(self.fs.expand_device_list(test[0]), test[1])
 
     def test_fold(self):
-        for test_key in fold_tests.keys():
+        for test_key in list(fold_tests.keys()):
             test = fold_tests.get(test_key)
             self.assertEqual(self.fs.fold_devices(test[0]), test[1])
 
@@ -796,7 +796,7 @@ class TestNodeExpand(unittest.TestCase):
             self.fs.expand_device_list("[")
             self.fail()
         except self.fs.DeviceListParseError as dlpe:
-            self.assertEqual(dlpe.message,  'missing bracket: "["')
+            self.assertEqual(str(dlpe),  'missing bracket: "["')
             pass
 
 if __name__ == '__main__':

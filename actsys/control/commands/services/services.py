@@ -45,7 +45,7 @@ class ServicesCommand(Command):
                 ssh_result = ssh.execute_multiple_nodes(list(self.command), remote_access_list, True)
                 self.command.pop()
 
-                for key, value in ssh_result.items():
+                for key, value in list(ssh_result.items()):
                     result_string = str(value)
                     cmd_result = CommandResult(value.return_code, result_string)
                     cmd_result.device_name = ipaddress_hostname_dict[key]
@@ -58,4 +58,4 @@ class ServicesCommand(Command):
                 result_list.append(CommandResult(0, result_string))
             return result_list
         except RuntimeError as err:
-            return [CommandResult(message=err.message)]
+            return [CommandResult(message=str(err))]

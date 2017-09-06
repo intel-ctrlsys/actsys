@@ -5,12 +5,12 @@
 """
 Tests for the FileStore class
 """
-from __future__ import print_function
+
 import unittest
 import tempfile
 import os
 import sys
-import StringIO
+import io
 import json
 import logging
 from mock import Mock, patch
@@ -39,7 +39,7 @@ class TestDataStoreCLI(unittest.TestCase):
 
     def test_device_list(self):
         self.mockDS.list_devices.return_value = [{'hostname': 'node1'}]
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'list'])
             self.assertEqual(output.getvalue(), '--- node1 ---\nhostname             : node1\n')
 
@@ -53,24 +53,26 @@ class TestDataStoreCLI(unittest.TestCase):
     def test_device_get(self):
         # print('execute_devices')
         self.mockDS.get_device.return_value = [{'device_type': 'compute node'}]
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'get', 'node1'])
             self.assertEqual(output.getvalue(), '--- None ---\ndevice_type          : compute node\n')
 
         self.mockDS.list_devices.return_value = [{'device_type': 'node', 'debug_ip': '127.0.0.111'}]
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'list', 'debug_ip=127.0.0.111'])
-            self.assertEqual(output.getvalue(),
-                             '--- None ---\ndebug_ip             : 127.0.0.111\ndevice_type          : node\n')
+            text = output.getvalue()
+            self.assertTrue('--- None ---\n' in text)
+            self.assertTrue('debug_ip             : 127.0.0.111\n' in text)
+            self.assertTrue('device_type          : node\n' in text)
 
     def test_device_get_no_options_allowed(self):
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'get', 'test1', 'option=opt'])
             # self.assertEqual(output.getvalue(), 'device get does not accept additional options.')
             self.assertEqual(result, 1)
 
     def test_device_get_only_one_device(self):
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['device', 'get', 'test[1-10]'])
             self.assertEqual(result, 1)
 
@@ -165,14 +167,14 @@ class TestDataStoreCLI(unittest.TestCase):
 
     def test_configuration_list(self):
         self.mockDS.list_configuration.return_value = [{'key': 'key1', "value": "value1"}]
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['config', 'list'])
             self.assertEqual(output.getvalue(), "key1                           : value1\n")
 
     def test_configuration_get(self):
         # print('execute_configurations')
         self.mockDS.get_configuration_value.return_value = [{'key': 'key1'}]
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['config', 'get', 'key1'])
             self.assertEqual(output.getvalue(), "key1 : [{'key': 'key1'}]\n")
 
@@ -248,7 +250,7 @@ class TestGroupCLI(unittest.TestCase):
     def test_group_get(self):
         self.mockDS.get_group_devices.return_value = self.device_list
         self.mockDS.expand_device_list.return_value = [self.group_name]
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'get', 'test'])
             self.assertEqual(output.getvalue(), "{} - {}\n".format(self.group_name, self.device_list))
             self.assertEqual(result, 0)
@@ -256,7 +258,7 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_group_expand(self):
         self.mockDS.expand_device_list.return_value = self.device_list
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'expand', '@test'])
             self.assertEqual(output.getvalue(), self.device_list + '\n')
             self.assertEqual(result, 0)
@@ -264,7 +266,7 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_group_fold(self):
         self.mockDS.fold_devices.return_value = self.device_list
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'fold', 'c1,c2,c3,c4,c5'])
             self.assertEqual(output.getvalue(), self.device_list + '\n')
             self.assertEqual(result, 0)
@@ -272,7 +274,7 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_group_list(self):
         self.mockDS.list_groups.return_value = {"a": "1", "b": "1", "c": "1"}
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'list'])
             self.assertEqual(output.getvalue(),  'a\nb\nc\n')
             self.assertEqual(result, 0)
@@ -280,7 +282,7 @@ class TestGroupCLI(unittest.TestCase):
         self.mockDS.reset_mock()
 
         self.mockDS.list_groups.return_value = {}
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'list'])
             self.assertEqual(output.getvalue(), 'No groups found.\n')
             self.assertEqual(result, 0)
@@ -288,7 +290,7 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_group_add(self):
         self.mockDS.add_to_group.return_value = self.device_list
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'add', self.device_list, self.group_name])
             self.assertEqual(output.getvalue(), "Group {} has been updated to {}\n".format(self.group_name, self.device_list))
             self.assertEqual(result, 0)
@@ -300,7 +302,7 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_group_remove(self):
         self.mockDS.remove_from_group.return_value = self.device_list
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'remove', 'foo', self.group_name])
             self.assertEqual(output.getvalue(), "Group {} has been updated to {}\n".format(self.group_name, self.device_list))
             self.assertEqual(result, 0)
@@ -308,7 +310,7 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_unknown_group_remove(self):
         self.mockDS.remove_from_group.return_value = None
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'remove', 'foo', self.group_name])
             self.assertEqual(result, 0)
         self.mockDS.remove_from_group.assert_called_once_with('foo', self.group_name)
@@ -319,7 +321,7 @@ class TestGroupCLI(unittest.TestCase):
 
     def test_group_groups(self):
         self.mockDS.get_device_groups.return_value = ["a", "b"]
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'groups', 'foo'])
             self.assertEqual(output.getvalue(), "foo is a member of groups:\na\nb\n")
             self.assertEqual(result, 0)
@@ -342,7 +344,7 @@ class TestGroupCLI(unittest.TestCase):
             pass
 
         self.mockDS.get_device_groups.return_value = []
-        with patch('sys.stdout', new_callable=StringIO.StringIO) as output:
+        with patch('sys.stdout', new_callable=io.StringIO) as output:
             result = self.dscli.parse_and_run(['group', 'groups', 'foo'])
             self.assertEqual(result, 0)
 

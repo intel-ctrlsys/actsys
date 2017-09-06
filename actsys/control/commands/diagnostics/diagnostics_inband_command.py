@@ -22,5 +22,5 @@ class DiagnosticsInBandCommand(DiagnosticsCommand):
         try:
             ret_msg = self.diagnostics_plugin.launch_diags(self.device, self.bmc_data)
         except Exception as ex:
-                return CommandResult(1, ex.message)
+                return CommandResult(1, str(ex))
         return CommandResult(0, ret_msg)

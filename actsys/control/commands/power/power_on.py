@@ -57,7 +57,7 @@ class PowerOnCommand(CommonPowerCommand):
             result = []
 
             power_dict = self.power_plugin.get_current_device_power_state()
-            for key, value in power_dict.iteritems():
+            for key, value in power_dict.items():
                 if value.startswith('On'):
                     command_result = CommandResult(-1, 'Power on for {}; Device is already Powered on'.format(key))
                     command_result.device_name = key
@@ -71,7 +71,7 @@ class PowerOnCommand(CommonPowerCommand):
             # STEP 6
             power_dict = self.power_plugin.set_device_power_state(target, force)
 
-            for key, value in power_dict.iteritems():
+            for key, value in power_dict.items():
                 if value and isinstance(value, bool):
                     command_result = CommandResult(0, 'Success: Device Powered On: {}'.format(key))
                     command_result.device_name = key
@@ -103,7 +103,7 @@ class PowerOnCommand(CommonPowerCommand):
                                    'device {}'.format(self.device_name))
 
         except RuntimeError as err:
-            return [CommandResult(message=err.message)]
+            return [CommandResult(message=str(err))]
 
         return result
 

@@ -5,7 +5,7 @@
 """
 This class defines how plugins are created from a folder.
 """
-from __future__ import print_function
+
 import imp
 import os
 import os.path
@@ -82,7 +82,7 @@ class PluginManager(object):
         """Add this provider to the list."""
         key = PluginManager._make_key(cls.FRAMEWORK_NAME,
                                       cls.PLUGIN_NAME)
-        if key in self.__plugin_frameworks.keys():
+        if key in list(self.__plugin_frameworks.keys()):
             if cls.PLUGIN_PRIORITY == self.__plugin_frameworks[key].PLUGIN_PRIORITY:
                 err = 'There is a collision of framework plugin and priority. The same named plugin in a framework ' \
                       'cannot have equal priority.'
@@ -95,7 +95,7 @@ class PluginManager(object):
     def get_frameworks(self):
         """Retrieve the list of unique provider frameworks."""
         frameworks = list()
-        for key in self.__plugin_frameworks.keys():
+        for key in list(self.__plugin_frameworks.keys()):
             framework = PluginManager._split_key(key)[0]
             if framework not in frameworks:
                 frameworks.append(framework)
@@ -107,14 +107,14 @@ class PluginManager(object):
         in the manager.
         """
         keys = list()
-        for entry in self.__plugin_frameworks.keys():
+        for entry in list(self.__plugin_frameworks.keys()):
             keys.append(entry)
         return keys
 
     def get_sorted_plugins_for_framework(self, framework):
         """Retrieve the list of plugins for a specific framework."""
         providers = list()
-        for key in self.__plugin_frameworks.keys():
+        for key in list(self.__plugin_frameworks.keys()):
             stored_framework, name = PluginManager._split_key(key)
             if framework == stored_framework:
                 providers.append((self.__plugin_frameworks[key].

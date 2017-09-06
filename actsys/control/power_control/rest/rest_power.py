@@ -5,7 +5,7 @@
 """
 Implements a power_control plugin for controlling nodes.
 """
-from __future__ import print_function
+
 from ...plugin import DeclarePlugin
 from ..power_control import PowerControl
 

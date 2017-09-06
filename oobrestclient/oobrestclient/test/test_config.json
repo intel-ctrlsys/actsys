@@ -1,0 +1,37 @@
+{
+    "node1": {
+        "FooString": {
+            "#obj": ["oob_rest_default_providers.StringDevice", "Foo"]
+        },
+        "HelloDevice": {
+            "#obj": ["oob_rest_default_providers.HelloSensor"]
+        },
+        "folder": {
+            "InsideString": {
+                "#obj": ["oob_rest_default_providers.StringDevice", "Inside"]
+            }
+        },
+        "exception_thrower": {
+            "#obj": ["oob_rest_default_providers.ExceptionThrower"]
+        }
+    },
+    "node2": {
+        "FooString": {
+            "#obj": ["oob_rest_default_providers.StringDevice", "Foo"]
+        },
+        "HelloDevice": {
+            "#obj": ["oob_rest_default_providers.HelloSensor"]
+        },
+        "folder": {
+            "InsideString": {
+                "#obj": ["oob_rest_default_providers.StringDevice", "Inside"]
+            }
+        },
+        "exception_thrower": {
+            "#obj": ["oob_rest_default_providers.ExceptionThrower"]
+        },
+        "non_string_obj": {
+            "#obj": [17]
+        }
+    }
+}

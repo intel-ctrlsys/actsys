@@ -6,7 +6,7 @@
 This module is called "Command Invoker" which uses APIs from "commands" folder
 to perform user requested operations.
 """
-from __future__ import print_function
+
 import os
 import logging
 from datastore import DataStoreBuilder
@@ -152,8 +152,8 @@ class CommandInvoker(object):
             device_list = self._device_name_check(device_regex)
         except self.datastore.DeviceListParseError as dlpe:
             result = CommandResult(1, "Failed to parse valid device name(s) in {}. "
-                                      "Error: {}".format(device_regex, dlpe.message))
-            self.logger.warning(result.message)
+                                      "Error: {}".format(device_regex, str(dlpe)))
+            self.logger.warning(str(result))
             return result
         if not device_list:
             return CommandResult(1, "No valid devices to run this command on.")
@@ -239,7 +239,7 @@ class CommandInvoker(object):
         try:
             command_result = cmd_obj.execute()
         except Exception as ex:
-            command_result = CommandResult(1, ex.message)
+            command_result = CommandResult(1, str(ex))
 
         if not isinstance(command_result, list):
             if devices is None:
@@ -363,8 +363,8 @@ class CommandInvoker(object):
                 node_list = self._device_name_check(nodes)
             except self.datastore.DeviceListParseError as dlpe:
                 result = CommandResult(1, "Failed to parse valid device name(s) in {}. "
-                                          "Error: {}".format(nodes, dlpe.message))
-                self.logger.warning(result.message)
+                                          "Error: {}".format(nodes, str(dlpe)))
+                self.logger.warning(str(result))
         else:
             node_list = None
         return self.common_cmd_invoker(None, "job_launch",

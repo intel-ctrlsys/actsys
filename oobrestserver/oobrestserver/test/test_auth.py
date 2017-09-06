@@ -1,7 +1,7 @@
 
 import os
 import uuid
-from ..Authenticator import Authenticator
+from oobrestserver.Authenticator import Authenticator
 from unittest import TestCase
 
 
@@ -85,3 +85,5 @@ class TestAuthenticator(TestCase):
         self.assertFalse(self.auth.reset_password('username', 'PassW0rd!', 'Password!'))
 
         self.assertTrue(self.auth.reset_password('username', 'PassW0rd!', 'n3w_p455w0Rd'))
+
+        self.assertFalse(self.auth.check_password_complexity(TestAuthenticator))

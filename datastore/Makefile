@@ -8,34 +8,34 @@ pip_install_dir=dist
 all: test pylint coverage build
 
 install_dev:
-	sudo -E pip install -e .
+	sudo -EH pip3 install -e .
 
 install:
-	python2 setup.py sdist
-	sudo -E pip2 install dist/*.tar.gz
+	python3 setup.py sdist
+	sudo -EH pip3 install dist/*.tar.gz
 
 uninstall:
-	sudo -E pip2 uninstall ctrlsys-datastore
+	sudo -EH pip3 uninstall ctrlsys-datastore
 
 install_requirements:
-	sudo -E pip2 install -r requirements.txt
+	sudo -EH pip3 install -r requirements.txt
 
 test: install_requirements
-	python2 -m pytest . --junit-xml=$(xml_report)
+	python3 -m pytest . --junit-xml=$(xml_report)
 
 pylint: install_requirements
 	pylint --rcfile=pylintrc --ignore-patterns=test* datastore || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
 
 coverage: install_requirements
-	python2 -m pytest . --cov-config .coveragerc --cov=datastore --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
+	python3 -m pytest . --cov-config .coveragerc --cov=datastore --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
 
 rpm:
-	python2 setup.py bdist_rpm
+	python3 setup.py bdist_rpm
 
 build:
-	python2 setup.py sdist --dist-dir $(pip_install_dir)
-	python2 setup.py bdist_wheel --dist-dir $(pip_install_dir)
-	python2 setup.py bdist_rpm
+	python3 setup.py sdist --dist-dir $(pip_install_dir)
+	python3 setup.py bdist_wheel --dist-dir $(pip_install_dir)
+	python3 setup.py bdist_rpm
 
 dist: build
 	-

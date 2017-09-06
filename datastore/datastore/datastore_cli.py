@@ -6,7 +6,7 @@
 """
 This module creates the command line parser and executes the user commands.
 """
-from __future__ import print_function
+
 import argparse
 import re
 from dateutil.parser import parse as date_parse

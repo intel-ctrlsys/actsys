@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from ..ParallelDispatcher import ParallelDispatcher
+from oobrestserver.GlobTools import GlobTools
 
 class TestRegexTranslation(TestCase):
 
@@ -11,11 +11,13 @@ class TestRegexTranslation(TestCase):
             '(1000|1004)': '(1000|1004)$',
             '1000/*/*': '1000/[^/]*/[^/]*$',
             '1000/**': '1000/.*$',
-            '*/**': '[^/]*/.*$'
+            '*/**': '[^/]*/.*$',
+            '100[1-4]': '100[1-4]$',
+            '100[!1-4]': '100[^1-4]$',
         }
         for glob in pairs:
             regex = pairs[glob]
-            result = ParallelDispatcher.regex_from_glob(glob)
+            result = GlobTools.regex_from_glob(glob)
             self.assertEqual(regex, result)
         
 

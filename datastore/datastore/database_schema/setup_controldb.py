@@ -22,7 +22,7 @@ def main():
         os.chdir(os.path.join(save_cwd, ini_dir))
         models.setup(alembic_ini=ini_file)
     except OperationalError as e:
-        print("\nException: %s\n" % e)
+        print(("\nException: %s\n" % e))
         print("Make sure the database exists and the current user has "
               "proper permissions to create tables and issue DDL & DML "
               "statements.")

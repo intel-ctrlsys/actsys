@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
-from __future__ import print_function
+
 import unittest
 from ..datastore import DataStore, DataStoreException
 from ..multistore import MultiStore

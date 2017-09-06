@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Application entry point for NC REST API. Parses arguments, creates the
 services, and starts the API server.
@@ -10,7 +10,7 @@ import argparse
 
 import cherrypy
 
-from Application import Application
+from oobrestserver.Application import Application
 
 
 def main():
@@ -39,7 +39,13 @@ def main():
 
     if options.host is not None:
         split_hostname = options.host.split(':')
-        cherrypy.config.update({'server.socket_port': int(split_hostname[1])})
+        if len(split_hostname) == 1:
+            cherrypy.config.update({'server.socket_port': 0})
+        elif len(split_hostname) == 2:
+            cherrypy.config.update({'server.socket_port': int(split_hostname[1])})
+        else:
+            print('ERROR: host must be in format <ip>[:<port>]')
+            return 1
         cherrypy.config.update({'server.socket_host': split_hostname[0]})
 
     ssl_enabled = False
@@ -49,7 +55,7 @@ def main():
         ssl_enabled = True
     elif options.cert or options.key:
         print("ERROR: Both --cert and --key are needed to enable SSL.")
-        sys.exit(0)
+        return 1
 
     app = Application(config)
 
@@ -57,13 +63,14 @@ def main():
         if not ssl_enabled:
             print("ERROR: Auth without SSL means passwords are sent in "
                   "plaintext! I'm putting a stop to this right now!")
-            sys.exit(0)
-        app.enable_auth(options.hashes_file)
+            return 1
+        app.enable_auth(options.auth_file)
 
     app.mount()
     cherrypy.engine.start()
     cherrypy.engine.block()
     app.cleanup()
+    return 0
 
-if __name__ == '__main__':
-    sys.exit(main() or 0)
+if __name__ == '__main__':  # pragma: no cover
+    sys.exit(main())

@@ -11,12 +11,15 @@ A flexible framework for accessing system management information from the hardwa
 * SSL and HTTP Basic Auth support
 
 ## Future Features
+* IPMI and Redfish Plugins
+* Live reconfiguration with PUT and DELETE
 * Content aggregation and redirection
 * LDAP and OAuth2 integration
 * Asynchronous operations
 * Server-side timeout options
 * Upgrade to Python 3.4
 * Improvements to parallelism performance
+* YAML config file support
 
 ## Download & Installation
 * Clone the repository from css/nc_rest on  [Gerrit](https://sid-gerrit.devtools.intel.com/#/admin/projects/css/nc_rest)
@@ -85,7 +88,7 @@ The only supported HTTP methods are GET and POST. GET corresponds to the defined
 The body of any GET request to the OOB-REST server will be ignored. The route and parameters supplied as part of the URL are enough to fully specify a GET request.
 
 #### POST
-The body of a POST response should contain only a JSON object, with one key, called value, whose mapped value is the JSON-serialized object the user wishes to pass as an argument to the setter function of the property identified by the route.
+The body of a POST request should contain only the JSON-serialized object the user wishes to pass as an argument to the setter function of the property identified by the route. The request header must be application/json.
 
 ### JSON Response Formats
 There are two possible response formats that the OOB-REST server can respond with: directory responses and leaf-node responses.

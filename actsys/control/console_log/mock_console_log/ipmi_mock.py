@@ -33,7 +33,7 @@ class MockConsoleLog(object):
         except Exception as ex:
             self.logger.debug("Unable to create new thread. Console logs "
                               "will not be collected\n Received Error:"
-                              + ex.message, self.node_name)
+                              + str(ex), self.node_name)
         self.stop_log_capture()
 
     def stop_log_capture(self):

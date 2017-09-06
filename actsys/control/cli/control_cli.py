@@ -7,7 +7,7 @@
 This module creates the command line parser and executes the user commands.
 """
 
-from __future__ import print_function
+
 
 import argparse
 import sys
@@ -284,7 +284,7 @@ class ControlCommandLineInterface(object):
         try:
             self.set_time_out(cmd_args)
         except (ConfigurationNeeded, ValueError) as error:
-            self.handle_invalid_timeout(error.message)
+            self.handle_invalid_timeout(str(error))
         if self.timeout < 0:
             self.handle_invalid_timeout('Timeout value (' + str(self.timeout) +
                                         ') should not be negative!')

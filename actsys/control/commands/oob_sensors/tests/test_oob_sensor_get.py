@@ -31,7 +31,7 @@ class TestOobSensorGetCommand(TestOobSensorCommand):
         self.assertEqual(self.oob_sensor_get_all.execute()[0].return_code, 0)
         self.assertEqual(self.oob_sensor_get1.execute()[0].return_code, 0)
         self.assertEqual(self.oob_sensor_get.execute()[0].return_code, 0)
-        self.oob_manager_mock.get_sensor_value.return_value = {"node": {u'temp': [0.88765444]}}
+        self.oob_manager_mock.get_sensor_value.return_value = {"node": {'temp': [0.88765444]}}
         self.assertEqual(self.oob_sensor_get.execute()[0].return_code, 0)
         self.oob_manager_mock.get_sensor_value.side_effect = RuntimeError
         self.assertEqual(self.oob_sensor_get.execute()[0].return_code, 255)

@@ -5,7 +5,7 @@
 """
 Tests for the plugin manager.
 """
-from __future__ import print_function
+
 import unittest
 from ...plugin.manager import PluginManager, DeclarePlugin, DeclareFramework
 import os
@@ -43,7 +43,7 @@ class TestPluginManager(unittest.TestCase):
     def test_empty_ctor(self):
         """Test"""
         empty_manager = PluginManager()
-        self.assertEquals(0, len(empty_manager.get_frameworks()))
+        self.assertEqual(0, len(empty_manager.get_frameworks()))
 
     def test_instances(self):
         """Test"""

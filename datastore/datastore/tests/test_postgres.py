@@ -5,7 +5,7 @@
 """
 Tests for the RemoteAccessData class
 """
-from __future__ import print_function
+
 import unittest
 import tempfile
 import os
@@ -394,7 +394,7 @@ class TestPostgresDB(unittest.TestCase):
     def test_export_to_file(self, mock_connect):
         expected_export_json = {
             'device': [
-                {'mac_address': '6', 'hostname': '4', 'ip_address': '5', 'device_type': {}, 'device_id': u'1'}
+                {'mac_address': '6', 'hostname': '4', 'ip_address': '5', 'device_type': {}, 'device_id': '1'}
             ],
             'profile': [
                 {'profile_name': '1'}
@@ -472,7 +472,7 @@ class TestPostgresDB(unittest.TestCase):
             PostgresStore.import_from_file(postgres, import_file.name)
             self.fail()
         except Exception as ex:
-            self.assertEqual(ex.message, "The mocked exception")
+            self.assertEqual(str(ex), "The mocked exception")
 
         os.remove(import_file.name)
 
