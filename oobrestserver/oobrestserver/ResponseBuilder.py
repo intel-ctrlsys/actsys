@@ -123,9 +123,9 @@ class ResponseBuilder(object):
                             'samples': [],
                             'exceptions': []
                         }
-                    if sample:
+                    if sample is not None:
                         response[node.route]['samples'].append(sample)
-                    if exception:
+                    if exception is not None:
                         response[node.route]['exceptions'].append(str(exception))
             return response
 
