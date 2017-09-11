@@ -27,7 +27,7 @@ pylint: install_requirements
 	pylint --rcfile=pylintrc --ignore-patterns=test* oobrestserver || [[ $$? == 0 || $$? -ge $(PYLINT_ERR_LEVEL) ]]
 
 coverage: install_requirements
-	python3 -m pytest . --cov-config .coveragerc --cov=oobrestserver --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
+	python3 -m pytest . --cov-config .coveragerc --cov=oobrestserver --cov=oob_rest_default_providers --cov-report term-missing --cov-report xml:$(xml_coverage_file) --cov-report html:$(html_coverage_dir)
 
 rpm:
 	python3 setup.py bdist_rpm

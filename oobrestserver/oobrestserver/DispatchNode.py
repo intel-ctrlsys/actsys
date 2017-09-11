@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 """Defines the DispatchNode class.
 
 DispatchNode provides a tree model of values in the system.

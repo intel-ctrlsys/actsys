@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 """
 Contains the GlobTools class, which provides methods for working with glob
 expressions in a similar way to regexes.

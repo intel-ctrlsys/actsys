@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 """Sample of a GUI page generator to demonstrate the ease of adding a GUI."""
 
 

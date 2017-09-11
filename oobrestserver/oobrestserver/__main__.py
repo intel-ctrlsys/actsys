@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 """
 Application entry point for NC REST API. Parses arguments, creates the
 services, and starts the API server.

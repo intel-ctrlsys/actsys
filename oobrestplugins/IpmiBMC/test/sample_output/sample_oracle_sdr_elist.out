@@ -1,0 +1,3 @@
+sys.id           | 00h | ok  | 23.0 | State Asserted
+sys.intsw        | 01h | ok  | 23.0 |
+sys.psfail      | 02h | ok  | 23.0 | Predictive Failure Asserted ...

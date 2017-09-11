@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 import os
 import sys
 import base64
@@ -5,7 +10,7 @@ import uuid
 
 from cherrypy.test import helper
 
-from  oobrestserver.Application import Application
+from oobrestserver.Application import Application
 from oobrestserver.Authenticator import Authenticator
 
 
@@ -45,7 +50,6 @@ class TestServer(helper.CPWebCase):
         TestServer.app.enable_auth(filename)
         TestServer.app.mount()
         os.remove(os.path.abspath(filename))
-
 
     def test_auth_file_created(self):
         my_app = Application({})

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
 """
 This is a short command-line utility for editing so-called 'auth files', which
 contain a pickled dictionary used to load an Authenticator object, a-la the

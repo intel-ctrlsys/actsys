@@ -1,0 +1,2 @@
+SEL Record ID 	: 0a00Record Type 	: 02Timestamp 	: 07/06/1970 01:53:58Generator ID 	: 0020EvM Revision 	: 04Sensor Type 	: Entity PresenceSensor Number 	: 12Event Type 	: Generic DiscreteEvent Direction 	: Assertion EventEvent Data (RAW) 	: 01ffffDescription 	: Device Present
+Sensor ID 	: ps0.prsnt (0x12)Entity ID 	: 10.0Sensor Type (Discrete): Entity PresenceStates Asserted 	: Availability State	[Device Present]

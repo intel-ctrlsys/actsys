@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 """
 Provides the Authenticator class, supporting all authentication services used
 by the server.

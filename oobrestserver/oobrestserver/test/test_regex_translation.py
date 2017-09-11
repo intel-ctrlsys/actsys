@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 from unittest import TestCase
 
 from oobrestserver.GlobTools import GlobTools
@@ -19,5 +24,3 @@ class TestRegexTranslation(TestCase):
             regex = pairs[glob]
             result = GlobTools.regex_from_glob(glob)
             self.assertEqual(regex, result)
-        
-

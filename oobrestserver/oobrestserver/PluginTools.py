@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
 """
 Provides the PluginTools class, which is used for loading modules and
 instantiating classes therein, from their names
