@@ -1,10 +1,15 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2017 Intel Corp.
+#
 """
 Defines the user interface. Three APIs are exposed to user: get_value,
 set_value, get_value_over_time
 """
 
 from urllib.parse import urlencode
-import requests
+import asyncio
+import aiohttp
 
 
 class ConnectError(Exception):
@@ -12,33 +17,79 @@ class ConnectError(Exception):
     pass
 
 
-class NodeController(object):
-    """The NodeController class to allow users to read/write system values"""
+class OobController(object):
+    """The OobController class to allow users to read/write system values"""
 
-    def __init__(self, host):
-        self.base_url = 'http://' + host + '/api/'
+    def __init__(self, host_list):
+        self.loop = asyncio.get_event_loop()
+        self.host_list = []
+        for host in host_list:
+            self.host_list.append(host)
 
     @staticmethod
-    def verified_response(method, *args, **kwargs):
+    @asyncio.coroutine
+    def _verified_response(method, *args, **kwargs):
         try:
-            response = method(*args, **kwargs)
+            response = yield from method(*args, **kwargs)
         except Exception as nc_exception:
-            raise ConnectError(str(nc_exception))
-        if response is None:
-            raise ConnectError("response is None!")
-        if response.status_code != 200:
-            raise ConnectError("response status " + str(response.status_code))
-        return response.json()
+            return {"exception": "response status " + str(nc_exception)}
+        try:
+            if response.status != 200:
+                return {"exception": "response status " + str(response.status)}
+            json_content = yield from response.json()
+            return json_content
+        except Exception as nc_exception:
+            response.close()
+            return {"exception": str(nc_exception)}
+        finally:
+            yield from response.release()
+
+    @staticmethod
+    def _decode_response_to_dict(responses):
+        return {key: value for d in responses for key, value in d.items()}
 
     def get_value(self, path):
-        url = self.base_url + path
-        return NodeController.verified_response(requests.get, url)
+        """
+        Get the response from multiple servers asynchronously and send it to clients
+        :param path:
+        :return:
+        """
+        items = []
+        with aiohttp.ClientSession(loop=self.loop) as session:
+            for host in self.host_list:
+                url = 'http://' + host + path
+                item = OobController._verified_response(session.get, url)
+                items.append(item)
+            responses = self.loop.run_until_complete(asyncio.gather(*items))
+        return OobController._decode_response_to_dict(responses)
 
     def set_value(self, path, value):
-        url = self.base_url + path
-        return NodeController.verified_response(requests.post, url, json=value)
+        """
+        Set the value on multiple servers asynchronously and send response to clients
+        :param path:
+        :return:
+        """
+        items = []
+        with aiohttp.ClientSession(loop=self.loop) as session:
+            for host in self.host_list:
+                url = 'http://' + host + path
+                item = OobController._verified_response(session.post, url, json=value)
+                items.append(item)
+            responses = self.loop.run_until_complete(asyncio.gather(*items))
+        return OobController._decode_response_to_dict(responses)
 
     def get_value_over_time(self, path, duration, sample_rate):
+        """
+        Get the response from multiple servers asynchronously and send it to clients
+        :param path:
+        :return:
+        """
+        items = []
         args = {'duration': duration, 'sample_rate': sample_rate}
-        url = self.base_url + path + '?' + urlencode(args)
-        return NodeController.verified_response(requests.get, url)
+        with aiohttp.ClientSession(loop=self.loop) as session:
+            for host in self.host_list:
+                url = 'http://' + host + path + '?' + urlencode(args)
+                item = OobController._verified_response(session.get, url)
+                items.append(item)
+            responses = self.loop.run_until_complete(asyncio.gather(*items))
+        return OobController._decode_response_to_dict(responses)

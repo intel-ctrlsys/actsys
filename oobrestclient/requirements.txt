@@ -2,4 +2,7 @@ pytest
 pytest-cov
 pylint
 mock
-requests
+asyncio
+aiohttp
+aioresponses
+typing
