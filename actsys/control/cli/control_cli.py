@@ -20,10 +20,19 @@ from ..commands import CommandResult, ConfigurationNeeded
 from .provision_cli import ProvisionCli
 from .diagnostics_cli import DiagnosticsCli
 from .job_launch_cli import JobLaunchCli
-from .interactive_commands import CtrlPrompt
 from sys import argv, exit, stderr
 from IPython import start_ipython
+from IPython.terminal.prompts import Token, Prompts
 from traitlets.config.loader import Config
+
+
+class InitPrompt(Prompts):
+    """Custom Prompt, makes the default prompt Ctrl[i]"""
+    def in_prompt_tokens(self, cli=None):
+        return[(Token.Prompt, 'Ctrl ['),
+               (Token.PromptNum, str(self.shell.execution_count)),
+               (Token.Prompt, ']: ')]
+
 
 class InteractiveCli(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, const=None, default=None, type=None, choices=None, required=False, help=None, metavar=None):
@@ -33,7 +42,7 @@ class InteractiveCli(argparse.Action):
         print ("........Initializing Interactive cli........")
         cfg = Config()
         cfg.IPCompleter.merge_completions = False
-        cfg.TerminalInteractiveShell.prompts_class = CtrlPrompt
+        cfg.TerminalInteractiveShell.prompts_class = InitPrompt
         cfg.InteractiveShellApp.exec_lines = ['import control.cli.interactive_commands\n']
         cfg.TerminalInteractiveShell.banner1 = '\x1b[2J\x1b[H\n' \
                                                '*************************************************************\n' \
