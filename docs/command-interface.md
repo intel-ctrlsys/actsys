@@ -10,6 +10,7 @@ Control Component Parser
 
 optional arguments:
   -h, --help            show this help message and exit
+  -i, --interactive     Start interactive session
   -V, --version         Provides the version of the tool
   -v, --verbosity       increase output verbosity
   -t TIMEOUT, --timeout TIMEOUT
@@ -38,3 +39,14 @@ Sub Commands:
 Ctrl supports several subcommands. The list of valid sub commands is provided in "./ctrl --help" command
 Each subcommand has its own help menu on how to use the subcommand.
 To get the help menu of a specific subcommand, use "./ctrl {subcommand} --help" command.
+
+##2.3.1 Interactive Commands
+The interactive cli features the following commands in addition the Ctrl commands.
+
+Interactive Commands:
+
+  {select, clear_select}
+    select              Set node/regex context for command execution
+    clear_select        Remove context.
+    %help               Display command help
+
