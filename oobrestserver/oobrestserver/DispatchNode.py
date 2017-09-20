@@ -15,7 +15,7 @@ node loads a plugin and grafts the plugin-provided paths onto the tree "here"
 
 import cherrypy
 from oobrestserver.GlobTools import GlobTools
-from oobrestserver.PluginTools import PluginTools
+from oobrestserver.Plugin import Plugin
 from oobrestserver.ResponseBuilder import ResponseBuilder
 
 
@@ -24,31 +24,68 @@ class DispatchNode(object):
 
     exposed = True
 
-    def __init__(self, config=None, base_route=''):
-        self.route = base_route
-        self.children = {}
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def GET(self):
+        return self.get()
+
+    def _cp_dispatch(self, vpath):
+        leaves = self.dispatch(vpath)
+        del vpath[:]
+        return ResponseBuilder(leaves)
+
+    def __init__(self, config=None, base_route='', saved_plugins=None):
         self.config = config or {}
-        self.add_plugin()
+        self.route = base_route
+        self.saved_plugins = saved_plugins or {}
+        self.children = {}
+        self.define_plugins()
+        self.load_plugins()
         self.add_children()
         self.add_getter()
 
-    def add_plugin(self):
-        inst_args = self.config.get('#obj', None)
-        if inst_args:
+    def define_plugins(self):
+        plugin_descriptions = self.config.get('_define_plugins', [])
+        for plugin_name in plugin_descriptions:
+            plugin_description = plugin_descriptions[plugin_name]
             try:
-                obj = PluginTools.instantiate(*inst_args)
-                self.config = obj.config
-            except Exception as ex:
-                print('Warning: Exception when importing user module ' +
-                      str(inst_args) + ': ' + str(ex))
+                plugin_object = Plugin.plugin(plugin_description)
+            except RuntimeError as ex:
+                print("Could not instantiate plugin from: "+str(plugin_description))
+                print("\n\t".join(str(ex).splitlines()))#TODO logger from app
+                continue
+            self.saved_plugins[plugin_name] = plugin_object
+
+    def load_plugins(self):
+        for plugin_description in self.config.get('_attach_plugins', []):
+            if isinstance(plugin_description, dict):
+                try:
+                    plugin_object = Plugin.plugin(plugin_description)
+                except RuntimeError as ex:
+                    print("Could not instantiate plugin from: "+str(plugin_description))
+                    print("\n\t".join(str(ex).splitlines()))
+                    #TODO logger from app instead
+                    continue
+            else:
+                if plugin_description not in self.saved_plugins:
+                    print("Could not instantiate plugin from: "+str(plugin_description))
+                    print("Error: Plugin name not previously defined")
+                    #TODO logger from app instead
+                    continue
+                plugin_object = self.saved_plugins[plugin_description]
+                # TODO, hang on, does a name define an instance or a description??
+                # TODO maybe I should support both
+            self.config.update(plugin_object)
+            # TODO do this in a way that detects overwritten plugin resources and warns about them
 
     def add_children(self):
-        for child in [x for x in self.config if not x.startswith('#')]:
+        for child in [x for x in self.config if not x.startswith('_') and not x.startswith('#')]:
             child_route = '/'.join([self.route, child])
             if self.route == '':
                 child_route = child
             self.children[child] = DispatchNode(self.config[child],
-                                                base_route=child_route)
+                                                base_route=child_route,
+                                                saved_plugins=self.saved_plugins)
 
     def add_getter(self):
         if '#getter' not in self.config:
@@ -58,48 +95,27 @@ class DispatchNode(object):
     def get(self):
         return [key for key in self.children]
 
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def GET(self, **kwargs):
-        return self.get(**kwargs)
-
-    def _cp_dispatch(self, vpath):
-        return ResponseBuilder(self.dispatch(vpath))
-
     def dispatch(self, vpath):
-        # Determine the list of nodes that match the request
-        if not vpath:
-            return [self]
-        path = vpath[:]
-        glob = path.pop(0)
         try:
-            if '**' in glob:
-                glob = '/'.join(vpath)
-                del vpath[:]
-                return self.descendants_matching(glob)
-            result = []
-            for child in self.children_matching(glob):
-                result += child.dispatch(path)
-            return result
+            if not vpath:
+                return [self]
+            if '**' in vpath[0]:
+                return self.descendants_matching('/'.join(vpath))
+            return sum([child.dispatch(vpath[1:]) for child in self.children_matching(vpath[0])],[])
         except ValueError as val_err:
             raise cherrypy.HTTPError(status=400, message=str(val_err))
 
     def cleanup(self):
-        func = self.config.get('#cleanup', None)
-        if func:
-            func()
+        self.config.get('#cleanup', lambda:None)()
         for child in self.children:
             self.children[child].cleanup()
 
     def children_matching(self, glob):
-        routes = GlobTools.filter(self.children, glob)
-        return [self.children[route] for route in routes]
+        return [self.children[route] for route in GlobTools.filter(self.children, glob)]
 
     def descendants_matching(self, glob):
         return [node for node in self.descendants() if GlobTools.match(node.route, glob)]
 
     def descendants(self):
-        if not self.children:
-            return [self]
         descendant_lists = [self.children[x].descendants() for x in self.children]
-        return [self]+[node for sublist in descendant_lists for node in sublist]
+        return sum(descendant_lists, [self])

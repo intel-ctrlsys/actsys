@@ -10,7 +10,7 @@ services, and starts the API server.
 """
 
 import sys
-import json
+import yaml
 import argparse
 
 import cherrypy
@@ -40,7 +40,7 @@ def main():
 
     config = {}
     if options.config_file is not None:
-        config = json.load(open(options.config_file))
+        config = yaml.load(open(options.config_file))
 
     if options.host is not None:
         split_hostname = options.host.split(':')

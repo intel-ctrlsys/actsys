@@ -3,3 +3,4 @@ pytest
 pylint
 mock
 cherrypy
+PyYAML

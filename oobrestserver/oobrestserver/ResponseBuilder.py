@@ -25,10 +25,10 @@ class ResponseBuilder(object):
         self.nodes = nodes
 
     exposed = True
-
-    def _cp_dispatch(self, vpath):
-        del vpath[:]
-        return self
+    #
+    # def _cp_dispatch(self, vpath):
+    #     del vpath[:]
+    #     return self
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

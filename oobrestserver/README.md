@@ -11,7 +11,7 @@ A flexible framework for accessing system management information from the hardwa
 * SSL and HTTP Basic Auth support
 
 ## Future Features
-* IPMI and Redfish Plugins
+* SNMP and Redfish Plugins
 * Live reconfiguration with PUT and DELETE
 * Content aggregation and redirection
 * LDAP and OAuth2 integration
@@ -19,7 +19,6 @@ A flexible framework for accessing system management information from the hardwa
 * Server-side timeout options
 * Upgrade to Python 3.4
 * Improvements to parallelism performance
-* YAML config file support
 
 ## Download & Installation
 * Clone the repository from css/nc_rest on  [Gerrit](https://sid-gerrit.devtools.intel.com/#/admin/projects/css/nc_rest)

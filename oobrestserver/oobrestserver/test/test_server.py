@@ -21,56 +21,118 @@ class TestServer(helper.CPWebCase):
         config = {
             "node1": {
                 "FooString": {
-                    "#obj": ["oob_rest_default_providers.StringDevice", "Foo"]
+                    "_attach_plugins": [
+                        {
+                            "module":"oob_rest_default_providers.StringDevice",
+                            "args": ["Foo"]
+                        }
+                    ]
                 },
                 "HelloDevice": {
-                    "#obj": ["oob_rest_default_providers.HelloSensor"]
+                    "_attach_plugins": [
+                        {
+                            "module": "oob_rest_default_providers.HelloSensor"
+                        }
+                    ]
                 },
                 "folder": {
                     "InsideString": {
-                        "#obj": ["oob_rest_default_providers.StringDevice", "Inside"]
+                        "_attach_plugins": [
+                            {
+                                "module":"oob_rest_default_providers.StringDevice",
+                                "args": ["Inside"]
+                            }
+                        ]
                     }
                 },
                 "exception_thrower": {
-                    "#obj": ["oob_rest_default_providers.ExceptionThrower"]
+                    "_attach_plugins": [
+                        {
+                            "module": "oob_rest_default_providers.ExceptionThrower"
+                        }
+                    ]
                 },
                 "no_config_exception" : {
-                    "#obj": ["BadPlugins.NoConfigPlugin"]
+                    "_attach_plugins":[
+                        {
+                          "module": "BadPlugins.NoConfigPlugin"
+                        }
+                    ]
                 }
             },
             "node2": {
                 "FooString": {
-                    "#obj": ["oob_rest_default_providers.StringDevice", "Foo"]
+                    "_attach_plugins": [
+                        {
+                            "module": "oob_rest_default_providers.StringDevice",
+                            "args": ["Foo"]
+                        }
+                    ]
                 },
                 "HelloDevice": {
-                    "#obj": ["oob_rest_default_providers.HelloSensor"]
+                    "_attach_plugins": [
+                        {
+                            "module":"oob_rest_default_providers.HelloSensor"
+                        }
+                    ]
                 },
                 "folder": {
                     "InsideString": {
-                        "#obj": ["oob_rest_default_providers.StringDevice", "Inside"]
+                        "_attach_plugins": [
+                            {
+                                "module": "oob_rest_default_providers.StringDevice",
+                                "args": "Inside"
+                            }
+                        ]
                     }
                 },
                 "exception_thrower": {
-                    "#obj": ["oob_rest_default_providers.ExceptionThrower"]
+                    "_attach_plugins": [
+                        {
+                            "module": "oob_rest_default_providers.ExceptionThrower"
+                        }
+                    ]
                 },
                 "non_string_obj": {
-                    "#obj": [17]
+                    "_attach_plugins": [
+                        {
+                            "module": None,
+                            "args": [17]
+                        }
+                    ]
                 }
             },
             "bad_noclass": {
-                '#obj': ['']
+                '_attach_plugins': [
+                    {
+                        "module": ''
+                    }
+                ]
             },
             "good_short": {
-                "#obj": ['oob_rest_default_providers.HelloSensor']
+                "_attach_plugins": [
+                    {
+                        "module": 'oob_rest_default_providers.HelloSensor'
+                    }
+                ]
             },
             "bad_ctor": {
-                "#obj": ["DefaultProviders.StringDevice", 'too', 'many', 'args']
+                "_attach_plugins": [
+                    {
+                        "module": "oob_rest_default_providers.StringDevice",
+                        "args": ['too', 'many', 'args']
+                    }
+                ]
             },
             "uncallable_getter_config_exception": {
                 "#getter": "Not a callable, certainly!"
             },
             "uncallable_getter_object_exception": {
-                "#obj": ["BadPlugins.NotCallableGetter"]
+                "_attach_plugins": [
+                    {
+                        "module": "BadPlugins.NotCallableGetter"
+                    }
+                ]
             }
         }
 

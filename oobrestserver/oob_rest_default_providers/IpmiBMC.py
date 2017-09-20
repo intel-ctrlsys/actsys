@@ -18,12 +18,10 @@ class IpmiBMC(object):
     def __init__(self, hostname, port, username, password):
         self.lock = threading.Lock()
         self.config = {
-            'node_boot': {
-                'state': {
-                    '#getter': self.get_chassis_state,
-                    '#setter': self.set_chassis_state,
-                    '#units': 'ChassisState'
-                }
+            'chassis_state': {
+                '#getter': self.get_chassis_state,
+                '#setter': self.set_chassis_state,
+                '#units': 'ChassisState'
             },
             'console': {
                 '#setter': self.capture_to_line

@@ -1,0 +1,50 @@
+jason_node:
+    FooString:
+        _attach_plugins:
+            - node_1_foo_string
+    HelloDevice:
+        _attach_plugins:
+            - node_1_hello_device
+    folder:
+        InsideString:
+            _attach_plugins:
+                - node_1_inner_string
+    exception_thrower:
+        _attach_plugins:
+            - node_1_ex_throw
+_define_plugins:
+    node_1_foo_string:
+        module: oob_rest_default_providers.StringDevice
+        args: [Foo]
+    node_1_hello_device:
+        module: oob_rest_default_providers.HelloSensor
+    node_1_inner_string:
+        module: oob_rest_default_providers.StringDevice
+        args: [Inside]
+    node_1_ex_throw:
+        module: oob_rest_default_providers.ExceptionThrower
+
+devyn_node:
+    FooString:
+        _attach_plugins:
+            - module: oob_rest_default_providers.StringDevice
+              args: [Foo]
+    HelloDevice:
+        _attach_plugins:
+            - module: oob_rest_default_providers.HelloSensor
+    folder:
+        InsideString:
+            _attach_plugins:
+                - module: oob_rest_default_providers.StringDevice
+                  args: [Inside]
+    exception_thrower:
+        _attach_plugins:
+            - module: oob_rest_default_providers.ExceptionThrower
+
+praneeths_real_node:
+    _attach_plugins:
+        - module: oob_rest_default_providers.IpmiBMC
+          args: [null, null, null, null]
+          url_mods:
+              chassis_state: node_boot/state
+              sensors/*: .
