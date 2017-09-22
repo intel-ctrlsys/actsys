@@ -51,10 +51,10 @@ class TestBmcIpmi(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_get_chassis_state(self, mock_esub):
-        mock_esub.return_value = SubprocessOutput(0, 'chassis_power = on', '')
+        mock_esub.return_value = SubprocessOutput(0, b'chassis_power = on', '')
         rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertTrue(rv)
-        mock_esub.return_value = SubprocessOutput(0, 'chassis_power = off', '')
+        mock_esub.return_value = SubprocessOutput(0, b'chassis_power = off', '')
         rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertFalse(rv)
         mock_esub.return_value = SubprocessOutput(1, None, None)
@@ -74,7 +74,7 @@ class TestBmcIpmi(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.bmc.set_chassis_state(self.bmc_credentials, 'red')
         self.bmc.set_chassis_state(self.bmc_credentials, 'bios')
-        mock_esub.return_value = SubprocessOutput(0, 'chassis_power = on', '')
+        mock_esub.return_value = SubprocessOutput(0, b'chassis_power = on', '')
         rv = self.bmc.get_chassis_state(self.bmc_credentials)
         self.assertTrue(rv)
         mock_enc.return_value = 0

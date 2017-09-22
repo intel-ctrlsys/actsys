@@ -34,7 +34,7 @@ class BmcIpmiUtil(Bmc):
             # TODO: Sometimes the ipmi tool fails, even though it actually succeeds. Root cause this, or double check.
             raise RuntimeError('Failed to execute "{}"! Command: {} stdout: {} stderr: {}'
                                .format(self.tool, command, subprocess_result.stdout, subprocess_result.stderr))
-        lines = subprocess_result.stdout.split('\n')
+        lines = subprocess_result.stdout.decode().split('\n')
         value = None
         for line in lines:
             if line.strip().startswith(self.name_to_find):
