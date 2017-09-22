@@ -1,0 +1,17 @@
+FooString:
+    _attach_plugins:
+        - module: oob_rest_default_providers.StringDevice
+          args: [Foo]
+HelloDevice:
+    _attach_plugins:
+        - module: oob_rest_default_providers.HelloSensor
+folder:
+    InsideString:
+        _attach_plugins:
+            - module: oob_rest_default_providers.StringDevice
+              args: [Inside]
+              url_mods:
+                  string: a/b/string
+exception_thrower:
+    _attach_plugins:
+        - module: oob_rest_default_providers.ExceptionThrower

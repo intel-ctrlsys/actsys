@@ -15,7 +15,7 @@ from oob_rest_default_providers import execute_subprocess
 
 class IpmiBMC(object):
 
-    def __init__(self, hostname, port, username, password):
+    def __init__(self, hostname, port, username, password, interface='lanplus'):
         self.lock = threading.Lock()
         self.config = {
             'chassis_state': {
@@ -41,7 +41,7 @@ class IpmiBMC(object):
 
         hostname = hostname or '127.0.0.1'
         port = port or '623'
-        self.ipmitool_opts = ['ipmitool', '-H', hostname, '-p', port]
+        self.ipmitool_opts = ['ipmitool', '-I', interface, '-H', hostname, '-p', port]
         if username:
             self.ipmitool_opts += ['-U', username]
         if password:
@@ -53,7 +53,7 @@ class IpmiBMC(object):
         with self.lock:
             subprocess_result = execute_subprocess.with_capture(command)
         if subprocess_result.return_code != 0 or subprocess_result.stdout is None:
-            raise RuntimeError('Failed to execute ipmiutil! Command: {} stdout: {} stderr: {}'
+            raise RuntimeError('Failed to execute ipmitool! Command: {} stdout: {} stderr: {}'
                                .format(command, subprocess_result.stdout, subprocess_result.stderr))
         for line in subprocess_result.stdout.splitlines():
             if line.strip().startswith('System Power'):
@@ -61,21 +61,11 @@ class IpmiBMC(object):
         raise RuntimeError('Failed to retrieve chassis power state!')
 
     def set_chassis_state(self, new_state):
-        cmd_map = {
-            'off': '-d',        # Hard power off the node
-            'on': '-u',         # Boot to the default BIOS boot option
-            'cycle': '-c',      # Power cycles the node
-            'bios': '-b',       # Reboot to BIOS setup
-            'efi': '-e',        # Reboot to EFI shell
-            'hdd': '-h',        # reboot to primary HDD device
-            'pxe': 'p',         # Reboot to network PXE device
-            'cdrom': '-v',      # Reboot to optical media
-            'removable': '-f',  # Reboot to removable media (floppy)
-        }
-        if new_state not in cmd_map:
-            raise RuntimeError('Illegal command "%s"!' % new_state)
         with self.lock:
-            cmd = self.ipmitool_opts + ['power', cmd_map[new_state]]
+            valid_states = ["on", "off", "soft", "cycle"]
+            if not new_state in valid_states:
+                raise RuntimeError("Invalid power state: {}. Choose from {}".format(new_state, valid_states))
+            cmd = self.ipmitool_opts + ['power', new_state]
             if not execute_subprocess.without_capture(cmd):
                 raise RuntimeError('Failed to execute ipmitool!')
 
@@ -83,11 +73,13 @@ class IpmiBMC(object):
         with self.lock:
             try:
                 command = self.ipmitool_opts + ['sol', 'activate']
-                return execute_subprocess.capture_to_line(command, stop_line=stop_line)
+                result = execute_subprocess.capture_to_line(command, halt_input=b'~./n', stop_line=stop_line)
+                return result
             except Exception as ex:
                 raise RuntimeError("Could not activate IPMI sol on BMC. "
                                    "Console logs will not be collected\n "
                                    "Received Error:" + str(ex))
+
 
     def set_led_interval(self, interval):
         with self.lock:

@@ -20,15 +20,10 @@ class ResponseBuilder(object):
     routes upon its instantiation, it parses URL arguments and samples plugin
     methods to construct a response document.
     """
-
     def __init__(self, nodes):
         self.nodes = nodes
 
     exposed = True
-    #
-    # def _cp_dispatch(self, vpath):
-    #     del vpath[:]
-    #     return self
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -42,12 +37,12 @@ class ResponseBuilder(object):
         value = cherrypy.request.json
         return self.set(value, **kwargs)
 
-    def set(self, value, sample_rate=None, duration=None, leaves_only=False):
-        func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#setter', value)
-        return self.handle_parallel(func, sample_rate, duration, leaves_only)
-
     def get(self, sample_rate=None, duration=None, leaves_only=False):
         func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#getter', None)
+        return self.handle_parallel(func, sample_rate, duration, leaves_only)
+
+    def set(self, value, sample_rate=None, duration=None, leaves_only=False):
+        func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#setter', value)
         return self.handle_parallel(func, sample_rate, duration, leaves_only)
 
     @staticmethod

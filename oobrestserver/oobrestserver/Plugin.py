@@ -41,7 +41,7 @@ class Plugin(object):
                         Plugin.module_from(
                             module_name
                         ), class_name
-                    ),args, kwargs
+                    ), args, kwargs
                 )
             ), url_mods
         )
@@ -84,11 +84,17 @@ class Plugin(object):
 
     @staticmethod
     def modded_config_from(config, url_mods):
+        print("modding the url configuration")
         result = config.copy()
         for source_glob, dest_path in url_mods.items():
-            for source_path in Plugin.search_resources(config, source_glob):
+            print("moving resources at {} to path {}".format(source_glob, dest_path))
+            path = source_glob.lstrip('/').split('/')
+            print("search path: {}".format(path))
+            matches = Plugin.search_resources(config, path)
+            print('matched paths: {}'.format(matches))
+            for source_path in matches:
                 Plugin.path_transform(result, source_path, dest_path)
-        return config
+        return result
 
     @staticmethod
     def search_resources(obj, search_path, resolved_path=''):
@@ -108,39 +114,63 @@ class Plugin(object):
 
     @staticmethod
     def path_transform(obj, source_path, dest_path):
-        Plugin.__set_recursive(obj, source_path, Plugin.__pop_recursive(obj, source_path))
+        Plugin.__set_recursive(obj, dest_path.strip('/').split('/'),
+                               Plugin.__pop_recursive(obj,
+                                                      source_path.strip('/').split('/')))
 
     @staticmethod
-    def __get_recursive(map, key):
-        if not key:
+    def __get_recursive(map, keys):
+        if not keys:
             return map
-        if not isinstance(map, dict) or key[0] not in map:
-            raise KeyError(key)
-        return Plugin.__get_recursive(map[key[0]], key[1:])
+        if not isinstance(map, dict) or keys[0] not in map:
+            raise KeyError(keys)
+        return Plugin.__get_recursive(map[keys[0]], keys[1:])
 
     @staticmethod
-    def __set_recursive(map, key, value):
-        if not key:
+    def __set_recursive(map, keys, value):
+        print("set recursive")
+        if not keys:
+            print("Empty key, so we're setting the whole map.")
             map = value
-        if len(key) == 1:
-            map[key[0]] = value
+        print("\tthis level's key is {}".format(keys[0]))
+        print("\tthis level's map is {}".format(map))
+        if len(keys) == 1:
+            print("\tlast key, so we can set and finish there")
+            if not isinstance(map.get(keys[0], None), dict):
+                map[keys[0]] = {}
+                #todo warn overwrite
+            if isinstance(value, dict):
+                map[keys[0]].update(value)
+            else:
+                map[keys[0]] = value
             return
-        if key[0] not in map:
-            map[key[0]] = {}
-            Plugin.__set_recursive(map[key[0]], key[1:], value)
+        if keys[0] not in map:
+            print("\tkey was not in the map, so we'll define it!".format(keys[0], map))
+            map[keys[0]] = {}
+        print("\tLet's look deeper into this matter...")
+        Plugin.__set_recursive(map[keys[0]], keys[1:], value)
 
     @staticmethod
     def __pop_recursive(map, path):
+        print("pop recursive")
         if not path:
             result = map.copy()
             del map
+            print("\tempty path, returning {}".format(str(result)))
             return result
         key_piece = path[0]
+        print("\tthis level's key is: {}".format(key_piece))
+        print("\tthis level's map is: {}".format(map))
         if key_piece not in map:
+            print("\tkey was not in the map, so error!")
             raise KeyError(key_piece)
         value = map.pop(key_piece)
+        print("\tthe key maps to: {}".format(value))
         if len(path) == 1:
+            print("\tsince that's the last path piece, we're done!")
             return value
         if not isinstance(value, dict):
+            print("\tOh no! That was not the last piece of the path, but the mapped object is not a map! Error!")
             raise KeyError()
-        return Plugin.__pop_recursive(map, path[1:])
+        print("\tLet's look deeper into this matter....")
+        return Plugin.__pop_recursive(value, path[1:])

@@ -34,7 +34,7 @@ class DispatchNode(object):
         del vpath[:]
         return ResponseBuilder(leaves)
 
-    def __init__(self, config=None, base_route='', saved_plugins=None):
+    def __init__(self, config=None, base_route='', saved_plugins=None, logger=None):
         self.config = config or {}
         self.route = base_route
         self.saved_plugins = saved_plugins or {}
@@ -72,6 +72,7 @@ class DispatchNode(object):
                     print("Error: Plugin name not previously defined")
                     #TODO logger from app instead
                     continue
+                print("loading a previously-defined plugin")
                 plugin_object = self.saved_plugins[plugin_description]
                 # TODO, hang on, does a name define an instance or a description??
                 # TODO maybe I should support both

@@ -69,7 +69,7 @@ class TestIpmiBMC(TestCase):
     def test_set_chassis_state(self):
 
         def fake_without_capture(cmd):
-            self.assertEqual(cmd[-2:], ['power', '-u'])
+            self.assertEqual(cmd[-2:], ['power', 'on'])
             return True
 
         mock.patch('oob_rest_default_providers.execute_subprocess.without_capture',

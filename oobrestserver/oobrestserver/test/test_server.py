@@ -171,6 +171,13 @@ class TestServer(helper.CPWebCase):
             self.getPage(url)
             self.assertStatus('200 OK')
 
+    def test_leaves_only(self):
+        self.getPage('/api/**')
+        everything = json.loads(self.body.decode('utf-8'))
+        self.getPage('/api/**?leaves_only=1')
+        only_leaves = json.loads(self.body.decode('utf-8'))
+        self.assertGreater(len(everything), len(only_leaves))
+
     def test_response_fields(self):
         self.getPage('/api/node1/folder/InsideString/string/')
         full_response = json.loads(self.body.decode('utf-8'))
@@ -335,10 +342,3 @@ class TestServer(helper.CPWebCase):
     def test_bad_glob(self):
         self.getPage('/api/100[1-4')
         self.assertStatus("400 Bad Request")
-
-    def test_leaves_only(self):
-        self.getPage('/api/**')
-        everything = json.loads(self.body.decode('utf-8'))
-        self.getPage('/api/**?leaves_only=1')
-        only_leaves = json.loads(self.body.decode('utf-8'))
-        self.assertGreater(len(everything), len(only_leaves))
