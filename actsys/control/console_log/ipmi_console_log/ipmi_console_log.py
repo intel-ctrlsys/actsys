@@ -23,11 +23,14 @@ class IpmiConsoleLog(object):
         self.cmd = 'IPMI_console_log'
         self.consolelog = None
         self.stop_line = None
+        self.result_line = None
 
-    def start_log_capture(self, stop_line):
+    def start_log_capture(self, stop_line, result_line):
         """Start capturing console"""
         console_lines = []
         self.stop_line = stop_line
+        self.result_line = result_line
+        result = []
         try:
             self.consolelog = Popen(['ipmiutil', 'sol', '-a', '-N', self.bmc_address, '-U', self.user_name, '-P',
                                      self.password, '-o', '/tmp/output'], stdout=PIPE, stderr=STDOUT, stdin=PIPE)
@@ -35,15 +38,20 @@ class IpmiConsoleLog(object):
             self.logger.debug("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
                               + str(ex), self.node_name)
 
+        result_found = False
         while self.consolelog.poll() is None:
             buffer_v = self.consolelog.stdout.readline()
             length_buff = len(buffer_v)
             if length_buff > 0:
                 line = buffer_v.decode(errors='ignore').strip('\n')
-                if self.stop_line in line:
+                if self.result_line in line:
+                    result_found = True
+                elif self.stop_line in line:
                     self.stop_log_capture()
                 else:
                     console_lines.append(line)
+                if result_found == True:
+                    result.append(line)
         self.consolelog.wait()
         self.consolelog = None
         try:
@@ -53,10 +61,13 @@ class IpmiConsoleLog(object):
             self.logger.debug("Unable to create new thread. Console logs "
                               "will not be collected\n Received Error:"
                               + str(ex), self.node_name)
-        return console_lines
+
+        return console_lines, result
 
     def stop_log_capture(self):
         """Stop capture"""
+        Popen(['ipmiutil', 'sol', '-d', '-N', self.bmc_address, '-U', self.user_name, '-P',
+               self.password], stdout=PIPE, stderr=STDOUT, stdin=PIPE)
         self.consolelog.terminate()
 
     def _write_to_datastore(self, raw_data):

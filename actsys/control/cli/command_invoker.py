@@ -212,7 +212,7 @@ class CommandInvoker(object):
                        'provisioner_set': 'provisioner_set',
                        'oob_sensor_get': 'oob_sensor_get',
                        'oob_sensor_get_time': 'oob_sensor_get_time',
-                       'diagnostics_inband': 'diagnostics_inband',
+                       'inband_diagnostics': 'inband_diagnostics',
                        'diagnostics_oob': 'diagnostics_oob',
                        'job_launch': 'job_launch',
                        'job_check': 'job_check',
@@ -431,7 +431,7 @@ class CommandInvoker(object):
 
     def diagnostics_inband(self, device_name, test=None, image=None):
         """Execute the inband Diagnostics"""
-        return self.common_cmd_invoker(device_name, "diagnostics_inband", test_name=test, diag_image=image)
+        return self.common_cmd_invoker(device_name, "inband_diagnostics", test_name=test, diag_image=image)
 
     def diagnostics_oob(self, device_name, test=None):
         """Execute the oob Diagnostics"""

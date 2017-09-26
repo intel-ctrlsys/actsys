@@ -48,7 +48,6 @@ class MockDiagnostics(Diagnostics):
         except Exception as ex:
             raise Exception(
                 "Error: Failed to read data from provisioner because {0}. No tests will be run.".format(str(ex)))
-
         if device not in device_list or img not in img_list:
             raise Exception(
                 "Error: Device does not exist in provisioner, provision device to continue")
@@ -73,6 +72,7 @@ class MockDiagnostics(Diagnostics):
     def launch_diags(self, device, bmc):
         """launches the diagnostic tests"""
         self.device = device
+        result_list = dict()
         self.bmc = bmc
         self.device_name = self.device.get("hostname")
 
@@ -106,8 +106,8 @@ class MockDiagnostics(Diagnostics):
             raise Exception("Cannot remove node from resource pool. {}".format(current_state))
         # start console log
         self.console_log = MockConsoleLog(self.device_name, '127.0.0.1', 'user', 'password')
-        self.console_log.start_log_capture('End of Diagnostics')
-
+        console_log_returned, result = self.console_log.start_log_capture('End of Diagnostics', 'Return Code: ')
+        result_list[self.device_name] = result
         # Step 2: Provision diagnostic image
         self._provision_image(self.img, self.kargs)
         self._set_node_state('Off')
@@ -125,7 +125,7 @@ class MockDiagnostics(Diagnostics):
         if result[0] != 0:
             raise Exception("Failed to add node back to resource pool")
 
-        return "Diagnostics completed on node {0}".format(self.device_name)
+        return result_list
 
     def _pack_options(self):
         """Return the node power control options based on the node_name and
@@ -134,6 +134,6 @@ class MockDiagnostics(Diagnostics):
         dev_l = list()
         dev_l.append(self.device)
         options['device_list'] = dev_l
-        options['bmc_list'] = self.bmc
+        options['bmc_list'] = [self.bmc]
         options['plugin_manager'] = self.plugin_manager
         return options

@@ -26,7 +26,6 @@ class TestsInbandDiagnostics(unittest.TestCase):
         self.mock_provisioner = Mock(spec=Provisioner)
         self.mock_power_control = Mock(spec=PowerControl)
         self.mock_plugin_manager = Mock(spec=PluginManager)
-        InBandDiagnostics.Test_Status
 
     def reset_for_test(self):
         """resetting all the mock return values for tests"""
@@ -52,7 +51,7 @@ class TestsInbandDiagnostics(unittest.TestCase):
         }
         self.device1 = {
             "hostname": "test1",
-            "ip_address": "192.168.1.1",
+            "ip_address": "127.0.0.1",
             "image": "old_img.bin",
             "provisioner_kernel_args": "old_diag",
             "console_port": "1000",
@@ -63,7 +62,7 @@ class TestsInbandDiagnostics(unittest.TestCase):
         }
         self.device = {
             "hostname": "test1",
-            "ip_address": "192.168.1.1",
+            "ip_address": "127.0.0.1",
             "image": "old_img.bin",
             "provisioner_kernel_args": "old_diag",
             "console_port": "1000",
@@ -80,20 +79,20 @@ class TestsInbandDiagnostics(unittest.TestCase):
         self.image_name1 = "test2.bin"
         self.test_name1 = "test_diag.bin"
 
-    @patch.object(IpmiConsoleLog, 'start_log_capture')
+    @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog')
+    @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog.start_log_capture')
     @patch.object(Thread, 'start')
-    def test_launch_diags_positive(self, console_mock, mock_thread):
+    def test_launch_diags_positive(self, mock_thread, console_mock, console_mock_class):
         """tests positive"""
-        console_mock.start_log_capture = MagicMock()
         self.reset_for_test()
-        mock_thread.start = MagicMock()
+        console_mock.return_value = "Start", "Stop"
         self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
                                                                 self.mock_power_control]
         diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name,
                                               plugin_manager=self.mock_plugin_manager)
-        InBandDiagnostics.Return_Code['test1'] = 'Return Code : 00'
+        diags_mock_plugin.console_log = console_mock_class
         result = diags_mock_plugin.launch_diags(self.device, self.bmc)
-        self.assertEqual('Diagnostics completed on node test1', result)
+        self.assertGreater(len(result), 0)
 
     def test_no_device(self):
         """tests exceptions"""

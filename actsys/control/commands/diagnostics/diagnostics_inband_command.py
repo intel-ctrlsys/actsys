@@ -10,7 +10,7 @@ from .. import CommandResult
 from .diagnostics_command import DiagnosticsCommand
 
 
-@DeclarePlugin('diagnostics_inband', 100)
+@DeclarePlugin('inband_diagnostics', 100)
 class DiagnosticsInBandCommand(DiagnosticsCommand):
     """Diagnosticsinband"""
     def __init__(self, device_name, configuration, plugin_manager, logger=None, **kwargs):

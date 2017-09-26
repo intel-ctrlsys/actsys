@@ -24,9 +24,10 @@ class MockConsoleLog(object):
         self.consolelog = None
         self.cmd = "Mock_Console_Log"
 
-    def start_log_capture(self, stop_text):
+    def start_log_capture(self, stop_text, result_text):
         """Start capturing console"""
         self.consolelog = 'HELLO FROM CONSOLE\nEnd of Diagnostics\nReturn Code : 67' + stop_text
+        result = result_text + ' 67'
         try:
             log_capture_thread = Thread(target=self._write_to_datastore(self.consolelog))
             log_capture_thread.start()
@@ -35,6 +36,8 @@ class MockConsoleLog(object):
                               "will not be collected\n Received Error:"
                               + str(ex), self.node_name)
         self.stop_log_capture()
+        return self.consolelog, result
+
 
     def stop_log_capture(self):
         """Stop capture"""

@@ -11,13 +11,11 @@ from control.diagnostics.diagnostics import Diagnostics
 from control.plugin import DeclarePlugin
 
 
-@DeclarePlugin('diagnostics_inband', 100)
+@DeclarePlugin('inband_diagnostics', 100)
 class InBandDiagnostics(Diagnostics):
     """This class controls launching the inband diagnostic tests
     This needs the input of a file """
     MOCK_PROVISION = False
-    Test_Status = {}
-    Return_Code = {}
 
     def __init__(self, **kwargs):
         Diagnostics.__init__(self, **kwargs)
@@ -82,9 +80,10 @@ class InBandDiagnostics(Diagnostics):
         self.device = device
         self.bmc = bmc
         bmc_ip_address = self.bmc.get("ip_address")
-        bmc_user = self.bmc.get("user_name")
+        bmc_user = self.bmc.get("user")
         bmc_password = self.bmc.get("password")
         self.device_name = self.device.get("hostname")
+        result_list = dict()
 
         if self.device.get("provisioner") is None or self.device.get("resource_controller") is None or \
                         self.device.get("device_power_control") is None:
@@ -114,31 +113,34 @@ class InBandDiagnostics(Diagnostics):
                     "Cannot remove node from resource pool for running diagnostics since {0}".format(result[1]))
         else:
             raise Exception("Cannot remove node from resource pool. {}".format(current_state))
+
         # start console log
         try:
             self.console_log = IpmiConsoleLog(self.device_name, bmc_ip_address, bmc_user, bmc_password)
-            self.console_log.start_log_capture('End of Diagnostics')
+            consolelines, result_line = self.console_log.start_log_capture('End of Diagnostics', 'Final Diagnostic Results')
+
         except Exception as ex:
             raise Exception('Unable to connect to the bmc, update the config file for device {0} and try again. Error '
                             'received from console log: {1}'.format(self.device_name, str(ex)))
+        result_list[self.device_name] = result_line
 
         # Step 2: Provision diagnostic image
         self._provision_image(self.img, self.kargs)
         self._set_node_state('Off')
         self._set_node_state('On')
 
-        # Step 4: Provision node back to old image
+        # Step 3: Provision node back to old image
         if not self.reboot_true:
             self._provision_image(self.old_image, self.old_kargs)
             self._set_node_state('Off')
             self._set_node_state('On')
 
-        # Step 5: Add node back to resource pool
+        # Step 4: Add node back to resource pool
         result = self.resource_manager.add_nodes_to_resource_pool(dev_l)
         if result[0] != 0:
             raise Exception("Failed to add node back to resource pool")
 
-        return "Diagnostics completed on node {0}".format(self.device_name)
+        return "Diagnostics completed on node {0} {1}".format(self.device_name, result_line)
 
     def _pack_options(self):
         """Return the node power control options based on the node_name and
@@ -147,6 +149,6 @@ class InBandDiagnostics(Diagnostics):
         dev_l = list()
         dev_l.append(self.device)
         options['device_list'] = dev_l
-        options['bmc_list'] = self.bmc
+        options['bmc_list'] = [self.bmc]
         options['plugin_manager'] = self.plugin_manager
         return options

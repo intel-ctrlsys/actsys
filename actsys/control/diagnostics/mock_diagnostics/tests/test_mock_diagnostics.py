@@ -79,17 +79,19 @@ class TestsMockDiagnostics(unittest.TestCase):
         self.image_name1 = "test2.bin"
         self.test_name1 = "test_diag.bin"
 
-    @patch.object(MockConsoleLog, 'start_log_capture')
-    def test_launch_diags_positive(self, console_mock):
+    @patch('control.console_log.mock_console_log.ipmi_mock.MockConsoleLog')
+    @patch('control.console_log.mock_console_log.ipmi_mock.MockConsoleLog.start_log_capture')
+    def test_launch_diags_positive(self, console_mock, console_mock_class):
         """Positive tests"""
-        console_mock.start_log_capture = MagicMock()
+        console_mock.return_value = "Start", "Stop"
         self.reset_for_test()
         self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
                                                                 self.mock_power_control]
         diags_mock_plugin = MockDiagnostics(diag_image=self.image_name, test_name=self.test_name,
                                             plugin_manager=self.mock_plugin_manager)
+        diags_mock_plugin.console_log = console_mock_class
         result = diags_mock_plugin.launch_diags(self.device, self.bmc)
-        self.assertEqual('Diagnostics completed on node test1', result)
+        self.assertGreater(len(result), 0)
 
     def test_no_device(self):
         """tests exceptions"""

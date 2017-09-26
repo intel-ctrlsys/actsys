@@ -23,7 +23,7 @@ class DiagnosticsCommand(Command):
 
     def setup(self):
         """Setup function to setup for diagnostics command"""
-        self.device = self.configuration.get_device(self.device_name)
+        self.device = self.configuration.get_device(self.device_name[0])
         if self.device.get("device_type") not in ['node', 'compute', 'service']:
             raise RuntimeError('Cannot run diagnostics on a non-node type '
                                'device!')
