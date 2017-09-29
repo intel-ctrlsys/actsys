@@ -80,7 +80,6 @@ class IpmiBMC(object):
                                    "Console logs will not be collected\n "
                                    "Received Error:" + str(ex))
 
-
     def set_led_interval(self, interval):
         with self.lock:
             try:
