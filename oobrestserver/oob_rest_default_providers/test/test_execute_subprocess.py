@@ -57,9 +57,3 @@ class TestExecuteSubprocess(TestCase):
         self.assertEqual(output.stderr, None)
         self.assertEqual(output.command, 'false')
         self.assertEqual(output.return_code, 1)
-
-    # def test_without_capture(self):
-    #     self.fail()
-    #
-    # def test_capture_to_line(self):
-    #     self.fail()

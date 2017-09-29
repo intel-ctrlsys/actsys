@@ -16,7 +16,8 @@ from oob_rest_default_providers import execute_subprocess
 class IpmiBMC(object):
 
     def __init__(self, hostname, port, username, password, interface='lanplus'):
-        self.lock = threading.Lock()
+        self.sol_lock = threading.Lock()
+        self.power_state_lock = threading.Lock()
         self.config = {
             'chassis_state': {
                 '#getter': self.get_chassis_state,
@@ -50,7 +51,7 @@ class IpmiBMC(object):
 
     def get_chassis_state(self):
         command = self.ipmitool_opts+ ['chassis', 'status']
-        with self.lock:
+        with self.power_state_lock:
             subprocess_result = execute_subprocess.with_capture(command)
         if subprocess_result.return_code != 0 or subprocess_result.stdout is None:
             raise RuntimeError('Failed to execute ipmitool! Command: {} stdout: {} stderr: {}'
@@ -61,7 +62,7 @@ class IpmiBMC(object):
         raise RuntimeError('Failed to retrieve chassis power state!')
 
     def set_chassis_state(self, new_state):
-        with self.lock:
+        with self.power_state_lock:
             valid_states = ["on", "off", "soft", "cycle"]
             if not new_state in valid_states:
                 raise RuntimeError("Invalid power state: {}. Choose from {}".format(new_state, valid_states))
@@ -70,7 +71,7 @@ class IpmiBMC(object):
                 raise RuntimeError('Failed to execute ipmitool!')
 
     def capture_to_line(self, stop_line):
-        with self.lock:
+        with self.sol_lock:
             try:
                 command = self.ipmitool_opts + ['sol', 'activate']
                 result = execute_subprocess.capture_to_line(command, halt_input=b'~./n', stop_line=stop_line)
@@ -81,12 +82,11 @@ class IpmiBMC(object):
                                    "Received Error:" + str(ex))
 
     def set_led_interval(self, interval):
-        with self.lock:
-            try:
-                command = self.ipmitool_opts + ['chassis', 'identify', interval]
-                execute_subprocess.without_capture(command)
-            except Exception as ex:
-                raise RuntimeError("Error using ipmitool: " + str(ex))
+        try:
+            command = self.ipmitool_opts + ['chassis', 'identify', interval]
+            execute_subprocess.without_capture(command)
+        except Exception as ex:
+            raise RuntimeError("Error using ipmitool: " + str(ex))
 
     def populate_sensors(self):
         sensor_table = self.get_sensor_table()
@@ -106,9 +106,8 @@ class IpmiBMC(object):
         return IpmiBMC.parse_raw_sensor_table(raw_table)
 
     def capture_raw_sensor_table(self):
-        with self.lock:
-            command = self.ipmitool_opts + ['sdr']
-            return execute_subprocess.with_capture(command).stdout
+        command = self.ipmitool_opts + ['sdr']
+        return execute_subprocess.with_capture(command).stdout
 
     @staticmethod
     def parse_raw_sensor_table(raw_table):
@@ -132,6 +131,5 @@ class IpmiBMC(object):
         return (name, sample, units)
 
     def get_sels(self):
-        with self.lock:
-            cmd = self.ipmitool_opts + ['sel', 'list']
-            return execute_subprocess.with_capture(cmd).stdout.splitlines()
+        cmd = self.ipmitool_opts + ['sel', 'list']
+        return execute_subprocess.with_capture(cmd).stdout.splitlines()
