@@ -52,7 +52,7 @@ class DispatchNode(object):
                 plugin_object = Plugin.plugin(plugin_description)
             except RuntimeError as ex:
                 print("Could not instantiate plugin from: "+str(plugin_description))
-                print("\n\t".join(str(ex).splitlines()))#TODO logger from app
+                print("\n\t".join(str(ex).splitlines()))
                 continue
             self.saved_plugins[plugin_name] = plugin_object
 
@@ -64,18 +64,15 @@ class DispatchNode(object):
                 except RuntimeError as ex:
                     print("Could not instantiate plugin from: "+str(plugin_description))
                     print("\n\t".join(str(ex).splitlines()))
-                    #TODO logger from app instead
                     continue
             else:
                 if plugin_description not in self.saved_plugins:
                     print("Could not instantiate plugin from: "+str(plugin_description))
                     print("Error: Plugin name not previously defined")
-                    #TODO logger from app instead
                     continue
                 print("loading a previously-defined plugin")
                 plugin_object = self.saved_plugins[plugin_description]
-                # TODO, hang on, does a name define an instance or a description??
-                # TODO maybe I should support both
+                # TODO, hang on, does a name define an instance or a description?? maybe I should support both
             self.config.update(plugin_object)
             # TODO do this in a way that detects overwritten plugin resources and warns about them
 

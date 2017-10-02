@@ -10,6 +10,8 @@ OOBREST Plugin for atomic OOB Management through IPMI.
 import functools
 import threading
 
+import subprocess
+
 from oob_rest_default_providers import execute_subprocess
 
 
@@ -70,17 +72,6 @@ class IpmiBMC(object):
             if not execute_subprocess.without_capture(cmd):
                 raise RuntimeError('Failed to execute ipmitool!')
 
-    def capture_to_line(self, stop_line):
-        with self.sol_lock:
-            try:
-                command = self.ipmitool_opts + ['sol', 'activate']
-                result = execute_subprocess.capture_to_line(command, halt_input=b'~./n', stop_line=stop_line)
-                return result
-            except Exception as ex:
-                raise RuntimeError("Could not activate IPMI sol on BMC. "
-                                   "Console logs will not be collected\n "
-                                   "Received Error:" + str(ex))
-
     def set_led_interval(self, interval):
         try:
             command = self.ipmitool_opts + ['chassis', 'identify', interval]
@@ -133,3 +124,25 @@ class IpmiBMC(object):
     def get_sels(self):
         cmd = self.ipmitool_opts + ['sel', 'list']
         return execute_subprocess.with_capture(cmd).stdout.splitlines()
+
+    def capture_to_line(self, stop_line):
+        """Start capturing console"""
+        console_lines = []
+        try:
+            command = self.ipmitool_opts + ['sol', 'activate']
+            consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+        except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknow exceptions
+            raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
+                              + str(ex))
+
+        while not consolelog.poll():
+            buffer_v = consolelog.stdout.readline()
+            length_buff = len(buffer_v)
+            if length_buff > 0:
+                line = buffer_v.strip('\n')
+                console_lines.append(line)
+                if stop_line in line:
+                    consolelog.terminate()
+            # consoleLog.wait()
+        consolelog.terminate()
+        return console_lines

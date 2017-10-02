@@ -23,3 +23,6 @@ class FakeSubProcess(object):
 
     def kill(self):
         self.term = True
+
+    def wait(self):
+        self.term = True

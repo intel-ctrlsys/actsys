@@ -37,13 +37,13 @@ class ResponseBuilder(object):
         value = cherrypy.request.json
         return self.set(value, **kwargs)
 
-    def get(self, sample_rate=None, duration=None, leaves_only=False):
+    def get(self, sample_rate=None, duration=None, leaves_only=False, timeout=None):
         func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#getter', None)
-        return self.handle_parallel(func, sample_rate, duration, leaves_only)
+        return self.handle_parallel(func, sample_rate, duration, leaves_only, timeout)
 
-    def set(self, value, sample_rate=None, duration=None, leaves_only=False):
+    def set(self, value, sample_rate=None, duration=None, leaves_only=False, timeout=None):
         func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#setter', value)
-        return self.handle_parallel(func, sample_rate, duration, leaves_only)
+        return self.handle_parallel(func, sample_rate, duration, leaves_only, timeout)
 
     @staticmethod
     def wrapped_plugin_method(method_label, value, node):
@@ -61,13 +61,13 @@ class ResponseBuilder(object):
             exception = str(ex)
         return node, return_value, exception
 
-    def handle_parallel(self, sample_method, sample_rate, duration, leaves_only):
+    def handle_parallel(self, sample_method, sample_rate, duration, leaves_only, timeout):
 
         """
         Parse URL args, sample the plugins concurrently, and build the response
         """
 
-        SAMPLE_RATE_MAX = 1000
+        SAMPLE_RATE_MAX = 1000 # TODO parameter for server setup
 
         if sample_rate is None:
             sample_rate = 1
@@ -84,6 +84,9 @@ class ResponseBuilder(object):
 
         if leaves_only:
             self.nodes = self.leaf_nodes()
+
+        if timeout is not None:
+            timeout = float(timeout)
 
         if not self.nodes:
             return {}
@@ -104,7 +107,11 @@ class ResponseBuilder(object):
                 timer.start()
 
             for timer in timers:
-                timer.join()
+                timer.join(timeout)
+                if not timer.is_alive():
+                    #TODO create subclass of threading timer that allows
+                    #TODO plugin interrupts from multithreaded context.
+                    pass
 
             results = []
             while not result_queue.empty():
@@ -121,7 +128,7 @@ class ResponseBuilder(object):
                             'start-time': cherrypy.response.time,
                             'samples': [],
                             'exceptions': []
-                        }
+                        } #TODO OData compliance here
                     if sample is not None:
                         response[node.route]['samples'].append(sample)
                     if exception is not None:

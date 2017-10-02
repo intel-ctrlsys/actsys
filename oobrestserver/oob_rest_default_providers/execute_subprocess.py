@@ -28,15 +28,3 @@ def with_capture(command, shell=False):
     pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell)
     stdout, stderr = pipe.communicate()
     return Output(command, pipe.returncode, stdout.decode('utf-8'), stderr.decode('utf-8'))
-
-def capture_to_line(command, stop_line, halt_input=None, shell=False):
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, shell=shell)
-    console_lines = []
-    while not proc.poll():
-        line = str(proc.stdout.readline()).strip('\n')
-        console_lines.append(line)
-        if stop_line in line:
-            if halt_input:
-                proc.communicate(input=halt_input, timeout=.1)
-            proc.terminate()
-    return console_lines

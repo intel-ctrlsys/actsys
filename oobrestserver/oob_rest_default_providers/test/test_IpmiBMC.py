@@ -169,7 +169,7 @@ class TestIpmiBMC(TestCase):
     def test_exception_capture_to_line(self):
         def thrower():
             raise RuntimeError('Exception for test!')
-        mock.patch("subprocess.Popen", return_value=thrower).start()
+        mock.patch("subprocess.Popen", side_effect=thrower).start()
         try:
             self.bmc.capture_to_line('anything, really')
             self.fail()
