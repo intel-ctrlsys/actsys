@@ -15,7 +15,7 @@ install:
 	sudo -EH pip3 install dist/*.tar.gz
 
 uninstall:
-	sudo -EH pip3 uninstall actsys
+	sudo -EH pip3 uninstall -y actsys
 
 install_requirements:
 	sudo -EH pip3 install -r requirements.txt

@@ -10,9 +10,7 @@ from setuptools import setup, find_packages
 description = "A datastore for exascale clusters"
 author = "Intel Corporation"
 license = "Apache"
-tests_require = ['python-dateutil>=2.6.0',
-                 'pytz',
-                 'pytest',
+tests_require = ['pytest',
                  'pytest-cov',
                  'pylint',
                  'mock']
@@ -26,7 +24,7 @@ setup(name='cmm',
       entry_points={
           'console_scripts': ['cmm = cmm.__main__:main']
       },
-      install_requires=['psycopg2', 'python-dateutil>=2.6.0', 'pytz', 'clustershell'],
+      install_requires=['inquirer', 'ipython'],
       test_suite='tests',
       tests_require=tests_require,
       extras_require={

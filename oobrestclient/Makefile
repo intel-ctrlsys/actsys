@@ -15,7 +15,7 @@ install:
 	sudo -E pip3 install dist/*.tar.gz
 
 uninstall:
-	sudo -E pip3 uninstall oobrestclient
+	sudo -E pip3 uninstall -y oobrestclient
 
 install_requirements:
 	sudo -E pip3 install -r requirements.txt
