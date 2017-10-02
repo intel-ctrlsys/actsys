@@ -26,12 +26,12 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_check_slurm_running_mock_succeed(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION", '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b"PARTITION", '')
         self.check_slurm_running_stub(True)
 
     @patch.object(Utilities, "execute_subprocess")
     def test_check_slurm_running_mock_fail(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "MOCKED_RETURN", '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b"MOCKED_RETURN", '')
         self.check_slurm_running_stub(False)
 
     def _assert_return_message(self, rc, message,
@@ -46,18 +46,18 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_nodes_success(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
-                                                         "debug*       up   infinite      5    idle node[01-05]\n"
-                                                         "Success", 'Success')
+        mock_exec_sub.return_value = SubprocessOutput(0, b"PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
+                                                         b"debug*       up   infinite      5    idle node[01-05]\n"
+                                                         b"Success", b'Success')
         self._remove_from_resource_pool_stub(0, "Succeeded in removing!")
 
     @patch.object(Utilities, "execute_subprocess")
     def test_remove_nodes_failure_multiple_states(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
-                                                         "debug*       up   infinite      1    idle node01\n"
-                                                         "debug*       up   infinite      2    alloc node[02-03]\n"
-                                                         "debug*       up   infinite      1    drain node04\n"
-                                                         "debug*       up   infinite      1    unknown node05", '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b"PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n "
+                                                         b"debug*       up   infinite      1    idle node01\n"
+                                                         b"debug*       up   infinite      2    alloc node[02-03]\n"
+                                                         b"debug*       up   infinite      1    drain node04\n"
+                                                         b"debug*       up   infinite      1    unknown node05", b'')
         self._remove_from_resource_pool_stub(1, "Failed in removing!")
 
     def _add_to_resource_pool_stub(self, rc_expected, message_expected):
@@ -67,16 +67,16 @@ class TestSlurmResourceControl(unittest.TestCase):
 
     @patch.object(Utilities, "execute_subprocess")
     def test_add_nodes_success(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
-                                                         "debug*       up   infinite      5    drain node[01-05]\n"
-                                                         "Success", 'Success')
+        mock_exec_sub.return_value = SubprocessOutput(0, b"PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
+                                                         b"debug*       up   infinite      5    drain node[01-05]\n"
+                                                         b"Success", b'Success')
         self._add_to_resource_pool_stub(0, "Succeeded in adding!")
 
     @patch.object(Utilities, "execute_subprocess")
     def test_add_nodes_failure_multiple_states(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, "PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
-                                                         "debug*       up   infinite      1    drain node01\n"
-                                                         "debug*       up   infinite      2    alloc node[02-03]\n"
-                                                         "debug*       up   infinite      1    idle node04\n"
-                                                         "debug*       up   infinite      1    unknown node05", '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b"PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST\n"
+                                                         b"debug*       up   infinite      1    drain node01\n"
+                                                         b"debug*       up   infinite      2    alloc node[02-03]\n"
+                                                         b"debug*       up   infinite      1    idle node04\n"
+                                                         b"debug*       up   infinite      1    unknown node05", b'')
         self._add_to_resource_pool_stub(1, "Failed in adding!")

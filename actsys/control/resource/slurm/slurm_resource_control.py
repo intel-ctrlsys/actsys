@@ -31,7 +31,7 @@ class SlurmResource(ResourceControl):
         """
         subprocess_result = self.utilities.execute_subprocess(['sinfo',
                                                                '-n', ','.join(node_list)])
-        return 0, os.linesep + subprocess_result.stdout
+        return 0, os.linesep + subprocess_result.stdout.decode()
 
     def _parse_columns(self, columns):
         if len(columns) != self.num_column:
@@ -44,9 +44,10 @@ class SlurmResource(ResourceControl):
         removing the nodes from cluster resource pool
         """
         reason = "For service"
-        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + ','.join(node_list),
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update',
+                                                               'nodename=' + ','.join([node_list]),
                                                                'state=drain', 'reason=' + reason, '-vvvv'])
-        if 'Success' in subprocess_result.stderr:
+        if 'Success' in subprocess_result.stderr.decode():
             return 'Succeeded in removing!'
         return 'Failed in removing!'
 
@@ -66,9 +67,10 @@ class SlurmResource(ResourceControl):
         adding the nodes back to cluster resource pool
         """
         reason = "Done with service"
-        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update', 'nodename=' + ','.join(node_list),
+        subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update',
+                                                               'nodename=' + ','.join([node_list]),
                                                                'state=undrain', 'reason=' + reason, '-vvvv'])
-        if 'Success' in subprocess_result.stderr:
+        if 'Success' in subprocess_result.stderr.decode():
             return 'Succeeded in adding!'
         return 'Failed in adding!'
 
@@ -93,6 +95,6 @@ class SlurmResource(ResourceControl):
             return False
         if subprocess_result.stdout is None:
             return False
-        if 'PARTITION' in subprocess_result.stdout:
+        if 'PARTITION' in subprocess_result.stdout.decode():
             return True
         return False
