@@ -74,7 +74,7 @@ class DispatchNode(object):
                 plugin_object = self.saved_plugins[plugin_description]
                 # TODO, does a name define an instance or a description?? maybe I should support both
             self.config.update(plugin_object)
-            # TODO do this in a way that detects overwritten plugin resources and warns about them
+            # TODO detect overwritten plugin resources and warn user about them
 
     def add_children(self):
         for child in [x for x in self.config if not x.startswith('_') and not x.startswith('#')]:

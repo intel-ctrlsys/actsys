@@ -1,11 +1,9 @@
-from io import StringIO
+from io import BytesIO
 
 class FakeSubProcess(object):
     def __init__(self, stdout, stderr, ret_code):
-        self.stdout_lines = stdout.splitlines()
-        self.stderr_lines = stderr.splitlines()
-        self.stdout = StringIO(stdout)
-        self.stderr = StringIO(stderr)
+        self.stdout = BytesIO(stdout)
+        self.stderr = BytesIO(stderr)
         self.ret_code = ret_code
         self.term = False
 

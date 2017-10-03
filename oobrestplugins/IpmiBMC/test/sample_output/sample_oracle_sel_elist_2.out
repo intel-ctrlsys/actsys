@@ -1,4 +1,0 @@
-100 | Pre-Init Time-stamp   | Temperature fp.t_amb | Upper Non-critical going high | Reading 31 > Threshold 30
-degrees C
-200 | Pre-Init Time-stamp   | Power Supply ps1.pwrok | State Deasserted
-300 | Pre-Init Time-stamp   | Entity Presence ps1.prsnt | Device Present
