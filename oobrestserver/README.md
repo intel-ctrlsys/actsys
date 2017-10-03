@@ -180,7 +180,7 @@ Key | Value Type | Value Description
 `exceptions` | list of strings | List of strings taken by casting any exceptions encountered by plugins during this operation.
 `end-time` | float | The server's system time when the operation finished
 `start-time` | float | The server's system time when the operation started
-`samples` | list of objects | The list of JOSN-serialized objects returned by the plugin as a response for this property. There may be more than one returned object when  the `duration` and `sample_rate` parameters are given.
+`samples` | list of objects | The list of JSON-serialized objects returned by the plugin as a response for this property. There may be more than one returned object when  the `duration` and `sample_rate` parameters are given.
 
 When multiple properties are identified by an ambiguous path, the response will contain key-value pairs identifying the fully-resolved path and response for each property.
 
@@ -317,6 +317,12 @@ There is no notion of a user session anywhere in the server as it stands today. 
 
 #### Plugin-level User Authorization
 The server now has authentication, but no authorization. An authorization system shall be developed, so that users have different levels of access in the system. For example, some plugins may demand a higher level of clearance to use, and certainly ordinary users should not have access to the live reconfiguration services mentioned earlier. This should be implemented in a way that is independent of the chosen authentication strategy.
+
+#### Plugin Method URL Keyword Arguments
+GET methods currently cannot take any parameters. This shall be remedied by allowing plugin-provided methods to access the request's URL parameters through `kwargs`.
+
+#### Thread Pool Configuration Options
+Currently, all server requests are processed by creating a thread pool to honor the parallel operations of the request concurrently. This should be user-configurable. The server administrator should be able to specify plugins which are to receive their own threads (for long-running plugin methods) and should have control over the number of threads in the pool.
 
 #### Redfish Wrapper
 Finally, since the structure of this system is so similar to the Redfish specification, it should be quite straightforward to enable the OData Schema as a configuration option passed to the server.

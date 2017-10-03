@@ -25,7 +25,10 @@ class Plugin(object):
         name_pieces = str(description.get('module', '')).split('.')
         module_name = '.'.join(name_pieces[:-1])
         class_name = name_pieces[-1]
+        return Plugin.safely_create_plugin(module_name, class_name, args, kwargs, url_mods)
 
+    @staticmethod
+    def safely_create_plugin(module_name, class_name, args, kwargs, url_mods):
         try:
             return Plugin.create_plugin(module_name, class_name, args, kwargs, url_mods)
         except RuntimeError as ex:
@@ -64,8 +67,7 @@ class Plugin(object):
         try:
             return getattr(module, class_name)
         except AttributeError as ex:
-            message = "Error loading class: {}".format(str(ex))
-            raise RuntimeError(message)
+            raise RuntimeError("Error loading class: {}".format(str(ex)))
 
     @staticmethod
     def obj_from(cls, args, kwargs):
@@ -110,20 +112,20 @@ class Plugin(object):
 
     @staticmethod
     def path_transform(obj, source_path, dest_path):
-        Plugin.__set_recursive(obj, dest_path.strip('/').split('/'),
-                               Plugin.__pop_recursive(obj,
+        Plugin.set_recursive(obj, dest_path.strip('/').split('/'),
+                             Plugin.__pop_recursive(obj,
                                                       source_path.strip('/').split('/')))
 
     @staticmethod
-    def __get_recursive(map, keys):
+    def get_recursive(map, keys):
         if not keys:
             return map
         if not isinstance(map, dict) or keys[0] not in map:
             raise KeyError(keys)
-        return Plugin.__get_recursive(map[keys[0]], keys[1:])
+        return Plugin.get_recursive(map[keys[0]], keys[1:])
 
     @staticmethod
-    def __set_recursive(map, keys, value):
+    def set_recursive(map, keys, value):
         if not keys:
             map = value
         if len(keys) == 1:
@@ -137,7 +139,7 @@ class Plugin(object):
             return
         if keys[0] not in map:
             map[keys[0]] = {}
-        Plugin.__set_recursive(map[keys[0]], keys[1:], value)
+        Plugin.set_recursive(map[keys[0]], keys[1:], value)
 
     @staticmethod
     def __pop_recursive(map, path):

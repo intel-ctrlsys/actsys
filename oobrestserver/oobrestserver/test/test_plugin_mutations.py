@@ -5,9 +5,8 @@ from oobrestserver.Plugin import Plugin
 
 class TestPluginMutations(TestCase):
 
-    def test_search_resources(self):
-
-        sample_data = {
+    def setUp(self):
+        self.sample_data = {
             "A": {
                 "B": {
                     "C": "/a/b/c",
@@ -25,6 +24,10 @@ class TestPluginMutations(TestCase):
                 }
             }
         }
+
+    def test_search_resources(self):
+
+        sample_data = self.sample_data.copy()
 
         tests = [
             ([], 1),
@@ -49,3 +52,8 @@ class TestPluginMutations(TestCase):
         for test in tests:
             print(test)
             self.assertEqual(len(Plugin.search_resources(sample_data, test[0])), test[1])
+
+    def test_get_set(self):
+        sample_data = self.sample_data.copy()
+        Plugin.path_transform(sample_data, '/A/B/C', 'A/C')
+        self.assertEqual(Plugin.get_recursive(sample_data, ['A', 'C']), '/a/b/c')

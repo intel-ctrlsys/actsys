@@ -37,13 +37,27 @@ class ResponseBuilder(object):
         value = cherrypy.request.json
         return self.set(value, **kwargs)
 
-    def get(self, sample_rate=None, duration=None, leaves_only=False, timeout=None):
-        func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#getter', None)
-        return self.handle_parallel(func, sample_rate, duration, leaves_only, timeout)
+    @staticmethod
+    def casted_kwargs(**kwargs):
+        if 'sample_rate' in kwargs:
+            kwargs['sample_rate'] = min(float(kwargs['sample_rate']), 1000) # TODO parameter
+        if 'duration' in kwargs:
+            kwargs['duration'] = float(kwargs['duration'])
+        if 'leaves_only' in kwargs:
+            kwargs['leaves_only'] = bool(kwargs['leaves_only'])
+        if 'timeout' in kwargs:
+            kwargs['timeout'] = float(kwargs['timeout'])
+        return kwargs
 
-    def set(self, value, sample_rate=None, duration=None, leaves_only=False, timeout=None):
+    def get(self, **kwargs):
+        func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#getter', None)
+        kwargs = ResponseBuilder.casted_kwargs(**kwargs)
+        return self.handle_parallel(func, **kwargs)
+
+    def set(self, value, **kwargs):
         func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#setter', value)
-        return self.handle_parallel(func, sample_rate, duration, leaves_only, timeout)
+        kwargs = ResponseBuilder.casted_kwargs(**kwargs)
+        return self.handle_parallel(func, **kwargs)
 
     @staticmethod
     def wrapped_plugin_method(method_label, value, node):
@@ -61,32 +75,10 @@ class ResponseBuilder(object):
             exception = str(ex)
         return node, return_value, exception
 
-    def handle_parallel(self, sample_method, sample_rate, duration, leaves_only, timeout):
-
-        """
-        Parse URL args, sample the plugins concurrently, and build the response
-        """
-
-        SAMPLE_RATE_MAX = 1000 # TODO parameter for server setup
-
-        if sample_rate is None:
-            sample_rate = 1
-        else:
-            sample_rate = float(sample_rate)
-
-        if sample_rate > SAMPLE_RATE_MAX:
-            sample_rate = SAMPLE_RATE_MAX
-
-        if duration is None:
-            duration = 1
-        else:
-            duration = float(duration)
+    def handle_parallel(self, sample_method, sample_rate=1, duration=1, leaves_only=False, timeout=None):
 
         if leaves_only:
             self.nodes = self.leaf_nodes()
-
-        if timeout is not None:
-            timeout = float(timeout)
 
         if not self.nodes:
             return {}
@@ -101,17 +93,17 @@ class ResponseBuilder(object):
             timers = []
             sample_times = [i / sample_rate for i in range(int(duration * sample_rate))]
 
+            stop_threads = threading.Event() # TODO make threaded plugins aware of this event
+            if timeout is not None:
+                threading.Timer(timeout, stop_threads.set).start()
+
             for sample_time in sample_times:
                 timer = threading.Timer(sample_time, put_map, [sample_method, self.nodes])
                 timers.append(timer)
                 timer.start()
 
             for timer in timers:
-                timer.join(timeout)
-                if not timer.is_alive():
-                    #TODO create subclass of threading timer that allows
-                    #TODO plugin interrupts from multithreaded context.
-                    pass
+                timer.join()
 
             results = []
             while not result_queue.empty():

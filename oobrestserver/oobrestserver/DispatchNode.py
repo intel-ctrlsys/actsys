@@ -72,7 +72,7 @@ class DispatchNode(object):
                     continue
                 print("loading a previously-defined plugin")
                 plugin_object = self.saved_plugins[plugin_description]
-                # TODO, hang on, does a name define an instance or a description?? maybe I should support both
+                # TODO, does a name define an instance or a description?? maybe I should support both
             self.config.update(plugin_object)
             # TODO do this in a way that detects overwritten plugin resources and warns about them
 

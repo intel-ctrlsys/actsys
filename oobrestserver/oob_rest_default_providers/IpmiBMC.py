@@ -9,7 +9,7 @@ OOBREST Plugin for atomic OOB Management through IPMI.
 
 import functools
 import threading
-
+import time
 import subprocess
 
 from oob_rest_default_providers import execute_subprocess
@@ -20,6 +20,8 @@ class IpmiBMC(object):
     def __init__(self, hostname, port, username, password, interface='lanplus'):
         self.sol_lock = threading.Lock()
         self.power_state_lock = threading.Lock()
+        self.sdr_lock = threading.Lock()
+
         self.config = {
             'chassis_state': {
                 '#getter': self.get_chassis_state,
@@ -41,6 +43,8 @@ class IpmiBMC(object):
                 '#setter': self.set_led_interval
             }
         }
+        self.last_sdr_update_time = 0
+        self.sdr_cache = {}
 
         hostname = hostname or '127.0.0.1'
         port = port or '623'
@@ -49,6 +53,7 @@ class IpmiBMC(object):
             self.ipmitool_opts += ['-U', username]
         if password:
             self.ipmitool_opts += ['-P', password]
+
         self.populate_sensors()
 
     def get_chassis_state(self):
@@ -80,21 +85,25 @@ class IpmiBMC(object):
             raise RuntimeError("Error using ipmitool: " + str(ex))
 
     def populate_sensors(self):
-        sensor_table = self.get_sensor_table()
-        for sensor_name in sensor_table:
-            self.config['sensors'][sensor_name] = {
-                '#getter': functools.partial(self.get_sensor_by_name, sensor_name),
-                '#units': sensor_table[sensor_name][1]
-            }
+        with self.sdr_lock:
+            self.__update_sdr_cache()
+            for sensor_name in self.sdr_cache:
+                self.config['sensors'][sensor_name] = {
+                    '#getter': functools.partial(self.get_sensor_by_name, sensor_name),
+                    '#units': self.sdr_cache[sensor_name][1]
+                }
 
     def get_sensor_by_name(self, sensor_name):
-        sensor_table = self.get_sensor_table()
-        value, units = sensor_table.get(sensor_name, (None, None))
-        return value
+        with self.sdr_lock:
+            self.__update_sdr_cache()
+            value, units = self.sdr_cache.get(sensor_name, (None, None))
+            return value
 
-    def get_sensor_table(self):
-        raw_table = self.capture_raw_sensor_table()
-        return IpmiBMC.parse_raw_sensor_table(raw_table)
+    def __update_sdr_cache(self):
+        if self.last_sdr_update_time <= time.time() - 1.0:
+            raw_table = self.capture_raw_sensor_table()
+            self.sdr_cache = IpmiBMC.parse_raw_sensor_table(raw_table)
+            self.last_sdr_update_time = time.time()
 
     def capture_raw_sensor_table(self):
         command = self.ipmitool_opts + ['sdr']
@@ -127,22 +136,22 @@ class IpmiBMC(object):
 
     def capture_to_line(self, stop_line):
         """Start capturing console"""
-        console_lines = []
-        try:
-            command = self.ipmitool_opts + ['sol', 'activate']
-            consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-        except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknow exceptions
-            raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
-                              + str(ex))
-
-        while not consolelog.poll():
-            buffer_v = consolelog.stdout.readline()
-            length_buff = len(buffer_v)
-            if length_buff > 0:
-                line = buffer_v.strip('\n')
-                console_lines.append(line)
-                if stop_line in line:
-                    consolelog.terminate()
-            # consoleLog.wait()
-        consolelog.terminate()
-        return console_lines
+        with self.sol_lock:
+            console_lines = []
+            try:
+                command = self.ipmitool_opts + ['sol', 'activate']
+                consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+            except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknow exceptions
+                raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
+                                  + str(ex))
+            while not consolelog.poll():
+                buffer_v = consolelog.stdout.readline()
+                length_buff = len(buffer_v)
+                if length_buff > 0:
+                    line = buffer_v.strip('\n')
+                    console_lines.append(line)
+                    if stop_line in line:
+                        consolelog.terminate()
+                # consoleLog.wait()
+            consolelog.terminate()
+            return console_lines

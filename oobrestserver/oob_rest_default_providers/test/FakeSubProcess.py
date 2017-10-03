@@ -16,7 +16,7 @@ class FakeSubProcess(object):
         self.term = True
 
     def communicate(self, input=None, timeout=None):
-        return self.stdout.read().encode('utf-8'), self.stderr.read().encode('utf-8')
+        return self.stdout.read(), self.stderr.read()
 
     def returncode(self):
         return self.ret_code

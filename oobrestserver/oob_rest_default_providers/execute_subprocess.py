@@ -17,7 +17,7 @@ class Output(object):
 
     def __str__(self):
         template = "command: {} return: {} stdout: {} stderr: {}"
-        return template.format(self.command, self.return_code, self.stdout, self.stderr)
+        return template.format(self.command, self.return_code, self.stdout.decode('utf-8'), self.stderr.decode('utf-8'))
 
 def without_capture(command, shell=False):
     with open(os.devnull, 'w') as dev_null:
@@ -27,4 +27,4 @@ def without_capture(command, shell=False):
 def with_capture(command, shell=False):
     pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell)
     stdout, stderr = pipe.communicate()
-    return Output(command, pipe.returncode, stdout.decode('utf-8'), stderr.decode('utf-8'))
+    return Output(command, pipe.returncode, stdout, stderr)

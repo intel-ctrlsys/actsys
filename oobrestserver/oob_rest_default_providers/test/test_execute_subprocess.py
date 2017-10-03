@@ -17,23 +17,23 @@ class TestExecuteSubprocess(TestCase):
 
     def test_with_capture(self):
         output = execute_subprocess.with_capture(['true'])
-        self.assertEqual(output.stdout, '')
-        self.assertEqual(output.stderr, '')
+        self.assertEqual(output.stdout, b'')
+        self.assertEqual(output.stderr, b'')
         self.assertEqual(output.command, 'true')
         self.assertEqual(output.return_code, 0)
 
     def test_echo_with_capture(self):
         output = execute_subprocess.with_capture(['echo', 'hello'])
-        self.assertEqual(output.stdout, 'hello\n')
-        self.assertEqual(output.stderr, '')
+        self.assertEqual(output.stdout, b'hello\n')
+        self.assertEqual(output.stderr, b'')
         self.assertEqual(output.command, 'echo hello')
         self.assertEqual(output.return_code, 0)
         self.assertEqual(str(output), "command: echo hello return: 0 stdout: hello\n stderr: ")
 
     def test_errcode_with_capture(self):
         output = execute_subprocess.with_capture(['false'])
-        self.assertEqual(output.stdout, '')
-        self.assertEqual(output.stderr, '')
+        self.assertEqual(output.stdout, b'')
+        self.assertEqual(output.stderr, b'')
         self.assertEqual(output.command, 'false')
         self.assertEqual(output.return_code, 1)
 
