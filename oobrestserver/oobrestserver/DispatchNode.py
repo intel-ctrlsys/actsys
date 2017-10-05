@@ -34,7 +34,7 @@ class DispatchNode(object):
         del vpath[:]
         return ResponseBuilder(leaves)
 
-    def __init__(self, config=None, base_route='', saved_plugins=None, logger=None):
+    def __init__(self, config=None, base_route='', saved_plugins=None):
         self.config = config or {}
         self.route = base_route
         self.saved_plugins = saved_plugins or {}
@@ -72,9 +72,7 @@ class DispatchNode(object):
                     continue
                 print("loading a previously-defined plugin")
                 plugin_object = self.saved_plugins[plugin_description]
-                # TODO, does a name define an instance or a description?? maybe I should support both
             self.config.update(plugin_object)
-            # TODO detect overwritten plugin resources and warn user about them
 
     def add_children(self):
         for child in [x for x in self.config if not x.startswith('_') and not x.startswith('#')]:
@@ -99,12 +97,12 @@ class DispatchNode(object):
                 return [self]
             if '**' in vpath[0]:
                 return self.descendants_matching('/'.join(vpath))
-            return sum([child.dispatch(vpath[1:]) for child in self.children_matching(vpath[0])],[])
+            return sum([child.dispatch(vpath[1:]) for child in self.children_matching(vpath[0])], [])
         except ValueError as val_err:
             raise cherrypy.HTTPError(status=400, message=str(val_err))
 
     def cleanup(self):
-        self.config.get('#cleanup', lambda:None)()
+        self.config.get('#cleanup', lambda: None)()
         for child in self.children:
             self.children[child].cleanup()
 

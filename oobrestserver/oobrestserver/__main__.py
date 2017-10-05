@@ -9,11 +9,11 @@ Application entry point for NC REST API. Parses arguments, creates the
 services, and starts the API server.
 """
 
-import sys
-import yaml
 import argparse
+import sys
 
 import cherrypy
+import yaml
 
 from oobrestserver.Application import Application
 

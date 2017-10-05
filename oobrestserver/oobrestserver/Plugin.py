@@ -70,9 +70,9 @@ class Plugin(object):
             raise RuntimeError("Error loading class: {}".format(str(ex)))
 
     @staticmethod
-    def obj_from(cls, args, kwargs):
+    def obj_from(plugin_class, args, kwargs):
         try:
-            return cls(*args, **kwargs)
+            return plugin_class(*args, **kwargs)
         except TypeError as ex:
             template = "Error creating instance: {}\n\targs: {}\n\tkwargs: {}"
             message = template.format(str(ex), str(args), str(kwargs))
@@ -113,44 +113,43 @@ class Plugin(object):
     @staticmethod
     def path_transform(obj, source_path, dest_path):
         Plugin.set_recursive(obj, dest_path.strip('/').split('/'),
-                             Plugin.__pop_recursive(obj,
-                                                      source_path.strip('/').split('/')))
+                             Plugin.__pop_recursive(obj, source_path.strip('/').split('/')))
 
     @staticmethod
-    def get_recursive(map, keys):
+    def get_recursive(dictionary, keys):
         if not keys:
-            return map
-        if not isinstance(map, dict) or keys[0] not in map:
+            return dictionary
+        if not isinstance(dictionary, dict) or keys[0] not in dictionary:
             raise KeyError(keys)
-        return Plugin.get_recursive(map[keys[0]], keys[1:])
+        return Plugin.get_recursive(dictionary[keys[0]], keys[1:])
 
     @staticmethod
-    def set_recursive(map, keys, value):
+    def set_recursive(dictionary, keys, value):
         if not keys:
-            map = value
+            dictionary = value
         if len(keys) == 1:
-            if not isinstance(map.get(keys[0], None), dict):
-                map[keys[0]] = {}
+            if not isinstance(dictionary.get(keys[0], None), dict):
+                dictionary[keys[0]] = {}
                 #todo warn overwrite
             if isinstance(value, dict):
-                map[keys[0]].update(value)
+                dictionary[keys[0]].update(value)
             else:
-                map[keys[0]] = value
+                dictionary[keys[0]] = value
             return
-        if keys[0] not in map:
-            map[keys[0]] = {}
-        Plugin.set_recursive(map[keys[0]], keys[1:], value)
+        if keys[0] not in dictionary:
+            dictionary[keys[0]] = {}
+        Plugin.set_recursive(dictionary[keys[0]], keys[1:], value)
 
     @staticmethod
-    def __pop_recursive(map, path):
+    def __pop_recursive(dictionary, path):
         if not path:
-            result = map.copy()
-            del map
+            result = dictionary.copy()
+            del dictionary
             return result
         key_piece = path[0]
-        if key_piece not in map:
+        if key_piece not in dictionary:
             raise KeyError(key_piece)
-        value = map.pop(key_piece)
+        value = dictionary.pop(key_piece)
         if len(path) == 1:
             return value
         if not isinstance(value, dict):

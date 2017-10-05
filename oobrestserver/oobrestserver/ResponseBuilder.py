@@ -7,7 +7,6 @@
 Contains the ResponseBuilder class, which represents the service of one request
 """
 
-import functools
 import threading
 import queue
 from multiprocessing.pool import ThreadPool
@@ -41,7 +40,7 @@ class ResponseBuilder(object):
     def request_args_from(kwargs):
         result = {}
         if 'sample_rate' in kwargs:
-            result['sample_rate'] = min(float(kwargs['sample_rate']), 1000) # TODO parameter
+            result['sample_rate'] = min(float(kwargs['sample_rate']), 1000)
         if 'duration' in kwargs:
             result['duration'] = float(kwargs['duration'])
         if 'leaves_only' in kwargs:
@@ -71,8 +70,6 @@ class ResponseBuilder(object):
 
     @staticmethod
     def wrap_method(method_label, args, kwargs):
-        # TODO right now URL provided kwargs can cause cryptic exceptions from plugins
-        # TODO if the plugin method doesn't take kwargs and some are provided.
         def wrapped_plugin_method(node):
             try:
                 func = node.config.get(method_label, None)
@@ -101,7 +98,7 @@ class ResponseBuilder(object):
             timers = []
             sample_times = [i / sample_rate for i in range(int(duration * sample_rate))]
 
-            stop_threads = threading.Event() # TODO make threaded plugins aware of this event
+            stop_threads = threading.Event()
             if timeout is not None:
                 threading.Timer(timeout, stop_threads.set).start()
 
@@ -128,7 +125,7 @@ class ResponseBuilder(object):
                             'start-time': cherrypy.response.time,
                             'samples': [],
                             'exceptions': []
-                        } #TODO OData compliance here
+                        }
                     if sample is not None:
                         response[node.route]['samples'].append(sample)
                     if exception is not None:
@@ -136,4 +133,4 @@ class ResponseBuilder(object):
             return response
 
     def leaf_nodes(self):
-        return [x for x in self.nodes if x.config.get('#units',None) != "PathNode"]
+        return [x for x in self.nodes if x.config.get('#units', None) != "PathNode"]
