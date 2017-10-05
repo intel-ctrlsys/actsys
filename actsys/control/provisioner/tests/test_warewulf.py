@@ -38,7 +38,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         redhat7.3            1672.2   /opt/intel/hpc-orchestrator/admin/images/redhat7.3
         centos7.3            407.1    /opt/intel/hpc-orchestrator/admin/images/centos7.3
         sles12sp1            1217.4   /opt/intel/hpc-orchestrator/admin/images/sles12sp1""")
-        self.mock_esub.return_value = SubprocessOutput(0, expected_output, None)
+        self.mock_esub.return_value = SubprocessOutput(0, expected_output.encode('utf-8'), None)
         self.assertListEqual(self.warewulf.list_images(), ['custom', 'redhat7.3', 'centos7.3', 'sles12sp1'])
 
     def test_list(self):
@@ -48,7 +48,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         test1               NodePool            192.168.1.11        00:1e:67:f9:ba:35
         test2               NodePool            192.168.1.50,192.168.2.50 00:1e:67:f9:ca:4d
         test3               UNDEF""")
-        self.mock_esub.return_value = SubprocessOutput(0, expected_output, None)
+        self.mock_esub.return_value = SubprocessOutput(0, expected_output.encode('utf-8'), None)
         self.assertListEqual(self.warewulf.list(), ['test1', 'test2', 'test3'])
 
     def test_set_image(self):
@@ -61,7 +61,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
 
         self.mock_deip.return_value = True
         expected_output = "ERROR:  No VNFS named: <image>"
-        self.mock_esub.return_value = SubprocessOutput(1, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(1, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_image(device, "foo")
 
@@ -76,7 +76,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         DBD::mysql::st execute failed: INSERT command denied to user 'user'@'localhost' for table 'binstore' at /usr/share/perl5/vendor_perl/Warewulf/DataStore/SQL/MySQL.pm line 604.
         ERROR:  put_chunk() failed with error:  INSERT command denied to user 'user'@'localhost' for table 'binstore'
         WARNING:  Could not open /etc/hosts: Permission denied""")
-        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_image(device, "foo")
 
@@ -86,7 +86,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
 
         device.pop(Provisioner.PROVISIONER_IMAGE_KEY)
 
-        self.mock_esub.return_value = SubprocessOutput(0, '', None)
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), None)
         self.warewulf.set_image(device, "some_image2")
         self.assertEqual(device.get(Provisioner.PROVISIONER_IMAGE_KEY), "some_image2")
 
@@ -121,7 +121,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.assertIsNone(device.get("ip_address"))
         self.assertIsNotNone(device.get("mac_address"))
 
-        self.mock_esub.return_value = SubprocessOutput(0, '', '')
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), ''.encode('utf-8'))
         self.warewulf.set_ip_address(device, "127.0.0.2")
         self.assertEqual(device.get("ip_address"), "127.0.0.2", device)
 
@@ -151,7 +151,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         DBD::mysql::st execute failed: INSERT command denied to user 'user'@'localhost' for table 'binstore' at /usr/share/perl5/vendor_perl/Warewulf/DataStore/SQL/MySQL.pm line 604.
         ERROR:  put_chunk() failed with error:  INSERT command denied to user 'user'@'localhost' for table 'binstore'
         WARNING:  Could not open /etc/hosts: Permission denied"""
-        self.mock_esub.return_value = SubprocessOutput(0, expected_output, expected_stderr)
+        self.mock_esub.return_value = SubprocessOutput(0, expected_output.encode('utf-8'), expected_stderr.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_ip_address(device, "127.0.0.11", "ensp6f0")
 
@@ -168,7 +168,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
 
         Proceed?
         Deleted 1 nodes.""")
-        self.mock_esub.return_value = SubprocessOutput(0, expected_output, None)
+        self.mock_esub.return_value = SubprocessOutput(0, expected_output.encode('utf-8'), None)
         result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
         self.assertEqual({"hostname": "test1", Provisioner.PROVISIONER_KEY: "UNDEF"}, result)
 
@@ -179,12 +179,12 @@ class TestWarewulfProvisioner(unittest.TestCase):
 
         Proceed?
         Deleted 2 nodes.""")
-        self.mock_esub.return_value = SubprocessOutput(0, expected_output, None)
+        self.mock_esub.return_value = SubprocessOutput(0, expected_output.encode('utf-8'), None)
         with self.assertRaises(ProvisionerException):
             result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
 
         self.mock_deip.return_value = False
-        self.mock_esub.return_value = SubprocessOutput(1, '', None)
+        self.mock_esub.return_value = SubprocessOutput(1, ''.encode('utf-8'), None)
         result = self.warewulf.delete({"hostname": "test1", Provisioner.PROVISIONER_KEY: "warewulf"})
         self.assertEqual({"hostname": "test1", Provisioner.PROVISIONER_KEY: "UNDEF"}, result)
 
@@ -198,7 +198,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
 
         self.mock_deip.return_value = True
         expected_output = "ERROR:  No bootstrap named: foo"
-        self.mock_esub.return_value = SubprocessOutput(1, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(1, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_bootstrap(device, "foo")
 
@@ -213,7 +213,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
                 DBD::mysql::st execute failed: INSERT command denied to user 'user'@'localhost' for table 'binstore' at /usr/share/perl5/vendor_perl/Warewulf/DataStore/SQL/MySQL.pm line 604.
                 ERROR:  put_chunk() failed with error:  INSERT command denied to user 'user'@'localhost' for table 'binstore'
                 WARNING:  Could not open /etc/hosts: Permission denied""")
-        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_bootstrap(device, "foo")
 
@@ -221,7 +221,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.warewulf.set_bootstrap(device, "some_bootstrap")
         self.assertEqual(device.get(Provisioner.PROVISIONER_BOOTSTRAP_KEY), "some_bootstrap")
 
-        self.mock_esub.return_value = SubprocessOutput(0, '', None)
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), None)
         self.warewulf.set_bootstrap(device, "some_bootstrap2")
         self.assertEqual(device.get(Provisioner.PROVISIONER_BOOTSTRAP_KEY), "some_bootstrap2")
 
@@ -244,7 +244,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.mock_deip.return_value = True
 
         # Invalid HW Address
-        self.mock_esub.return_value = SubprocessOutput(1, None, "ERROR:  Option 'hwaddr' has invalid characters")
+        self.mock_esub.return_value = SubprocessOutput(1, None, "ERROR:  Option 'hwaddr' has invalid characters".encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_hardware_address(device, "invalid_hardware_address")
 
@@ -257,7 +257,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.assertIsNone(device.get("mac_address"))
         self.assertEqual(device.get("ip_address"), "192.168.123.123")
 
-        self.mock_esub.return_value = SubprocessOutput(0, '', '')
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), ''.encode('utf-8'))
         self.warewulf.set_hardware_address(device, "00:00:00:00:00:01")
         self.assertEqual(device.get("mac_address"), "00:00:00:00:00:01", device)
 
@@ -287,7 +287,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         DBD::mysql::st execute failed: INSERT command denied to user 'user'@'localhost' for table 'binstore' at /usr/share/perl5/vendor_perl/Warewulf/DataStore/SQL/MySQL.pm line 604.
         ERROR:  put_chunk() failed with error:  INSERT command denied to user 'user'@'localhost' for table 'binstore'
         WARNING:  Could not open /etc/hosts: Permission denied"""
-        self.mock_esub.return_value = SubprocessOutput(0, expected_output, expected_stderr)
+        self.mock_esub.return_value = SubprocessOutput(0, expected_output.encode('utf-8'), expected_stderr.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_hardware_address(device, "00:00:00:00:00:00", "ensp6f0")
 
@@ -303,7 +303,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
             self.warewulf.add({"hostname": "test-1"})
 
         # Negative case
-        self.mock_esub.return_value = SubprocessOutput(56, 'foo', 'bar')
+        self.mock_esub.return_value = SubprocessOutput(56, 'foo'.encode('utf-8'), 'bar'.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.add({"hostname": "test-1"})
 
@@ -320,12 +320,12 @@ class TestWarewulfProvisioner(unittest.TestCase):
         DBD::mysql::st execute failed: INSERT command denied to user 'user'@'localhost' for table 'binstore' at /usr/share/perl5/vendor_perl/Warewulf/DataStore/SQL/MySQL.pm line 604.
         ERROR:  put_chunk() failed with error:  INSERT command denied to user 'user'@'localhost' for table 'binstore'
         WARNING:  Could not open /etc/hosts: Permission denied""")
-        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.add({"hostname": "test-1"})
 
         # Positive case
-        self.mock_esub.return_value = SubprocessOutput(0, '', '')
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), ''.encode('utf-8'))
         device = self.warewulf.add({"hostname": "test-1"})
         self.assertEqual(device.get(Provisioner.PROVISIONER_KEY), "warewulf")
 
@@ -337,7 +337,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.mock_deip.return_value = True
 
         # Positive case
-        self.mock_esub.return_value = SubprocessOutput(0, '', '')
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), ''.encode('utf-8'))
         device = self.warewulf.add({"hostname": "test-1"})
         self.assertEqual(device.get(Provisioner.PROVISIONER_KEY), "warewulf")
 
@@ -356,7 +356,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
 
         self.mock_deip.return_value = True
         expected_output = "ERROR:  No file found for name: foo"
-        self.mock_esub.return_value = SubprocessOutput(1, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(1, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_files(device, "foo")
 
@@ -371,7 +371,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         DBD::mysql::st execute failed: INSERT command denied to user 'user'@'localhost' for table 'binstore' at /usr/share/perl5/vendor_perl/Warewulf/DataStore/SQL/MySQL.pm line 604.
         ERROR:  put_chunk() failed with error:  INSERT command denied to user 'user'@'localhost' for table 'binstore'
         WARNING:  Could not open /etc/hosts: Permission denied""")
-        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_files(device, "foo")
 
@@ -379,7 +379,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.warewulf.set_files(device, "some_file")
         self.assertEqual(device.get(Provisioner.PROVISIONER_FILE_KEY), "some_file")
 
-        self.mock_esub.return_value = SubprocessOutput(0, '', None)
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), None)
         self.warewulf.set_files(device, "some_file,some_file2")
         self.assertEqual(device.get(Provisioner.PROVISIONER_FILE_KEY), "some_file,some_file2")
 
@@ -407,7 +407,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         DBD::mysql::st execute failed: INSERT command denied to user 'user'@'localhost' for table 'binstore' at /usr/share/perl5/vendor_perl/Warewulf/DataStore/SQL/MySQL.pm line 604.
         ERROR:  put_chunk() failed with error:  INSERT command denied to user 'user'@'localhost' for table 'binstore'
         WARNING:  Could not open /etc/hosts: Permission denied""")
-        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output)
+        self.mock_esub.return_value = SubprocessOutput(0, None, expected_output.encode('utf-8'))
         with self.assertRaises(ProvisionerException):
             self.warewulf.set_kernel_args(device, "foo")
 
@@ -415,7 +415,7 @@ class TestWarewulfProvisioner(unittest.TestCase):
         self.warewulf.set_kernel_args(device, "some_arg")
         self.assertEqual(device.get(Provisioner.PROVISIONER_KARGS_KEY), "some_arg")
 
-        self.mock_esub.return_value = SubprocessOutput(0, '', None)
+        self.mock_esub.return_value = SubprocessOutput(0, ''.encode('utf-8'), None)
         self.warewulf.set_kernel_args(device, "console=tty01,1153295")
         self.assertEqual(device.get(Provisioner.PROVISIONER_KARGS_KEY), "console=tty01,1153295")
 

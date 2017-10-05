@@ -53,7 +53,9 @@ class TestsInbandDiagnostics(unittest.TestCase):
             "hostname": "test1",
             "ip_address": "127.0.0.1",
             "image": "old_img.bin",
+            "provisioner_bootstarp": "old_img.bin",
             "provisioner_kernel_args": "old_diag",
+            "mac_address": "00:11:22:33:44:55",
             "console_port": "1000",
             "node_power": "mock",
             "device_type": "node",
@@ -63,8 +65,9 @@ class TestsInbandDiagnostics(unittest.TestCase):
         self.device = {
             "hostname": "test1",
             "ip_address": "127.0.0.1",
-            "image": "old_img.bin",
+            "provisioner_bootstrap": "old_img.bin",
             "provisioner_kernel_args": "old_diag",
+            "mac_address": "00:11:22:22:33:44",
             "console_port": "1000",
             "resource_controller": "mock",
             "device_power_control": "mock",
@@ -75,20 +78,36 @@ class TestsInbandDiagnostics(unittest.TestCase):
             "bmc": self.bmc
         }
         self.image_name = "Centos7.1"
-        self.test_name = None
+        self.test_name = "DiagList=all DiagReboot=yes"
+        self.test_name2 = None
         self.image_name1 = "test2.bin"
         self.test_name1 = "test_diag.bin"
 
     @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog')
     @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog.start_log_capture')
-    @patch.object(Thread, 'start')
-    def test_launch_diags_positive(self, mock_thread, console_mock, console_mock_class):
+    # @patch.object(Thread, 'start')
+    # @patch.object(Thread, 'join')
+    @patch.object(InBandDiagnostics, '_edit_boot_parameters')
+    #@patch.object(InBandDiagnostics, '_console_log_calling')
+    def test_launch_diags_positive(self, edit_patch, console_mock, console_mock_class):
         """tests positive"""
         self.reset_for_test()
         console_mock.return_value = "Start", "Stop"
+        edit_patch.return_value = 1
         self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
                                                                 self.mock_power_control]
         diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name,
+                                              plugin_manager=self.mock_plugin_manager)
+        diags_mock_plugin.console_log = console_mock_class
+        result = diags_mock_plugin.launch_diags(self.device, self.bmc)
+        self.assertGreater(len(result), 0)
+
+        self.reset_for_test()
+        console_mock.return_value = "Start", "Stop"
+        edit_patch.return_value = 1
+        self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
+                                                                self.mock_power_control]
+        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name2,
                                               plugin_manager=self.mock_plugin_manager)
         diags_mock_plugin.console_log = console_mock_class
         result = diags_mock_plugin.launch_diags(self.device, self.bmc)
@@ -148,12 +167,13 @@ class TestsInbandDiagnostics(unittest.TestCase):
 
     @patch.object(IpmiConsoleLog, 'start_log_capture')
     @patch.object(Thread, 'start')
-    def test_power_control_failure(self, console_mock, mock_thread):
+    def test_power_control_failure(self,  console_mock, mock_thread):
         """tests exceptions"""
         console_mock.start_log_capture = MagicMock()
         self.reset_for_test()
         mock_thread.start = MagicMock()
         self.mock_power_control.set_device_power_state.return_value = False
+
         self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
                                                                 self.mock_power_control]
         diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name,

@@ -116,8 +116,8 @@ class Warewulf(Provisioner):
             output = self.utilities.execute_subprocess(['wwsh', '-y', 'node', 'delete', device_name_for_provisioner])
 
             self._check_for_general_errors(output)
-            if output.stdout is not None and "Deleted 1 nodes." not in output.stdout \
-                    and "No Nodes Found" not in output.stdout:
+            if output.stdout is not None and "Deleted 1 nodes." not in output.stdout.decode() \
+                    and "No Nodes Found" not in output.stdout.decode():
                 raise ProvisionerException("Some unknown error occured", output)
 
         device[self.PROVISIONER_KEY] = self.UNSET_KEY
@@ -181,7 +181,7 @@ class Warewulf(Provisioner):
                                                         '--netdel', interface])
 
             if output.return_code == 1 and output.stderr is not None \
-                    and "ERROR:  Object c1 has no netdev" in output.stderr:
+                    and "ERROR:  Object c1 has no netdev" in output.stderr.decode():
                 # This is an ok error to have... everything was deleted as needed.
                 output.return_code = 0
 
@@ -264,7 +264,7 @@ class Warewulf(Provisioner):
                                                         '--netdel', interface])
 
             if output.return_code == 1 and output.stderr is not None \
-                    and "ERROR:  Object c1 has no netdev" in output.stderr:
+                    and "ERROR:  Object c1 has no netdev" in output.stderr.decode():
                 # This is an ok error to have... everything was deleted as needed.
                 output.return_code = 0
 
@@ -275,7 +275,7 @@ class Warewulf(Provisioner):
                 ['wwsh', '-y', 'node', 'set', device_name_for_provisioner, '--netdev={}'.format(interface),
                  '--hwaddr={}'.format(hardware_address)])
 
-            if output.stderr is not None and "ERROR:  Option 'hwaddr' has invalid characters" in output.stderr:
+            if output.stderr is not None and "ERROR:  Option 'hwaddr' has invalid characters" in output.stderr.decode():
                 raise ProvisionerException("The hardware address `{}` is not valid.".format(hardware_address), output)
 
         self._check_for_general_errors(output)
@@ -339,7 +339,7 @@ class Warewulf(Provisioner):
         output = self.utilities.execute_subprocess(
             ['wwsh', '-y', 'provision', 'set', device_name_for_provisioner, '--vnfs={}'.format(image)])
         # Check for errors becuase of No VNFS
-        if output.stderr is not None and "No VNFS named:" in output.stderr:
+        if output.stderr is not None and "No VNFS named:" in output.stderr.decode():
             raise ProvisionerException("The image supplied is not known by the provisioner.", output)
         # Check for other, more general, errors.
         self._check_for_general_errors(output)
@@ -399,7 +399,7 @@ class Warewulf(Provisioner):
         output = self.utilities.execute_subprocess(
             ['wwsh', '-y', 'provision', 'set', device_name_for_provisioner, '--bootstrap={}'.format(bootstrap)])
         # Check for errors because of no bootstrap with this name
-        if output.stderr is not None and "No bootstrap named:" in output.stderr:
+        if output.stderr is not None and "No bootstrap named:" in output.stderr.decode():
             raise ProvisionerException("The bootstrap supplied is not known by the provisioner.", output)
         # Check for other, more general, errors.
         self._check_for_general_errors(output)
@@ -463,7 +463,7 @@ class Warewulf(Provisioner):
             ['wwsh', '-y', 'provision', 'set', device_name_for_provisioner, '--files={}'.format(files)])
         # Check for errors because of no file(s) with this name
         # TODO: This needs to be changed because of the possibility of partial success!
-        if output.stderr is not None and "No file found for name:" in output.stderr:
+        if output.stderr is not None and "No file found for name:" in output.stderr.decode():
             raise ProvisionerException("The file(s) supplied are not known by the provisioner.", output)
         # Check for other, more general, errors.
         self._check_for_general_errors(output)
@@ -540,7 +540,7 @@ class Warewulf(Provisioner):
         """
         output = self.utilities.execute_subprocess(['wwsh', 'node', 'list'])
         device_names = list()
-        output_lines = output.stdout.splitlines()
+        output_lines = output.stdout.decode().splitlines()
         for device_line in output_lines:
             if device_line.startswith("NAME") or device_line.startswith("==================="):
                 # Header lines
@@ -562,7 +562,7 @@ class Warewulf(Provisioner):
         """
         output = self.utilities.execute_subprocess(['wwsh', 'vnfs', 'list'])
         image_names = list()
-        output_lines = output.stdout.splitlines()
+        output_lines = output.stdout.decode().splitlines()
         for image_line in output_lines:
             if image_line.startswith("VNFS"):
                 # Header lines
@@ -609,7 +609,7 @@ class Warewulf(Provisioner):
     @staticmethod
     def _check_for_general_errors(output, assert_is_zero=True):
         """Check for the most common errors in warewulf commands. Permission errors, and pad error codes."""
-        if output.stderr is not None and Warewulf.DATABASE_INSERT_ERROR in output.stderr:
+        if output.stderr is not None and Warewulf.DATABASE_INSERT_ERROR in output.stderr.decode():
             raise ProvisionerException("Could not complete action due to insufficient"
                                        " permissions to the warewulf db.", output)
         if assert_is_zero and output.return_code != 0:
