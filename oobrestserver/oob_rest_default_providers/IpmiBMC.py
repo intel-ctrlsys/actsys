@@ -64,8 +64,8 @@ class IpmiBMC(object):
             raise RuntimeError('Failed to execute ipmitool! Command: {} stdout: {} stderr: {}'
                                .format(command, subprocess_result.stdout, subprocess_result.stderr))
         for line in subprocess_result.stdout.splitlines():
-            if line.strip().startswith('System Power'):
-                return line.split(':')[1].strip()
+            if line.decode().strip().startswith('System Power'):
+                return line.decode().split(':')[1].strip()
         raise RuntimeError('Failed to retrieve chassis power state!')
 
     def set_chassis_state(self, new_state):
@@ -113,7 +113,7 @@ class IpmiBMC(object):
     def parse_raw_sensor_table(raw_table):
         sensor_table = {}
         for line in raw_table.splitlines():
-            sensor_name, value, units = IpmiBMC.parse_sensor_table_line(str(line))
+            sensor_name, value, units = IpmiBMC.parse_sensor_table_line(line.decode('ascii'))
             sensor_table[sensor_name] = (value, units)
         return sensor_table
 
@@ -141,17 +141,24 @@ class IpmiBMC(object):
             try:
                 command = self.ipmitool_opts + ['sol', 'activate']
                 consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-            except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknow exceptions
+            except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknown exceptions
                 raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
                                   + str(ex))
             while not consolelog.poll():
                 buffer_v = consolelog.stdout.readline()
                 length_buff = len(buffer_v)
                 if length_buff > 0:
-                    line = buffer_v.strip('\n')
+                    line = buffer_v.decode('ascii').strip('\n')
                     console_lines.append(line)
                     if stop_line in line:
                         consolelog.terminate()
                 # consoleLog.wait()
             consolelog.terminate()
+            try:
+                command = self.ipmitool_opts + ['sol', 'deactivate']
+                consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+            except Exception as ex:
+                raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
+                                  + str(ex))
+            consolelog.wait()
             return console_lines

@@ -133,6 +133,13 @@ class TestServer(helper.CPWebCase):
                         "module": "BadPlugins.NotCallableGetter"
                     }
                 ]
+            },
+            "kw": {
+                "_attach_plugins": [
+                    {
+                        "module": "oob_rest_default_providers.EchoKwargs"
+                    }
+                ]
             }
         }
 
@@ -305,6 +312,10 @@ class TestServer(helper.CPWebCase):
         self.getPage('/api/good_short/hello')
         self.assertStatus('200 OK')
         self.assertIn('Hello World!', self.body.decode('utf-8'))
+
+    def test_echo_kwargs(self):
+        self.getPage('/api/kw/kwargs?foo=bar')
+        self.assertEqual("{'foo': 'bar'}", json.loads(self.body.decode('utf-8'))['kw/kwargs']['samples'][0])
 
     def test_bad_ctor(self):
         self.getPage('/api/bad_ctor/*')

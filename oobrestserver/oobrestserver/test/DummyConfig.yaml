@@ -15,3 +15,6 @@ folder:
 exception_thrower:
     _attach_plugins:
         - module: oob_rest_default_providers.ExceptionThrower
+kwargs:
+    _attach_plugins:
+        - module: oob_rest_default_providers.EchoKwargs

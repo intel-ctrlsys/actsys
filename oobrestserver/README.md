@@ -155,6 +155,8 @@ Parameter | Type | Description | Notes
 `timeout` | float | The server shall time out after the provided number of seconds, killing all processes related to the request and returning a failure message to the client. | *This argument is not yet implemented, and will be ignored.*
 `callback` | string | When provided, a response is given to the client immediately, and the server shall perform a POST operation to the URL provided by this argument when the request is complete. | *This argument is not yet implemented, and will be ignored.*
 
+Any URL parameters other than the ones listed above are passed to the invoked plugin method's `kwargs` dictionary.
+
 ### HTTP methods
 The only supported HTTP methods are GET and POST. GET corresponds to the defined "get" behavior of a property, and POST corresponds to the "set" behavior.
 > Note: Internally, these map to the methods identified as "#getter" and "#setter" by the plugin configuration dictionary, respectively.
@@ -166,23 +168,16 @@ The body of any GET request to the OOB-REST server will be ignored. The route an
 The body of a POST request should contain only the JSON-serialized object the user wishes to pass as an argument to the setter function of the property identified by the route. The request header must be application/json.
 
 ### JSON Response Formats
-There are two possible response formats that the OOB-REST server can respond with: directory responses and leaf-node responses.
-
-#### Directory Response
-The directory response consists of the key `children` mapped to a JSON object whose keys are the names of URL route pieces that are valid next-level steps down the hierarchy, and whose values are the assembled URLS of those nodes.
-
-### Leaf-node Response
-For the response JSON object given by leaf nodes in the hierarchy, the keys are the full route to the property in question and the values are JSON objects with the following schema:
+Every response given by the server is a JSON object whose top-level keys are the full paths to resources identified by the requested URL, after disambiguation. The mapped objects describe the state of their respective resources with the following schema.
 
 Key | Value Type | Value Description
 -|-
 `units` | string | A string identifying the units of measurement for this property. It is optional.
 `exceptions` | list of strings | List of strings taken by casting any exceptions encountered by plugins during this operation.
-`end-time` | float | The server's system time when the operation finished
 `start-time` | float | The server's system time when the operation started
 `samples` | list of objects | The list of JSON-serialized objects returned by the plugin as a response for this property. There may be more than one returned object when  the `duration` and `sample_rate` parameters are given.
 
-When multiple properties are identified by an ambiguous path, the response will contain key-value pairs identifying the fully-resolved path and response for each property.
+For URLs that identify non-terminal nodes of the resource tree, the `units` property is `PathNode` and each value in the `samples` list is a list of valid next-step URL pieces that, when concatenated with the current URL, lead to deeper nodes in the resource tree. This is done to implement `ls`-like functionality.
 
 ### Client API Python Wrapper
 Provided with the server is a Python wrapper class to handle URLs and HTTP requests for the client. This class, called NodeController, has the following methods:
@@ -317,9 +312,6 @@ There is no notion of a user session anywhere in the server as it stands today. 
 
 #### Plugin-level User Authorization
 The server now has authentication, but no authorization. An authorization system shall be developed, so that users have different levels of access in the system. For example, some plugins may demand a higher level of clearance to use, and certainly ordinary users should not have access to the live reconfiguration services mentioned earlier. This should be implemented in a way that is independent of the chosen authentication strategy.
-
-#### Plugin Method URL Keyword Arguments
-GET methods currently cannot take any parameters. This shall be remedied by allowing plugin-provided methods to access the request's URL parameters through `kwargs`.
 
 #### Thread Pool Configuration Options
 Currently, all server requests are processed by creating a thread pool to honor the parallel operations of the request concurrently. This should be user-configurable. The server administrator should be able to specify plugins which are to receive their own threads (for long-running plugin methods) and should have control over the number of threads in the pool.

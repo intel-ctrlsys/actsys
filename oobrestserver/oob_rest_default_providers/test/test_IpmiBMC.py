@@ -144,7 +144,7 @@ class TestIpmiBMC(TestCase):
 
     def test_capture_to_line(self):
 
-        lines = samples.theoretical_sol_activate_output.splitlines()
+        lines = [x.decode('ascii') for x in samples.theoretical_sol_activate_output.splitlines()]
         expectations = {
             'SIGIL0': lines[:1],
             'SIGIL1': lines[:4],
@@ -159,7 +159,7 @@ class TestIpmiBMC(TestCase):
         for sigil in expectations:
             popen_patch = mock.patch(
                 "subprocess.Popen",
-                return_value=FakeSubProcess(samples.theoretical_sol_activate_output, '', 0)
+                return_value=FakeSubProcess(samples.theoretical_sol_activate_output, b'', 0)
             )
             popen_patch.start()
             result = self.bmc.capture_to_line(sigil)
@@ -178,11 +178,11 @@ class TestIpmiBMC(TestCase):
 
     def test_parse_exception(self):
         try:
-            IpmiBMC.parse_raw_sensor_table("a | b | c\nd | e\nf | g | h\n")
+            IpmiBMC.parse_raw_sensor_table(b"a | b | c\nd | e\nf | g | h\n")
             self.fail()
         except RuntimeError:
             pass
 
     def test_sels(self):
-        mock.patch("subprocess.Popen", return_value=FakeSubProcess(samples.healthy_sel_elist_output, '', 0)).start()
+        mock.patch("subprocess.Popen", return_value=FakeSubProcess(samples.healthy_sel_elist_output, b'', 0)).start()
         self.assertEqual(self.bmc.get_sels(), samples.healthy_sel_elist_output.splitlines())

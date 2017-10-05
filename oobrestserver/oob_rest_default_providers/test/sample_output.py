@@ -1,5 +1,5 @@
 theoretical_sol_activate_output = \
-"""SIGIL0
+b"""SIGIL0
 >>> line one
 >>> line two
 SIGIL1_then_words
@@ -11,7 +11,7 @@ SIGIL6
 SIGIL7"""
 
 healthy_chassis_status_output = \
-"""System Power         : on
+b"""System Power         : on
 Power Overload       : false
 Power Interlock      : inactive
 Main Power Fault     : false
@@ -33,7 +33,7 @@ Power Button Disabled: false
 """
 
 healthy_sdr_output = \
-"""Pwr Unit Status  | 0x00              | ok
+b"""Pwr Unit Status  | 0x00              | ok
 IPMI Watchdog    | 0x00              | ok
 Physical Scrty   | 0x00              | ok
 FP NMI Diag Int  | 0x00              | ok
@@ -125,7 +125,7 @@ P2 MTT           | no reading        | ns
 """
 
 healthy_sel_elist_output = \
-"""   1 | 06/03/2014 | 17:38:05 | Event Logging Disabled System Event Log | Log area reset/cleared | Asserted
+b"""   1 | 06/03/2014 | 17:38:05 | Event Logging Disabled System Event Log | Log area reset/cleared | Asserted
    2 | 06/03/2014 | 17:38:05 | Power Supply #0x51 | Presence detected | Deasserted
    3 | 06/03/2014 | 17:38:06 | Fan #0x0c | Fully Redundant | Deasserted
    4 | 06/03/2014 | 17:38:06 | Fan #0x0c | Redundancy Lost | Asserted

@@ -38,42 +38,50 @@ class ResponseBuilder(object):
         return self.set(value, **kwargs)
 
     @staticmethod
-    def casted_kwargs(**kwargs):
+    def request_args_from(kwargs):
+        result = {}
         if 'sample_rate' in kwargs:
-            kwargs['sample_rate'] = min(float(kwargs['sample_rate']), 1000) # TODO parameter
+            result['sample_rate'] = min(float(kwargs['sample_rate']), 1000) # TODO parameter
         if 'duration' in kwargs:
-            kwargs['duration'] = float(kwargs['duration'])
+            result['duration'] = float(kwargs['duration'])
         if 'leaves_only' in kwargs:
-            kwargs['leaves_only'] = bool(kwargs['leaves_only'])
+            result['leaves_only'] = bool(kwargs['leaves_only'])
         if 'timeout' in kwargs:
-            kwargs['timeout'] = float(kwargs['timeout'])
-        return kwargs
-
-    def get(self, **kwargs):
-        func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#getter', None)
-        kwargs = ResponseBuilder.casted_kwargs(**kwargs)
-        return self.handle_parallel(func, **kwargs)
-
-    def set(self, value, **kwargs):
-        func = functools.partial(ResponseBuilder.wrapped_plugin_method, '#setter', value)
-        kwargs = ResponseBuilder.casted_kwargs(**kwargs)
-        return self.handle_parallel(func, **kwargs)
+            result['timeout'] = float(kwargs['timeout'])
+        return result
 
     @staticmethod
-    def wrapped_plugin_method(method_label, value, node):
-        return_value = None
-        exception = None
-        try:
-            func = node.config.get(method_label, None)
-            if func is None:
-                raise RuntimeError('Method not supported')
-            if value is None:
-                return_value = func()
-            else:
-                return_value = func(value)
-        except Exception as ex:
-            exception = str(ex)
-        return node, return_value, exception
+    def method_kwargs_from(kwargs):
+        result = kwargs.copy()
+        for key in ['sample_rate', 'duration', 'leaves_only', 'timeout']:
+            result.pop(key, None)
+        return result
+
+    def get(self, **kwargs):
+        method_kwargs = ResponseBuilder.method_kwargs_from(kwargs)
+        request_kwargs = ResponseBuilder.request_args_from(kwargs)
+        func = ResponseBuilder.wrap_method('#getter', [], method_kwargs)
+        return self.handle_parallel(func, **request_kwargs)
+
+    def set(self, value, **kwargs):
+        method_kwargs = ResponseBuilder.method_kwargs_from(kwargs)
+        request_kwargs = ResponseBuilder.request_args_from(kwargs)
+        func = ResponseBuilder.wrap_method('#setter', [value], method_kwargs)
+        return self.handle_parallel(func, **request_kwargs)
+
+    @staticmethod
+    def wrap_method(method_label, args, kwargs):
+        # TODO right now URL provided kwargs can cause cryptic exceptions from plugins
+        # TODO if the plugin method doesn't take kwargs and some are provided.
+        def wrapped_plugin_method(node):
+            try:
+                func = node.config.get(method_label, None)
+                if func is None:
+                    raise RuntimeError('Method not supported')
+                return node, func(*args, **kwargs), None
+            except Exception as ex:
+                return node, None, str(ex)
+        return wrapped_plugin_method
 
     def handle_parallel(self, sample_method, sample_rate=1, duration=1, leaves_only=False, timeout=None):
 
@@ -87,7 +95,7 @@ class ResponseBuilder(object):
 
             result_queue = queue.Queue()
 
-            def put_map(method, routes):
+            def enqueue_map_results(method, routes):
                 result_queue.put(pool.map_async(method, routes))
 
             timers = []
@@ -98,7 +106,7 @@ class ResponseBuilder(object):
                 threading.Timer(timeout, stop_threads.set).start()
 
             for sample_time in sample_times:
-                timer = threading.Timer(sample_time, put_map, [sample_method, self.nodes])
+                timer = threading.Timer(sample_time, enqueue_map_results, [sample_method, self.nodes])
                 timers.append(timer)
                 timer.start()
 
