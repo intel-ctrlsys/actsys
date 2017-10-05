@@ -7,11 +7,10 @@
 
 
 import json
-
 import cherrypy
 
 
-class GuiDispatcher(object):
+class GuiWrapper(object):
     """Wraps the data from the provider api in an HTML page."""
 
     exposed = True

@@ -103,7 +103,9 @@ class Plugin(object):
         matches_dict = Plugin.filtered_dict(search_path[0], obj)
         result = []
         for matching_key in matches_dict:
-            result += Plugin.search_resources(matches_dict[matching_key], search_path[1:], resolved_path+'/'+matching_key)
+            result += Plugin.search_resources(matches_dict[matching_key],
+                                              search_path[1:],
+                                              resolved_path+'/'+matching_key)
         return result
 
     @staticmethod

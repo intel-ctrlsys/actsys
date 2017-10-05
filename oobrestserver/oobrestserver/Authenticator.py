@@ -31,6 +31,13 @@ class Authenticator(object):
         with open(auth_file_name, 'rb') as auth_file:
             self.users = pickle.load(auth_file)
 
+    def load_or_create(self, auth_file_name):
+        try:
+            self.load(auth_file_name)
+        except IOError:
+            self.create_empty_auth_file(auth_file_name)
+            self.load(auth_file_name)
+
     @staticmethod
     def create_empty_auth_file(auth_file_name):
         with open(auth_file_name, 'wb') as auth_file:

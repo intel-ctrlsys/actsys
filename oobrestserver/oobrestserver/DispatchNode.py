@@ -10,29 +10,14 @@ DispatchNode provides a tree model of values in the system.
 DispatchNode objects load from a config dict and recursively instantiate more
 nodes to build out the tree. If the #obj directive occurs in the config, the
 node loads a plugin and grafts the plugin-provided paths onto the tree "here"
-
 """
 
-import cherrypy
 from oobrestserver.GlobTools import GlobTools
 from oobrestserver.Plugin import Plugin
-from oobrestserver.ResponseBuilder import ResponseBuilder
 
 
 class DispatchNode(object):
     """Dispatch node for finding providers at URL routes."""
-
-    exposed = True
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def GET(self):
-        return self.get()
-
-    def _cp_dispatch(self, vpath):
-        leaves = self.dispatch(vpath)
-        del vpath[:]
-        return ResponseBuilder(leaves)
 
     def __init__(self, config=None, base_route='', saved_plugins=None):
         self.config = config or {}
@@ -85,11 +70,11 @@ class DispatchNode(object):
 
     def add_getter(self):
         if '#getter' not in self.config:
-            self.config['#getter'] = self.get
+            self.config['#getter'] = self.subtrees
             self.config['#units'] = 'PathNode'
 
-    def get(self):
-        return [key for key in self.children]
+    def subtrees(self):
+        return list(self.children.keys())
 
     def dispatch(self, vpath):
         try:
@@ -98,8 +83,14 @@ class DispatchNode(object):
             if '**' in vpath[0]:
                 return self.descendants_matching('/'.join(vpath))
             return sum([child.dispatch(vpath[1:]) for child in self.children_matching(vpath[0])], [])
-        except ValueError as val_err:
-            raise cherrypy.HTTPError(status=400, message=str(val_err))
+        except ValueError:
+            return []
+
+    def get_method(self, label):
+        func = self.config.get(label, None)
+        if func is None:
+            raise RuntimeError('Method not supported')
+        return func
 
     def cleanup(self):
         self.config.get('#cleanup', lambda: None)()

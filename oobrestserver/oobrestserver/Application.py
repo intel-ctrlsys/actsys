@@ -8,17 +8,21 @@
 import cherrypy
 
 from oobrestserver.DispatchNode import DispatchNode
-from oobrestserver.GuiDispatcher import GuiDispatcher
+from oobrestserver.GuiWrapper import GuiWrapper
 from oobrestserver.Authenticator import Authenticator
+import oobrestserver.ResponseBuilder as ResponseBuilder
 
 
 class Application(object):
     """Main class defining the server object to be mounted to cherrypy"""
 
+    exposed = True
+
     def __init__(self, config):
         """Start the server with default settings and the specified config."""
-        self.json_app = DispatchNode(config)
-        self.gui_app = GuiDispatcher(self.json_app)
+        self.tree = DispatchNode(config)
+        self.nodes = []
+        self.gui_app = GuiWrapper(self)
         cherrypy.engine.subscribe('stop', self.cleanup)
         self.json_conf = {
             '/': {
@@ -38,16 +42,8 @@ class Application(object):
         }
 
     def enable_auth(self, auth_file):
-        """
-        Create an Authenticator and hook up its authenticate method to
-        cherrypy.
-        """
         auth = Authenticator()
-        try:
-            auth.load(auth_file)
-        except IOError:
-            auth.create_empty_auth_file(auth_file)
-            auth.load(auth_file)
+        auth.load_or_create(auth_file)
         sec_settings = {
             'tools.auth_basic.on': True,
             'tools.auth_basic.realm': 'localhost',
@@ -57,8 +53,49 @@ class Application(object):
         self.gui_conf['/'].update(sec_settings)
 
     def mount(self):
-        cherrypy.tree.mount(self.json_app, '/api', self.json_conf)
+        cherrypy.tree.mount(self, '/api', self.json_conf)
         cherrypy.tree.mount(self.gui_app, '/gui', self.gui_conf)
 
     def cleanup(self):
-        self.json_app.cleanup()
+        self.tree.cleanup()
+
+    def _cp_dispatch(self, vpath):
+        self.nodes = self.tree.dispatch(vpath)
+        del vpath[:]
+        return self
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def GET(self, **url_params):
+        method_kwargs = self.method_kwargs_from(url_params)
+        request_kwargs = self.request_kwargs_from(url_params)
+        return ResponseBuilder.generate_document(self.nodes, '#getter', [], method_kwargs, request_kwargs)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def POST(self, **url_params):
+        method_kwargs = self.method_kwargs_from(url_params)
+        request_kwargs = self.request_kwargs_from(url_params)
+        method_args = [cherrypy.request.json]
+        return ResponseBuilder.generate_document(self.nodes, '#setter', method_args, method_kwargs, request_kwargs)
+
+    @staticmethod
+    def request_kwargs_from(url_params):
+        result = {}
+        if 'sample_rate' in url_params:
+            result['sample_rate'] = min(float(url_params['sample_rate']), 1000)
+        if 'duration' in url_params:
+            result['duration'] = float(url_params['duration'])
+        if 'leaves_only' in url_params:
+            result['leaves_only'] = bool(url_params['leaves_only'])
+        if 'timeout' in url_params:
+            result['timeout'] = float(url_params['timeout'])
+        return result
+
+    @staticmethod
+    def method_kwargs_from(url_params):
+        result = url_params.copy()
+        for key in ['sample_rate', 'duration', 'leaves_only', 'timeout']:
+            result.pop(key, None)
+        return result

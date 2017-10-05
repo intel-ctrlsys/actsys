@@ -352,4 +352,5 @@ class TestServer(helper.CPWebCase):
 
     def test_bad_glob(self):
         self.getPage('/api/100[1-4')
-        self.assertStatus("400 Bad Request")
+        self.assertStatus("200 OK")
+        self.assertBody('{}')
