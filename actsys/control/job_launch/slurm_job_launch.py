@@ -94,26 +94,6 @@ class SlurmJobLaunch(JobLaunch):
         return self.check_job_metadata_common(self.make_squeue_cmd,
                                               job_id, state, 1)
 
-    def find_file(self, job_id, output_file):
-        file_name = output_file
-        if output_file is None:
-            file_name = 'slurm-' + job_id + '.out'
-        result = self.util.execute_subprocess(['find', '/', '-name', file_name])
-        if '' == result.stdout:
-            return None
-        return result.stdout.split(os.linesep)[0]
-
-    def retrieve_job_result(self, job_id, output_file=None):
-        if job_id is None:
-            return 1, 'Job ID is mandatory'
-        file_to_read = self.find_file(job_id, output_file)
-        if file_to_read is None:
-            return 1, 'Job output file does not exist!'
-        ret = self.util.execute_subprocess(['cat', file_to_read])
-        if ret.return_code != 0:
-            return ret.return_code, ret.stderr
-        return ret.return_code, ret.stdout
-
     def cancel_job(self, job_id):
         if job_id is None:
             return 1, 'Job id is mandatory!'

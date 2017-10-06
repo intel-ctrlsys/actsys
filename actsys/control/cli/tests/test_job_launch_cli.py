@@ -22,7 +22,6 @@ class TestProvisionCLI(unittest.TestCase):
         commands = [
             ['launch', '-h'],
             ['check', '-h'],
-            ['retrieve', '-o mock_file', '-h'],
             ['cancel', '-h'],
             ['-h']
         ]
@@ -45,14 +44,6 @@ class TestProvisionCLI(unittest.TestCase):
 
         with self.assertRaises(SystemExit):
             self.cli.parse_and_run(['check', '--args args'])
-
-    def test_retrieve(self):
-        self.cli.parse_and_run(['retrieve', 'job-1', '-o job-1.output'])
-        self.mock_ci.job_retrieve.assert_called_once()
-
-        with self.assertRaises(SystemExit):
-            # missing arg <job_id>
-            self.cli.parse_and_run(['retrieve'])
 
     def test_cancel(self):
         self.cli.parse_and_run(['cancel', 'job-1'])

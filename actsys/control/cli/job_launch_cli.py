@@ -20,10 +20,9 @@ class JobLaunchCli(object):
 
         self.subparsers = self.root_parser.add_subparsers(title='Action',
                                                           description='What to do with job '
-                                                                      '(launch/check/retrieve/cancel)?')
+                                                                      '(launch/check/cancel)?')
         self.add_launch_args()
         self.add_check_args()
-        self.add_retrieve_args()
         self.add_cancel_args()
 
     def add_launch_args(self):
@@ -55,19 +54,6 @@ class JobLaunchCli(object):
         self.check_parser.add_argument('--state', '-s', required=False,
                                        help='Check jobs with certain state.')
         self.check_parser.set_defaults(execute_function=self.check_execute)
-
-    def add_retrieve_args(self):
-        """
-        Retrieve job output
-        :return:
-        """
-        self.retrieve_parser = self.subparsers.add_parser('retrieve',
-                                                          help='Retrieve job output.')
-        self.retrieve_parser.add_argument('job_id',
-                                          help='The job id to be retrieved.')
-        self.retrieve_parser.add_argument('--output_file', '-o', required=False,
-                                          help='The output file from which to retrieve job result.')
-        self.retrieve_parser.set_defaults(execute_function=self.retrieve_execute)
 
     def add_cancel_args(self):
         """
@@ -115,15 +101,6 @@ class JobLaunchCli(object):
         """
         return self.command_invoker.job_check(parsed_args.job_id,
                                               parsed_args.state)
-
-    def retrieve_execute(self, parsed_args):
-        """
-        Execute job retrieve command
-        :param parsed_args: As defined by the CLI above
-        :return: CommandResult
-        """
-        return self.command_invoker.job_retrieve(parsed_args.job_id,
-                                                 parsed_args.output_file)
 
     def cancel_execute(self, parsed_args):
         """

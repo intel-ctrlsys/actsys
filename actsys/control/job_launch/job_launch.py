@@ -37,15 +37,6 @@ class JobLaunch(object, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def retrieve_job_result(self, job_id, output_file=None):
-        """retrieve the result after a job is done
-        :param job_id: which job to retrieve result
-        :param output_file: from which output file to retrieve result
-        :return: result after a job is done
-        """
-        pass
-
-    @abstractmethod
     def cancel_job(self, job_id):
         """cancel a job
         :param job_id: which job to cancel

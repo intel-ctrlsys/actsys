@@ -138,10 +138,9 @@ class CommandInvoker(object):
         from ..diagnostics.inband_diagnostics.inband_diagnostics import InBandDiagnostics
         self.manager.register_plugin_class(InBandDiagnostics)
 
-        from ..commands.job_launch import JobLaunch, JobCheck, JobRetrieve, JobCancel
+        from ..commands.job_launch import JobLaunch, JobCheck, JobCancel
         self.manager.register_plugin_class(JobLaunch)
         self.manager.register_plugin_class(JobCheck)
-        self.manager.register_plugin_class(JobRetrieve)
         self.manager.register_plugin_class(JobCancel)
 
         from ..job_launch import SlurmJobLaunch, MockJobLaunch
@@ -216,7 +215,6 @@ class CommandInvoker(object):
                        'diagnostics_oob': 'diagnostics_oob',
                        'job_launch': 'job_launch',
                        'job_check': 'job_check',
-                       'job_retrieve': 'job_retrieve',
                        'job_cancel': 'job_cancel'
                       }
         results = list()
@@ -389,16 +387,6 @@ class CommandInvoker(object):
         """
         return self.common_cmd_invoker(None, "job_check",
                                        job_id=job_id, state=state)
-
-    def job_retrieve(self, job_id, output_file=None):
-        """
-        Retrieve job results
-        :param job_id: the id of job to be retrieved
-        :param output_file: the file from which to retrieve the results
-        :return: CommandResult
-        """
-        return self.common_cmd_invoker(None, "job_retrieve", job_id=job_id,
-                                       output_file=output_file)
 
     def job_cancel(self, job_id):
         """
