@@ -47,7 +47,6 @@ class ShellCommands(Magics):
             self.datastore.set_device(self.system_default_root_device)
             self.device = self.datastore.get_device(self.system_default_root_device.get("hostname"))
 
-        assert self.device is not None
         self.system_device = self.device
 
         config = self.datastore.get_configuration_value("cmm")
@@ -55,7 +54,6 @@ class ShellCommands(Magics):
             print("No configuration found for CMM, adding default configuration.")
             self.datastore.set_configuration("cmm", self.system_default_config)
             config = self.datastore.get_configuration_value("cmm")
-        assert config is not None
 
         self.system_config = config
 

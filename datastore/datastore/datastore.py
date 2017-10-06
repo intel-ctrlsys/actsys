@@ -51,6 +51,7 @@ class DataStore(object, metaclass=ABCMeta):
         set_std_group_resolver(datastore_group_resolver)
         return datastore_group_resolver
 
+
     @abstractmethod
     def get_device(self, device_name):
         """

@@ -10,11 +10,6 @@ from .datastore import DataStore, DataStoreException, get_logger, add_stream_log
 from .filestore import FileStore
 from .postgresstore import PostgresStore
 from .multistore import MultiStore
-have_metagraph = True
-try:
-    from .metagraphstore import MetagraphStore
-except:
-    have_metagraph = False
 
 
 class DataStoreBuilder(object):
@@ -106,8 +101,6 @@ class DataStoreBuilder(object):
 
         if datastore_location.startswith("postgres://"):
             return PostgresStore(datastore_location)
-        elif have_metagraph and datastore_location.startswith("metagraph://"):   # TODO: fix this
-            return MetagraphStore(datastore_location)
         elif os.path.isfile(datastore_location):
             return FileStore(datastore_location)
 
