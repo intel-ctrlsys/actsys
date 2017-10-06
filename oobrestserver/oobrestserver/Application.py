@@ -5,12 +5,14 @@
 
 """Contains the Application class, which represents the running server."""
 
+import logging
+
 import cherrypy
 
 from oobrestserver.DispatchNode import DispatchNode
 from oobrestserver.GuiWrapper import GuiWrapper
 from oobrestserver.Authenticator import Authenticator
-import oobrestserver.ResponseBuilder as ResponseBuilder
+from oobrestserver import ResponseBuilder
 
 
 class Application(object):
@@ -18,9 +20,10 @@ class Application(object):
 
     exposed = True
 
-    def __init__(self, config):
+    def __init__(self, config, logger=None):
         """Start the server with default settings and the specified config."""
-        self.tree = DispatchNode(config)
+        self.logger = logger or logging.getLogger()
+        self.tree = DispatchNode(self.logger, config)
         self.nodes = []
         self.gui_app = GuiWrapper(self)
         cherrypy.engine.subscribe('stop', self.cleanup)

@@ -13,12 +13,16 @@ from oobrestserver.__main__ import main
 
 class FakeOptions(object):
 
-    def __init__(self, config_file=None, host=None, key=None, cert=None, auth_file=None):
+    def __init__(self, config_file=None, host=None, key=None, cert=None, auth_file=None,
+                 log_level=None, log_file=None, log_file_size=None, log_file_count=None):
         self.config_file = config_file
         self.host = host
         self.key, self.cert = key, cert
         self.auth_file = auth_file
-
+        self.log_level = log_level
+        self.log_file = log_file
+        self.log_file_size = log_file_size
+        self.log_file_count = log_file_count
 
 class TestEntryPoint(TestCase):
 
