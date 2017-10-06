@@ -1,7 +1,7 @@
 
 from unittest import TestCase
 
-from oobrestserver.Plugin import Plugin
+from oobrestserver import Plugin
 
 class TestPluginMutations(TestCase):
 

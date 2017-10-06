@@ -5,7 +5,7 @@
 
 from unittest import TestCase
 
-from oobrestserver.GlobTools import GlobTools
+from oobrestserver import GlobTools
 
 class TestRegexTranslation(TestCase):
 

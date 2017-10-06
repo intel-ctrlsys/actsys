@@ -12,14 +12,15 @@ nodes to build out the tree. If the #obj directive occurs in the config, the
 node loads a plugin and grafts the plugin-provided paths onto the tree "here"
 """
 
-from oobrestserver.GlobTools import GlobTools
-from oobrestserver.Plugin import Plugin
+from oobrestserver import GlobTools
+from oobrestserver import Plugin
 
 
 class DispatchNode(object):
     """Dispatch node for finding providers at URL routes."""
 
-    def __init__(self, config=None, base_route='', saved_plugins=None):
+    def __init__(self, logger, config=None, base_route='', saved_plugins=None):
+        self.logger = logger
         self.config = config or {}
         self.route = base_route
         self.saved_plugins = saved_plugins or {}
@@ -36,8 +37,8 @@ class DispatchNode(object):
             try:
                 plugin_object = Plugin.plugin(plugin_description)
             except RuntimeError as ex:
-                print("Could not instantiate plugin from: "+str(plugin_description))
-                print("\n\t".join(str(ex).splitlines()))
+                exception_string = "\n\t".join(str(ex).splitlines())
+                self.logger.warn("Could not instantiate plugin from: "+str(plugin_description)+exception_string)
                 continue
             self.saved_plugins[plugin_name] = plugin_object
 
@@ -47,15 +48,14 @@ class DispatchNode(object):
                 try:
                     plugin_object = Plugin.plugin(plugin_description)
                 except RuntimeError as ex:
-                    print("Could not instantiate plugin from: "+str(plugin_description))
-                    print("\n\t".join(str(ex).splitlines()))
+                    exception_string = "\n\t".join(str(ex).splitlines())
+                    self.logger.warn("Could not instantiate plugin from: "+str(plugin_description)+exception_string)
                     continue
             else:
                 if plugin_description not in self.saved_plugins:
-                    print("Could not instantiate plugin from: "+str(plugin_description))
-                    print("Error: Plugin name not previously defined")
+                    self.logger.warn("Plugin name not previously defined: "+str(plugin_description))
                     continue
-                print("loading a previously-defined plugin")
+                self.logger.info("loading a previously-defined plugin")
                 plugin_object = self.saved_plugins[plugin_description]
             self.config.update(plugin_object)
 
@@ -64,8 +64,7 @@ class DispatchNode(object):
             child_route = '/'.join([self.route, child])
             if self.route == '':
                 child_route = child
-            self.children[child] = DispatchNode(self.config[child],
-                                                base_route=child_route,
+            self.children[child] = DispatchNode(self.logger, self.config[child], base_route=child_route,
                                                 saved_plugins=self.saved_plugins)
 
     def add_getter(self):
@@ -98,10 +97,10 @@ class DispatchNode(object):
             self.children[child].cleanup()
 
     def children_matching(self, glob):
-        return [self.children[route] for route in GlobTools.filter(self.children, glob)]
+        return [self.children[route] for route in GlobTools.glob_filter(self.children, glob)]
 
     def descendants_matching(self, glob):
-        return [node for node in self.descendants() if GlobTools.match(node.route, glob)]
+        return [node for node in self.descendants() if GlobTools.glob_match(node.route, glob)]
 
     def descendants(self):
         descendant_lists = [self.children[x].descendants() for x in self.children]
