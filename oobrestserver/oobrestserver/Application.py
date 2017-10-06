@@ -9,7 +9,7 @@ import logging
 
 import cherrypy
 
-from oobrestserver.DispatchNode import DispatchNode
+from oobrestserver.LocalResourceTree import LocalResourceTree
 from oobrestserver.GuiWrapper import GuiWrapper
 from oobrestserver.Authenticator import Authenticator
 from oobrestserver import ResponseBuilder
@@ -23,7 +23,7 @@ class Application(object):
     def __init__(self, config, logger=None):
         """Start the server with default settings and the specified config."""
         self.logger = logger or logging.getLogger()
-        self.tree = DispatchNode(self.logger, config)
+        self.tree = LocalResourceTree(self.logger, config)
         self.nodes = []
         self.gui_app = GuiWrapper(self)
         cherrypy.engine.subscribe('stop', self.cleanup)

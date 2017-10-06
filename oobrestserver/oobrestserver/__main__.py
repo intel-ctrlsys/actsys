@@ -58,7 +58,7 @@ def main():
         log_file_size = 10*1024*1024
 
     logger = logging.getLogger()
-    formatter = logging.Formatter('%(levelname)s:%(message)s')
+    formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(message)s')
 
     stdout_log_handler = logging.StreamHandler(sys.stdout)
     stdout_log_handler.setLevel(log_level)

@@ -15,7 +15,10 @@ def glob_filter(strings, glob):
     return [elt for elt in strings if glob_match(elt, glob)]
 
 def glob_match(string, glob):
-    return bool(re.match(regex_from_glob(glob), string))
+    try:
+        return bool(re.match(regex_from_glob(glob), string))
+    except ValueError:
+        return False
 
 def regex_from_glob(pattern):
     """FSM to convert globstar patterns to Python regexes"""
