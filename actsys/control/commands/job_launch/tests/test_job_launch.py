@@ -9,7 +9,7 @@ import unittest
 
 from mock import MagicMock, patch
 
-from .. import JobLaunch, JobCheck, JobCancel, JobRetrieve
+from .. import JobLaunch, JobCheck, JobCancel
 from ....plugin.manager import PluginManager, PluginManagerException
 from datastore import DataStore
 from ...command import ConfigurationNeeded
@@ -26,7 +26,6 @@ class TestJobLaunch(unittest.TestCase):
         self.job_mock = self.mock_plugin_manager.create_instance.return_value
         self.job_mock.launch_batch_job.return_value = (0, 'foo')
         self.job_mock.check_job_metadata.return_value = (0, 'foo')
-        self.job_mock.retrieve_job_result.return_value = (0, 'foo')
         self.job_mock.cancel_job.return_value = (0, 'foo')
         self.config = {
                 'device_name': 'mock-node',
@@ -36,7 +35,6 @@ class TestJobLaunch(unittest.TestCase):
             }
         self.job_launch = JobLaunch(**self.config)
         self.job_check = JobCheck(**self.config)
-        self.job_retrieve = JobRetrieve(**self.config)
         self.job_cancel = JobCancel(**self.config)
 
     def setup_mock_config(self):
@@ -76,13 +74,6 @@ class TestJobLaunch(unittest.TestCase):
     def test_check_execute_no_resource_controller(self):
         self.job_check.resource_controller = None
         self.assertEqual(-1, self.job_check.execute().return_code)
-
-    def test_retrieve_execute(self):
-        self.assertEqual(self.job_retrieve.execute().return_code, 0)
-
-    def test_retrieve_execute_no_resource_controller(self):
-        self.job_retrieve.resource_controller = None
-        self.assertEqual(-1, self.job_retrieve.execute().return_code)
 
     def test_cancel_execute(self):
         self.assertEqual(self.job_cancel.execute().return_code, 0)

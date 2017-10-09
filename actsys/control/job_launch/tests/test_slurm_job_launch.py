@@ -61,34 +61,6 @@ class TestSlurmJobLaunch(unittest.TestCase):
         self.assertEqual(ret[0], 0)
         self.assertTrue('line1\nline2\nline3' in ret[1])
 
-    def test_retrieve_job_no_job_id(self):
-        job = SlurmJobLaunch()
-        ret = job.retrieve_job_result(None)
-        self.assertEqual(ret[0], 1)
-        self.assertEqual(ret[1], 'Job ID is mandatory')
-
-    @patch.object(Utilities, 'execute_subprocess')
-    def test_retrieve_job_no_file(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, '', '')
-        job = SlurmJobLaunch()
-        ret = job.retrieve_job_result('1')
-        self.assertEqual(ret, (1, 'Job output file does not exist!'))
-
-    @patch.object(Utilities, 'execute_subprocess')
-    def test_retrieve_with_file_failed(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(1, 'job_1.output',
-                                                      'Error happened!')
-        job = SlurmJobLaunch()
-        ret = job.retrieve_job_result('1', output_file='job_1.output')
-        self.assertEqual(ret, (1, 'Error happened!'))
-
-    @patch.object(Utilities, 'execute_subprocess')
-    def test_retrieve_with_file_succeed(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, 'pi=3.1415926', '')
-        job = SlurmJobLaunch()
-        ret = job.retrieve_job_result('1', output_file='job_1.output')
-        self.assertEqual(ret, (0, 'pi=3.1415926'))
-
     def test_cancel_job_no_job_id(self):
         job = SlurmJobLaunch()
         ret = job.cancel_job(None)

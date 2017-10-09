@@ -117,32 +117,6 @@ class TestMockJobLaunch(unittest.TestCase):
         self.assertEqual(ret[0], 0)
         self.assertTrue('running' in ret[1])
 
-    def test_retrieve_job_no_job_id(self):
-        mock_job = MockJobLaunch()
-        ret = mock_job.retrieve_job_result(None)
-        self.assertEqual(ret, (1, 'Job ID is mandatory'))
-
-    def test_retrieve_invalid_job_no_output_file(self):
-        mock_job = MockJobLaunch()
-        ret = mock_job.retrieve_job_result('INVALID-job-id')
-        self.assertEqual(ret, (1, 'No jobs found!'))
-
-    def test_retrieve_job_no_output_file(self):
-        mock_job = MockJobLaunch()
-        ret = mock_job.retrieve_job_result('mocked-job-1')
-        self.assertEqual(ret, (0, 'Mocked job result: pi = 3.141592653589'))
-
-    def test_retrieve_job_invalid_output_file(self):
-        mock_job = MockJobLaunch()
-        ret = mock_job.retrieve_job_result('mocked-job-1', output_file='File')
-        self.assertEqual(ret, (1, 'No output file found!'))
-
-    def test_retrieve_job_output_file(self):
-        mock_job = MockJobLaunch()
-        ret = mock_job.retrieve_job_result('mocked-job-1',
-                                           output_file='mocked-job-1.output')
-        self.assertEqual(ret, (0, 'Mocked job result: pi = 3.141592653589'))
-
     def test_cancel_job_no_job_id(self):
         mock_job = MockJobLaunch()
         ret = mock_job.cancel_job(None)

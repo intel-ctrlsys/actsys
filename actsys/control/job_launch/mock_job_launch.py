@@ -101,17 +101,6 @@ class MockJobLaunch(JobLaunch):
             return self.check_job_with_job_id_no_state(job_id, res_list)
         return self.check_job_with_job_id_with_state(job_id, state, res_list)
 
-    def retrieve_job_result(self, job_id, output_file=None):
-        if job_id is None:
-            return 1, 'Job ID is mandatory'
-        if job_id not in self.job_list:
-            return 1, 'No jobs found!'
-        if output_file is not None:
-            if output_file != job_id + '.output':
-                return 1, 'No output file found!'
-            return 0, 'Mocked job result: pi = 3.141592653589'
-        return 0, 'Mocked job result: pi = 3.141592653589'
-
     def cancel_job(self, job_id):
         if job_id is None:
             return 1, 'Job id is mandatory!'
