@@ -46,8 +46,8 @@ class SlurmJobLaunch(JobLaunch):
         result = self.util.execute_subprocess(cmd)
         if result.return_code != 0:
             return result.return_code, os.linesep + \
-                   self.remove_last_empty_line(result.stderr)
-        job_id = result.stdout.split()[3]
+                   self.remove_last_empty_line(result.stderr.decode())
+        job_id = result.stdout.decode().split()[3]
         return result.return_code, \
             'Job submitted successfully with id:' + job_id
 
@@ -78,8 +78,8 @@ class SlurmJobLaunch(JobLaunch):
         result = self.util.execute_subprocess(cmd_maker(job_id, state))
         if result.return_code != 0:
             return result.return_code, os.linesep + \
-                   self.remove_last_empty_line(result.stderr)
-        result.stdout = self.remove_last_empty_line(result.stdout)
+                   self.remove_last_empty_line(result.stderr.decode())
+        result.stdout = self.remove_last_empty_line(result.stdout.decode())
         if len(result.stdout.split(os.linesep)) == len_count:
             return 1, 'No jobs found!'
         return result.return_code, os.linesep + result.stdout
@@ -103,7 +103,7 @@ class SlurmJobLaunch(JobLaunch):
         result = self.util.execute_subprocess(['scancel', job_id, '-v'])
         if result.return_code != 0:
             return result.return_code, os.linesep + \
-                   self.remove_last_empty_line(result.stderr)
-        if 'error' in result.stderr:
-            return 1, os.linesep + self.remove_last_empty_line(result.stderr)
+                   self.remove_last_empty_line(result.stderr.decode())
+        if 'error' in result.stderr.decode():
+            return 1, os.linesep + self.remove_last_empty_line(result.stderr.decode())
         return result.return_code, 'Job has been cancelled successfully!'

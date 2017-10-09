@@ -21,7 +21,7 @@ class TestSlurmJobLaunch(unittest.TestCase):
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_launch_job_sbatch_error(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(2, '', 'sbatch error')
+        mock_exec_sub.return_value = SubprocessOutput(2, b'', b'sbatch error')
         job = SlurmJobLaunch()
         ret = job.launch_batch_job('test_script', node_count='1', nodes=
                                    'test_node', output_file='job_1.output')
@@ -29,8 +29,8 @@ class TestSlurmJobLaunch(unittest.TestCase):
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_launch_job_succeed(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, 'Submitted job '
-                                                         'successfully 1', '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b'Submitted job '
+                                                         b'successfully 1', b'')
         job = SlurmJobLaunch()
         ret = job.launch_batch_job('test_script')
         self.assertEqual(ret[0], 0)
@@ -38,7 +38,7 @@ class TestSlurmJobLaunch(unittest.TestCase):
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_check_job_sacct_disabled(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(1, '', 'Error happened!')
+        mock_exec_sub.return_value = SubprocessOutput(1, b'', b'Error happened!')
         job = SlurmJobLaunch()
         ret = job.check_job_metadata()
         self.assertEqual(ret[0], 1)
@@ -46,7 +46,7 @@ class TestSlurmJobLaunch(unittest.TestCase):
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_check_job_sacct_enabled_no_job(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, 'line1\nline2\n', '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b'line1\nline2\n', b'')
         job = SlurmJobLaunch()
         ret = job.check_job_metadata(job_id='1', state='running')
         self.assertEqual(ret[0], 1)
@@ -54,8 +54,8 @@ class TestSlurmJobLaunch(unittest.TestCase):
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_check_job_sacct_enabled_succeed(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, 'line1\nline2\n'
-                                                         'line3\n', '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b'line1\nline2\n'
+                                                         b'line3\n', b'')
         job = SlurmJobLaunch()
         ret = job.check_job_metadata(job_id='1', state='running')
         self.assertEqual(ret[0], 0)
@@ -68,21 +68,21 @@ class TestSlurmJobLaunch(unittest.TestCase):
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_cancel_job_none_zero_ret_code(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(1, '', 'Error happened!')
+        mock_exec_sub.return_value = SubprocessOutput(1, b'', b'Error happened!')
         job = SlurmJobLaunch()
         ret = job.cancel_job('1')
         self.assertEqual(ret, (1, 'No jobs found!'))
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_cancel_job_fail(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, '', 'error happened!')
+        mock_exec_sub.return_value = SubprocessOutput(0, b'', b'error happened!')
         job = SlurmJobLaunch()
         ret = job.cancel_job('1')
         self.assertEqual(ret, (1, '\nerror happened!'))
 
     @patch.object(Utilities, 'execute_subprocess')
     def test_cancel_job_succeed(self, mock_exec_sub):
-        mock_exec_sub.return_value = SubprocessOutput(0, '', '')
+        mock_exec_sub.return_value = SubprocessOutput(0, b'', b'')
         job = SlurmJobLaunch()
         ret = job.cancel_job('1')
         self.assertEqual(ret, (0, 'Job has been cancelled successfully!'))
