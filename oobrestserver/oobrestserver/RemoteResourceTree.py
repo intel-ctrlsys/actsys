@@ -3,7 +3,6 @@
 # Copyright (c) 2016-2017 Intel Corp.
 #
 
-
 import requests
 
 from oobrestserver.BaseResourceTree import BaseResourceTree
@@ -21,16 +20,17 @@ class RemoteResourceTree(BaseResourceTree):
 
     def get_method(self, label):
         if label == '#getter':
-            pass # wrap GET requests w/ URL params <-> kwargs mapped
+
+            pass # wrap GET requests w/ URL params <-> kwargs mapped. Return a function!l
         if label == '#setter':
             pass # wrap POST like GET above
         raise NotImplementedError()
 
     def add_resources(self, config):
-        raise NotImplementedError() # wrap PUT
+        raise NotImplementedError() # wrap PUT after server supports this
 
-    def remove_resources(self, path):
-        raise NotImplementedError() # wrap DELETE
+    def remove_resources(self, child):
+        raise NotImplementedError() # wrap DELETE after server supports this
 
     def cleanup(self):
         pass

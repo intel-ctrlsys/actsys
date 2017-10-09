@@ -18,9 +18,18 @@ from oob_rest_default_providers import execute_subprocess
 class IpmiBMC(object):
 
     def __init__(self, hostname, port, username, password, interface='lanplus'):
+
         self.sol_lock = threading.Lock()
         self.power_state_lock = threading.Lock()
         self.sdr_lock = threading.Lock()
+        self.last_sdr_update_time = 0
+        self.sdr_cache = {}
+
+        self.ipmitool_opts = ['ipmitool', '-I', interface, '-H', hostname or '127.0.0.1', '-p', port or '623']
+        if username:
+            self.ipmitool_opts += ['-U', username]
+        if password:
+            self.ipmitool_opts += ['-P', password]
 
         self.config = {
             'chassis_state': {
@@ -29,7 +38,8 @@ class IpmiBMC(object):
                 '#units': 'ChassisState'
             },
             'console': {
-                '#setter': self.capture_to_line
+                '#setter': self.capture_to_line,
+                '#cleanup': self.deactivate_sol
             },
             'sel': {
                 '#getter': self.get_sels
@@ -43,16 +53,6 @@ class IpmiBMC(object):
                 '#setter': self.set_led_interval
             }
         }
-        self.last_sdr_update_time = 0
-        self.sdr_cache = {}
-
-        hostname = hostname or '127.0.0.1'
-        port = port or '623'
-        self.ipmitool_opts = ['ipmitool', '-I', interface, '-H', hostname, '-p', port]
-        if username:
-            self.ipmitool_opts += ['-U', username]
-        if password:
-            self.ipmitool_opts += ['-P', password]
 
         self.populate_sensors()
 
@@ -144,21 +144,36 @@ class IpmiBMC(object):
             except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknown exceptions
                 raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
                                   + str(ex))
+
+            deathclock = threading.Timer(20, consolelog.terminate)
+            deathclock.start()
+            success = False
+
             while not consolelog.poll():
-                buffer_v = consolelog.stdout.readline()
+                consolelog.stdout.flush()
+                buffer_v = consolelog.stdout.readline() ## Bug probably caused by pipe deadlock
+                deathclock.cancel()
+                deathclock = threading.Timer(20, consolelog.terminate)
+                deathclock.start()
                 length_buff = len(buffer_v)
                 if length_buff > 0:
-                    line = buffer_v.decode('ascii').strip('\n')
+                    line = buffer_v.decode('utf-8').strip('\n')
                     console_lines.append(line)
                     if stop_line in line:
                         consolelog.terminate()
-                # consoleLog.wait()
+                        success = True
             consolelog.terminate()
-            try:
-                command = self.ipmitool_opts + ['sol', 'deactivate']
-                consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
-            except Exception as ex:
-                raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
-                                  + str(ex))
+            deathclock.cancel()
+            self.deactivate_sol()
+            if success:
+                return console_lines
+            raise RuntimeError('\n'.join(console_lines))
+
+    def deactivate_sol(self):
+        try:
+            command = self.ipmitool_opts + ['sol', 'deactivate']
+            consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                          stdin=subprocess.PIPE)
             consolelog.wait()
-            return console_lines
+        except Exception as ex:
+            pass

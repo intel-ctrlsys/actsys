@@ -24,7 +24,7 @@ class Application(object):
         """Start the server with default settings and the specified config."""
         self.logger = logger or logging.getLogger()
         self.tree = LocalResourceTree(self.logger, config)
-        self.nodes = []
+        self.nodes = [self.tree]
         self.gui_app = GuiWrapper(self)
         cherrypy.engine.subscribe('stop', self.cleanup)
         self.json_conf = {
@@ -72,7 +72,9 @@ class Application(object):
     def GET(self, **url_params):
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
-        return ResponseBuilder.generate_document(self.nodes, '#getter', [], method_kwargs, request_kwargs)
+        result = ResponseBuilder.generate_document(self.nodes, '#getter', [], method_kwargs, request_kwargs)
+        self.nodes = [self.tree]
+        return result
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -81,7 +83,30 @@ class Application(object):
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
         method_args = [cherrypy.request.json]
-        return ResponseBuilder.generate_document(self.nodes, '#setter', method_args, method_kwargs, request_kwargs)
+        result = ResponseBuilder.generate_document(self.nodes, '#setter', method_args, method_kwargs, request_kwargs)
+        self.nodes = [self.tree]
+        return result
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def PUT(self, **url_params):
+        config = cherrypy.request.json
+        for node in self.nodes:
+            node.add_resources(config)
+        self.nodes = [self.tree]
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def DELETE(self, **url_params):
+        for node in self.nodes:
+            parent_route = node.route.split('/')[:-1]
+            parents = self.tree.dispatch(parent_route)
+            leaf_obj_name = node.route.split('/')[-1]
+            if len(parents) == 1:
+                parent = parents[0]
+                parent.remove_resources(leaf_obj_name)
+        self.nodes = [self.tree]
 
     @staticmethod
     def request_kwargs_from(url_params):
