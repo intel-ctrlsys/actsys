@@ -78,13 +78,13 @@ class InBandDiagnostics(Diagnostics):
         file_d = open(bootstrap_config_fullpath, 'r')
         fd_content = file_d.read()
         if 'DiagList' in fd_content:
-            self._edit_boot_parameters(bootstrap_config_fullpath)
-        else:
-            return
+            self._edit_boot_params(bootstrap_config_fullpath)
         return
 
     @staticmethod
     def _edit_boot_params(bootstrap_config_fullpath):
+        """ Editing the /var//lib/tftpboot/warewulf/pxelinux.cfg/01-<mac-address> file to work
+        with specific diag image """
         file_d = open(bootstrap_config_fullpath, 'r')
         fd_content = file_d.read()
         fd_content = re.sub(r"ro initrd=bootstrap/[0-9]+/initfs.gz", r'', fd_content)
@@ -111,6 +111,7 @@ class InBandDiagnostics(Diagnostics):
         except Exception as ex:
             raise Exception('Unable to connect to the bmc, update the config file for device {0} and try again. Error '
                             'received from console log: {1}'.format(self.device_name, str(ex)))
+        return
 
     def launch_diags(self, device, bmc):
         """launches the diagnostic tests"""
@@ -151,16 +152,17 @@ class InBandDiagnostics(Diagnostics):
                     "Cannot remove node from resource pool for running diagnostics since {0}".format(result[1]))
         else:
             raise Exception("Cannot remove node from resource pool. {}".format(current_state))
-        console_log_thread = Thread(target=self._console_log_calling, args=[bmc_ip_address, bmc_user, bmc_password,
-                                                                            result_queue])
+        console_log_thread = Thread(target=self._console_log_calling, args=[bmc_ip_address, bmc_user, bmc_password, result_queue])
         console_log_thread.start()
         # Step 2: Provision diagnostic image
         self._provision_image(self.img, self.kargs)
         self._set_node_state('Off')
         self._set_node_state('On')
         console_log_thread.join()
-        result_list[self.device_name] = result_queue.get()
-
+        try:
+            result_list[self.device_name] = result_queue.get()
+        except Exception:
+            raise
         # Step 3: Provision node back to old image
         if not self.reboot_true:
             self._provision_image(self.old_image, self.old_kargs)
