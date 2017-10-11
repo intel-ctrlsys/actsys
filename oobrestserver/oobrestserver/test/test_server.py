@@ -18,6 +18,14 @@ class TestServer(helper.CPWebCase):
         if app_path not in sys.path:
             sys.path.append(app_path)
 
+        TestServer.app = Application({})
+        TestServer.app.mount()
+
+    def teardown_class(cls):
+        TestServer.app.cleanup()
+        super(TestServer, cls).teardown_class()
+
+    def setUp(self):
         config = {
             "node1": {
                 "FooString": {
@@ -142,13 +150,10 @@ class TestServer(helper.CPWebCase):
                 ]
             }
         }
-
-        TestServer.app = Application(config)
-        TestServer.app.mount()
-
-    def teardown_class(cls):
-        TestServer.app.cleanup()
-        super(TestServer, cls).teardown_class()
+        json_config = json.dumps(config)
+        headers = [('Content-Type', 'application/json'),
+                   ('Content-Length', str(len(json_config)))]
+        self.getPage('/api', headers=headers, method='PUT', body=json_config)
 
     def check_exception_free_body(self):
         doc = json.loads(self.body.decode('utf-8'))
@@ -177,6 +182,15 @@ class TestServer(helper.CPWebCase):
             print('getting'+url)
             self.getPage(url)
             self.assertStatus('200 OK')
+
+    def test_delete(self):
+        self.getPage('/api/node1/folder/')
+        self.assertStatus('200 OK')
+        self.getPage('/api/node1', method='DELETE')
+        self.assertStatus('200 OK')
+        self.getPage('/api/node1/folder/')
+        self.assertStatus('200 OK')
+        self.assertBody('{}')
 
     def test_leaves_only(self):
         self.getPage('/api/**')

@@ -15,7 +15,7 @@ class BaseResourceTree(object):
     def add_resources(self, config):
         raise NotImplementedError()
 
-    def remove_resources(self, path):
+    def remove_resources(self, child):
         raise NotImplementedError()
 
     def cleanup(self):
