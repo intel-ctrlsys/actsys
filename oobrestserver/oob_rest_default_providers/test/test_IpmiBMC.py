@@ -185,4 +185,7 @@ class TestIpmiBMC(TestCase):
 
     def test_sels(self):
         mock.patch("subprocess.Popen", return_value=FakeSubProcess(samples.healthy_sel_elist_output, b'', 0)).start()
-        self.assertEqual(self.bmc.get_sels(), samples.healthy_sel_elist_output.splitlines())
+        actual = self.bmc.get_sels()
+        expected = samples.healthy_sel_elist_output.decode('ascii').splitlines()
+        self.assertEqual(expected[:10], actual[:10])
+        self.assertEqual(expected[:-10], actual[:-10])

@@ -132,28 +132,40 @@ class IpmiBMC(object):
 
     def get_sels(self):
         cmd = self.ipmitool_opts + ['sel', 'list']
-        return execute_subprocess.with_capture(cmd).stdout.splitlines()
+        proc = execute_subprocess.with_capture(cmd)
+        output_bytes = proc.stdout
+        output_string = output_bytes.decode('ascii')
+        output_lines = output_string.splitlines()
+        return output_lines
 
-    def capture_to_line(self, stop_line):
+    def capture_to_line(self, stop_line, timeout=None):
+
+        if timeout is None:
+            timeout = 20
+        else:
+            timeout = float(timeout)
+
         """Start capturing console"""
         with self.sol_lock:
             console_lines = []
             try:
                 command = self.ipmitool_opts + ['sol', 'activate']
-                consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE)
+                consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
             except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknown exceptions
                 raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
                                   + str(ex))
 
-            deathclock = threading.Timer(20, consolelog.terminate)
+            deathclock = threading.Timer(timeout, consolelog.terminate)
             deathclock.start()
             success = False
 
             while not consolelog.poll():
                 consolelog.stdout.flush()
-                buffer_v = consolelog.stdout.readline() ## Bug probably caused by pipe deadlock
+                buffer_v = consolelog.stdout.readline()
+                if consolelog.poll():
+                    break
                 deathclock.cancel()
-                deathclock = threading.Timer(20, consolelog.terminate)
+                deathclock = threading.Timer(timeout, consolelog.terminate)
                 deathclock.start()
                 length_buff = len(buffer_v)
                 if length_buff > 0:
@@ -167,7 +179,7 @@ class IpmiBMC(object):
             self.deactivate_sol()
             if success:
                 return console_lines
-            raise RuntimeError('\n'.join(console_lines))
+            raise RuntimeError('Timed out when gathering console lines:\n'+'\n'.join(console_lines))
 
     def deactivate_sol(self):
         try:
