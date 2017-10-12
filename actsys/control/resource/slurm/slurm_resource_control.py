@@ -69,7 +69,7 @@ class SlurmResource(ResourceControl):
         reason = "Done with service"
         subprocess_result = self.utilities.execute_subprocess(['scontrol', 'update',
                                                                'nodename=' + ','.join([node_list]),
-                                                               'state=undrain', 'reason=' + reason, '-vvvv'])
+                                                               'state=resume', 'reason=' + reason, '-vvvv'])
         if 'Success' in subprocess_result.stderr.decode():
             return 'Succeeded in adding!'
         return 'Failed in adding!'
