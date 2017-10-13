@@ -180,6 +180,7 @@ class InBandDiagnostics(Diagnostics):
                    configuration object."""
         options = {}
         dev_l = list()
+        self.device['access_type'] = 'mock'
         dev_l.append(self.device)
         options['device_list'] = dev_l
         options['bmc_list'] = [self.bmc]
