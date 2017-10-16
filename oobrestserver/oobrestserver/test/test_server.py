@@ -36,6 +36,17 @@ class TestServer(helper.CPWebCase):
                         }
                     ]
                 },
+                "BarString": {
+                    "_attach_plugins": [
+                        {
+                            "module":"oob_rest_default_providers.StringFolderDevice",
+                            "args": ["Bar"],
+                            "url_mods": {
+                                "strings/*": ""
+                            }
+                        }
+                    ]
+                },
                 "HelloDevice": {
                     "_attach_plugins": [
                         {
@@ -154,6 +165,29 @@ class TestServer(helper.CPWebCase):
         headers = [('Content-Type', 'application/json'),
                    ('Content-Length', str(len(json_config)))]
         self.getPage('/api', headers=headers, method='PUT', body=json_config)
+
+    def test_moved_resources(self):
+        self.getPage('/api/node1/BarString')
+        print (self.body)
+        for url in [
+            '/api/node1/BarString/string_one',
+            '/api/node1/BarString/string_two',
+            '/api/node1/BarString/string_three'
+        ]:
+            self.getPage(url)
+            doc = json.loads(self.body.decode('utf-8'))
+            res_key = '/'.join(url.split('/')[2:])
+            response = doc[res_key]
+            samples = response['samples']
+            self.assertIn('Bar', samples)
+        for url in [
+            '/api/node1/BarString/strings/string_one',
+            '/api/node1/BarString/strings/string_two',
+            '/api/node1/BarString/strings/string_three'
+        ]:
+            self.getPage(url)
+            self.assertStatus('200 OK')
+            self.assertBody('{}')
 
     def check_exception_free_body(self):
         doc = json.loads(self.body.decode('utf-8'))

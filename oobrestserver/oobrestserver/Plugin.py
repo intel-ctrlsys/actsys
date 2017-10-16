@@ -75,11 +75,13 @@ def config_from(obj):
 
 def modded_config_from(config, url_mods):
     result = config.copy()
-    for source_glob, dest_path in url_mods.items():
-        path = source_glob.lstrip('/').split('/')
-        matches = search_resources(config, path)
-        for source_path in matches:
-            path_transform(result, source_path, dest_path)
+    for source_glob, dest_glob in url_mods.items():
+        source_path = keys(source_glob)
+        dest_path = keys(dest_glob)
+        matches = search_resources(result, source_path)
+        for resolved_source_glob in matches:
+            resolved_source_path = keys(resolved_source_glob)
+            path_transform(result, resolved_source_path, dest_path)
     return result
 
 def search_resources(obj, search_path, resolved_path=''):
@@ -96,8 +98,12 @@ def search_resources(obj, search_path, resolved_path=''):
 def filtered_dict(glob, dictionary):
     return {key: dictionary[key] for key in dictionary if GlobTools.glob_match(key, glob) and not key.startswith('#')}
 
+def keys(string_path):
+    return [key for key in string_path.lstrip('/').split('/') if key != '']
+
 def path_transform(obj, source_path, dest_path):
-    set_recursive(obj, dest_path.strip('/').split('/'), __pop_recursive(obj, source_path.strip('/').split('/')))
+    popped_resource_tree = __pop_recursive(obj, source_path)
+    set_recursive(obj, dest_path, popped_resource_tree)
 
 def get_recursive(dictionary, keys):
     if not keys:
@@ -108,19 +114,14 @@ def get_recursive(dictionary, keys):
 
 def set_recursive(dictionary, keys, value):
     if not keys:
-        dictionary = value
-    if len(keys) == 1:
-        if not isinstance(dictionary.get(keys[0], None), dict):
-            dictionary[keys[0]] = {}
-            #todo warn overwrite
-        if isinstance(value, dict):
-            dictionary[keys[0]].update(value)
-        else:
-            dictionary[keys[0]] = value
+        dictionary.update(value)
         return
-    if keys[0] not in dictionary:
+    if keys[0] not in dictionary or not isinstance(dictionary.get(keys[0], None), dict):
         dictionary[keys[0]] = {}
-    set_recursive(dictionary[keys[0]], keys[1:], value)
+    if len(keys) == 1:
+        dictionary[keys[0]].update(value)
+    else:
+        set_recursive(dictionary[keys[0]], keys[1:], value)
 
 def __pop_recursive(dictionary, path):
     if not path:
@@ -130,9 +131,9 @@ def __pop_recursive(dictionary, path):
     key_piece = path[0]
     if key_piece not in dictionary:
         raise KeyError(key_piece)
-    value = dictionary.pop(key_piece)
     if len(path) == 1:
-        return value
+        return {key_piece: dictionary.pop(key_piece)}
+    value = dictionary[key_piece]
     if not isinstance(value, dict):
         raise KeyError()
     return __pop_recursive(value, path[1:])

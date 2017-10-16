@@ -2,6 +2,7 @@
 from unittest import TestCase
 
 from oobrestserver import Plugin
+from oobrestserver.LocalResourceTree import LocalResourceTree
 
 class TestPluginMutations(TestCase):
 
@@ -55,5 +56,10 @@ class TestPluginMutations(TestCase):
 
     def test_get_set(self):
         sample_data = self.sample_data.copy()
-        Plugin.path_transform(sample_data, '/A/B/C', 'A/C')
+        Plugin.path_transform(sample_data, ['A', 'B', 'C'], 'A')
         self.assertEqual(Plugin.get_recursive(sample_data, ['A', 'C']), '/a/b/c')
+
+    def test_group_move(self):
+        mod = Plugin.modded_config_from(self.sample_data, {'/A/B/*': 'A/C'})
+        self.assertEqual(Plugin.get_recursive(mod, ['A', 'C', 'C']), '/a/b/c')
+        self.assertEqual(Plugin.get_recursive(mod, ['A', 'C', 'F']), '/a/b/f')
