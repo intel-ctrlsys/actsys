@@ -60,7 +60,6 @@ class TestServer(helper.CPWebCase):
         os.remove(os.path.abspath(filename))
 
     def teardown_class(cls):
-        TestServer.app.cleanup()
         super(TestServer, cls).teardown_class()
 
     def test_no_auth(self):

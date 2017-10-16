@@ -30,7 +30,6 @@ class TestEntryPoint(TestCase):
         mock.patch('argparse.ArgumentParser.add_argument', return_value=None).start()
         mock.patch('yaml.load', return_value={}).start()
         mock.patch('oobrestserver.Application.Application.enable_auth', return_value=None).start()
-        mock.patch('oobrestserver.Application.Application.cleanup', return_value=None).start()
         mock.patch('oobrestserver.Application.Application.mount', return_value=None).start()
         mock.patch('oobrestserver.Application.Application.__init__', return_value=None).start()
         mock.patch('cherrypy.engine.start', return_value=None).start()

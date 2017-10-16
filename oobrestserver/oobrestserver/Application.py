@@ -26,7 +26,7 @@ class Application(object):
         self.tree = LocalResourceTree(self.logger, config)
         self.nodes = [self.tree]
         self.gui_app = GuiWrapper(self)
-        cherrypy.engine.subscribe('stop', self.cleanup)
+        cherrypy.engine.subscribe('stop', self.tree.cleanup)
         self.json_conf = {
             '/': {
                 'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
@@ -58,9 +58,6 @@ class Application(object):
     def mount(self):
         cherrypy.tree.mount(self, '/api', self.json_conf)
         cherrypy.tree.mount(self.gui_app, '/gui', self.gui_conf)
-
-    def cleanup(self):
-        self.tree.cleanup()
 
     def _cp_dispatch(self, vpath):
         self.nodes = self.tree.dispatch(vpath)

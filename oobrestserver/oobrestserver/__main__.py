@@ -109,7 +109,6 @@ def main():
     app.mount()
     cherrypy.engine.start()
     cherrypy.engine.block()
-    app.cleanup()
     return 0
 
 if __name__ == '__main__':  # pragma: no cover

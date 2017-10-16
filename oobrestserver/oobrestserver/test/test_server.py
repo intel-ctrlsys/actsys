@@ -22,7 +22,6 @@ class TestServer(helper.CPWebCase):
         TestServer.app.mount()
 
     def teardown_class(cls):
-        TestServer.app.cleanup()
         super(TestServer, cls).teardown_class()
 
     def setUp(self):
