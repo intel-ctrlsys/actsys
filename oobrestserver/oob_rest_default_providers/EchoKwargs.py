@@ -11,4 +11,3 @@ class EchoKwargs(object):
 
     def echo_kwargs(self, **kwargs):
         return str(kwargs)
-

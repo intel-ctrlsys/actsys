@@ -33,7 +33,7 @@ class RemoteResourceTree(BaseResourceTree):
         raise NotImplementedError() # wrap DELETE after server supports this
 
     def cleanup(self):
-        pass
+        pass # that's really all there is to it.
 
     def dispatch(self, vpath):
         if not vpath:

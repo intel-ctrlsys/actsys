@@ -46,10 +46,6 @@ def handle_parallel(nodes, sample_method, sample_rate=1, duration=1, leaves_only
         timers = []
         sample_times = [i / sample_rate for i in range(int(duration * sample_rate))]
 
-        stop_threads = threading.Event()
-        if timeout is not None:
-            threading.Timer(timeout, stop_threads.set).start()
-
         for sample_time in sample_times:
             timer = threading.Timer(sample_time, enqueue_map_results, [sample_method, nodes])
             timers.append(timer)
