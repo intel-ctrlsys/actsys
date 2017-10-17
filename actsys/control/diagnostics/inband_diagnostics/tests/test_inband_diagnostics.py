@@ -6,6 +6,7 @@
 Tests for inband diags
 """
 import unittest
+import queue
 from mock import MagicMock, Mock, patch
 from threading import Thread
 from control.diagnostics.inband_diagnostics.inband_diagnostics import InBandDiagnostics
@@ -15,6 +16,13 @@ from control.provisioner.provisioner import Provisioner
 from control.resource.resource_control import ResourceControl
 from control.power_control.power_control import PowerControl
 
+
+def mock_init(s, target, args):
+    args[3].put(3)
+    return None
+
+def mock_init2(s, target, args):
+    return None
 
 class TestsInbandDiagnostics(unittest.TestCase):
     """Unit tests for Mock Diagnostics"""
@@ -85,11 +93,38 @@ class TestsInbandDiagnostics(unittest.TestCase):
 
     @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog')
     @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog.start_log_capture')
-    # @patch.object(Thread, 'start')
-    # @patch.object(Thread, 'join')
+    def test_console_log_called(self, console_mock_class, console_mock):
+        """function call test"""
+        self.reset_for_test()
+        console_mock_class.side_effect = Exception('Error')
+        queue_var = queue.Queue()
+        queue_var.put(4)
+        self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
+                                                                     self.mock_power_control]
+        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name,
+                                                  plugin_manager=self.mock_plugin_manager)
+        with self.assertRaises(Exception):
+            diags_mock_plugin._console_log_calling('127.0.0.1', 'user', 'password', queue_var)
+
+        self.reset_for_test()
+        console_mock_class.side_effect = None
+        console_mock_class.return_value = 'start', 'stop'
+        queue_var = queue.Queue()
+        queue_var.put(4)
+        self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
+                                                                self.mock_power_control]
+        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name,
+                                              plugin_manager=self.mock_plugin_manager)
+        diags_mock_plugin._console_log_calling('127.0.0.1', 'user', 'password', queue_var)
+        self.assertEqual(4, queue_var.get())
+
+    @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog')
+    @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog.start_log_capture')
+    @patch.object(Thread, '__init__', mock_init)
+    @patch.object(Thread, 'start')
+    @patch.object(Thread, 'join')
     @patch.object(InBandDiagnostics, '_edit_boot_parameters')
-    #@patch.object(InBandDiagnostics, '_console_log_calling')
-    def test_launch_diags_positive(self, edit_patch, console_mock, console_mock_class):
+    def test_launch_diags_positive(self,console_mock_class,console_mock,mock_start,mock_join, edit_patch):
         """tests positive"""
         self.reset_for_test()
         console_mock.return_value = "Start", "Stop"
@@ -112,6 +147,25 @@ class TestsInbandDiagnostics(unittest.TestCase):
         diags_mock_plugin.console_log = console_mock_class
         result = diags_mock_plugin.launch_diags(self.device, self.bmc)
         self.assertGreater(len(result), 0)
+
+    @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog')
+    @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog.start_log_capture')
+    @patch.object(Thread, '__init__', mock_init2)
+    @patch.object(Thread, 'start')
+    @patch.object(Thread, 'join')
+    @patch.object(InBandDiagnostics, '_edit_boot_parameters')
+    def test_launch_diags_exception_queue(self, console_mock_class, console_mock, mock_start, mock_join, edit_patch):
+        """tests exceptions"""
+        self.reset_for_test()
+        console_mock.return_value = "Start", "Stop"
+        edit_patch.return_value = 1
+        self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
+                                                                self.mock_power_control]
+        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name,
+                                              plugin_manager=self.mock_plugin_manager)
+        diags_mock_plugin.console_log = console_mock_class
+        with self.assertRaises(Exception):
+            diags_mock_plugin.launch_diags(self.device, self.bmc)
 
     def test_no_device(self):
         """tests exceptions"""
