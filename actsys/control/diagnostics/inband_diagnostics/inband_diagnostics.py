@@ -159,10 +159,11 @@ class InBandDiagnostics(Diagnostics):
         self._set_node_state('Off')
         self._set_node_state('On')
         console_log_thread.join()
-        try:
+        if not result_queue.empty():
             result_list[self.device_name] = result_queue.get()
-        except Exception:
-            raise
+        else:
+            raise Exception('Console log failed to receive data, diagnostics did not complete and the node will be in '
+                            'bad state')
         # Step 3: Provision node back to old image
         if not self.reboot_true:
             self._provision_image(self.old_image, self.old_kargs)
