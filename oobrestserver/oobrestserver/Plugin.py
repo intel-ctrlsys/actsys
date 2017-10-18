@@ -11,7 +11,6 @@ whose terminal symbols are functions within loaded, initialized plugins.
 import importlib
 from sys import modules
 
-from oobrestserver import GlobTools
 from oobrestserver.RDict import RDict
 
 
@@ -26,7 +25,8 @@ def plugin(description):
 
 def create_plugin(module_name, class_name, args, kwargs, url_mods):
     try:
-        return transform(get_config(instantiate(get_class(class_name, get_module(module_name)), args, kwargs)), url_mods)
+        return transform(get_config(instantiate(get_class(get_module(
+            module_name), class_name), args, kwargs)), url_mods)
     except RuntimeError as ex:
         raise RuntimeError(str(ex)+"\n\tclass: {}\n\tin module: {}".format(class_name, module_name))
 
@@ -38,7 +38,7 @@ def get_module(module_name):
     except ValueError as ex:
         raise RuntimeError("Error importing module: {}".format(str(ex)))
 
-def get_class(class_name, module):
+def get_class(module, class_name):
     try:
         return getattr(module, class_name)
     except AttributeError as ex:
@@ -57,15 +57,14 @@ def get_config(obj):
     return obj.config
 
 def transform(config, url_mods):
-    rd = RDict(config.copy())
+    recursive_dict = RDict(config.copy())
     for source_glob, dest_glob in url_mods.items():
         source_path = keys(source_glob)
         dest_path = keys(dest_glob)
-        matches = rd.search(source_path)
+        matches = recursive_dict.search(source_path)
         for resolved_source_path in matches:
-            rd.move(resolved_source_path, dest_path)
-    return rd.raw()
+            recursive_dict.move(resolved_source_path, dest_path)
+    return recursive_dict.raw()
 
 def keys(string_path):
     return [key for key in string_path.lstrip('/').split('/') if key != '']
-

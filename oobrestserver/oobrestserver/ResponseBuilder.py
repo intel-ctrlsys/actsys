@@ -27,7 +27,7 @@ def wrap_method(method_label, args, kwargs):
     return wrapped_plugin_method
 
 
-def handle_parallel(nodes, sample_method, sample_rate=1, duration=1, leaves_only=False, timeout=None):
+def handle_parallel(nodes, sample_method, sample_rate=1, duration=1, leaves_only=False):
 
     if leaves_only:
         nodes = [x for x in nodes if x.config.get('#units', None) != "PathNode"]

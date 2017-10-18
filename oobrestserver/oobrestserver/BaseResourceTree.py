@@ -26,4 +26,3 @@ class BaseResourceTree(object):
 
     def _globstar_dispatch(self, vpath):
         return [node for node in self.list_children(True) if GlobTools.glob_match(node.route, '/'.join(vpath))]
-
