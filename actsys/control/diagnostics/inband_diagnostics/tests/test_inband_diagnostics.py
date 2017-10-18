@@ -21,8 +21,10 @@ def mock_init(s, target, args):
     args[3].put(3)
     return None
 
+
 def mock_init2(s, target, args):
     return None
+
 
 class TestsInbandDiagnostics(unittest.TestCase):
     """Unit tests for Mock Diagnostics"""
@@ -87,7 +89,6 @@ class TestsInbandDiagnostics(unittest.TestCase):
         }
         self.image_name = "Centos7.1"
         self.test_name = "DiagList=all DiagReboot=yes"
-        self.test_name2 = None
         self.image_name1 = "test2.bin"
         self.test_name1 = "test_diag.bin"
 
@@ -142,7 +143,7 @@ class TestsInbandDiagnostics(unittest.TestCase):
         edit_patch.return_value = 1
         self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
                                                                 self.mock_power_control]
-        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name2,
+        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name1,
                                               plugin_manager=self.mock_plugin_manager)
         diags_mock_plugin.console_log = console_mock_class
         result = diags_mock_plugin.launch_diags(self.device, self.bmc)

@@ -26,12 +26,11 @@ class InBandDiagnostics(Diagnostics):
         self.img = kwargs['diag_image']
         self.old_image = None
         self.kargs = kwargs['test_name']
-        if self.kargs is None:
-            self.kargs = 'DiagReboot=no'
         if "DiagReboot=yes" not in self.kargs:
             self.kargs += ' DiagReboot=no'
         else:
             self.reboot_true = True
+        self.kargs = "console=ttyS0,115200n1 " + self.kargs
         self.old_kargs = None
         self.console_log = None
         self.device = None
