@@ -69,11 +69,12 @@ class InBandDiagnostics(Diagnostics):
             raise Exception("Failed to set image {0} or test {1}. Provisioner returned error {2}. "
                             "Cannot run diagnostics. ".format(img, args, ex.message))
         mac_address = self.device.get("mac_address")
-        self._edit_boot_parameters(mac_address)
+        tftpboot_file = self.device.get("tftpboot")
+        self._edit_boot_parameters(mac_address, tftpboot_file)
 
-    def _edit_boot_parameters(self, mac_address):
+    def _edit_boot_parameters(self, mac_address, tftpboot_file):
         mac_addr = mac_address.replace(':', '-')
-        bootstrap_config_fullpath = "/var/lib/tftpboot/warewulf/pxelinux.cfg/01-" + mac_addr
+        bootstrap_config_fullpath = tftpboot_file + "/01-" + mac_addr
         file_d = open(bootstrap_config_fullpath, 'r')
         fd_content = file_d.read()
         if 'DiagList' in fd_content:
