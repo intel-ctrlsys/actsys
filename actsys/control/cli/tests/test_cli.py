@@ -278,6 +278,11 @@ class ControlCliParserTest(TestCase):
     def tearDown(self):
         CommandInvoker.BASE_CLUSTER_CONFIG_NAME = self.original_cluster_config_name
 
+    def test_no_args(self):
+        sys.argv[1:] = []
+        with self.assertRaises(SystemExit):
+            self.TestParser.get_all_args()
+
     def test_version(self):
         sys.argv[1:] = ['--version']
         with self.assertRaises(SystemExit):
