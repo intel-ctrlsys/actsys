@@ -64,6 +64,16 @@ class LocalResourceTree(BaseResourceTree):
         results = [self.children[route].dispatch(vpath[1:]) for route in GlobTools.glob_filter(self.children, vpath[0])]
         return sum(results, [])
 
+    # There's probably a class hiding below this line...
+
+    # Child class of the RDict which allows the editing of the RDict through the consumption of config dicts
+    # Another child class of THAT child of RDict... is exactly the LocalResourceTree class.
+    # Then the add and remove resources are pass through and the dispatch = search. In fact, maybe RemoteResourceTree
+    # is a subclass of RDict, and dispatch always exactly equals search... just a rename
+
+    # Or, more realistically, just subclass RDict directly here. It's an RDict that can be defined and extended by the
+    # plugin loading methods, and supports the BaseResourceTree contract. There we go!
+
     def __define_plugins(self, config):
         plugin_descriptions = config.get('_define_plugins', {})
         for plugin_name, plugin_description in plugin_descriptions.items():
@@ -75,15 +85,16 @@ class LocalResourceTree(BaseResourceTree):
         for plugin_description in config.get('_attach_plugins', []):
             if isinstance(plugin_description, dict):
                 plugin_object = self.__get_plugin_from_description(plugin_description)
-                if plugin_object is not None:
-                    config.update(plugin_object)
+                config.update(plugin_object or {})
             else:
-                if plugin_description not in self.saved_plugins:
-                    self.logger.warn("Plugin name not previously defined: "+str(plugin_description))
-                    continue
-                self.logger.info("loading a previously-defined plugin")
-                plugin_object = self.saved_plugins[plugin_description]
-                config.update(plugin_object)
+                self.__attach_saved_plugin(plugin_description, config)
+
+    def __attach_saved_plugin(self, plugin_description, config):
+        if plugin_description in self.saved_plugins:
+            self.logger.info("loading a previously-defined plugin")
+            config.update(self.saved_plugins[plugin_description])
+        else:
+            self.logger.warn("Plugin name not previously defined: "+str(plugin_description))
 
     def __attach_remotes(self, config):
         for remote_label, remote_host in config.get('_remote_hosts').items():

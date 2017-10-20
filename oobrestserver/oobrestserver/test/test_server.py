@@ -227,11 +227,7 @@ class TestServer(helper.CPWebCase):
                 '/api/node1/folder/',
                 '/api/node1/folder/InsideString/',
                 '/api/node1/folder/InsideString/string/',
-                '/gui/',
-                '/gui/node1/',
-                '/gui/node1/folder/',
-                '/gui/node1/folder/InsideString/',
-                '/gui/node1/folder/InsideString/string/']:
+                '/gui/']:
             print('getting'+url)
             self.getPage(url)
             self.assertStatus('200 OK')

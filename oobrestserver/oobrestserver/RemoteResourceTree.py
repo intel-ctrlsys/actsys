@@ -2,40 +2,38 @@
 #
 # Copyright (c) 2016-2017 Intel Corp.
 #
+"""Remote access to resource trees hosted by other server instances"""
 
 import requests
-
 from oobrestserver.BaseResourceTree import BaseResourceTree
-from oobrestserver import GlobTools
+
 
 class RemoteResourceTree(BaseResourceTree):
+    """Implements the BaseResourceTree contract by issuing HTTP requests to other servers."""
 
     def __init__(self, remote_host):
         self.url = remote_host
 
     def list_children(self, recursive=False):
-        # parse result of GET @ url?recursive=1
-        # requests.get()
-        return []
+        response = requests.get(self.url, params={'recursive': 1})
+        return response.json()['']['samples'][0]
 
     def get_method(self, label):
         if label == '#getter':
-
-            pass # wrap GET requests w/ URL params <-> kwargs mapped. Return a function!l
+            def get_request(**kwargs):
+                return requests.get(self.url, params=kwargs)
+            return get_request
         if label == '#setter':
-            pass # wrap POST like GET above
-        raise NotImplementedError()
+            def post_request(value, **kwargs):
+                return requests.post(self.url, json=value, params=kwargs)
+            return post_request
+        raise RuntimeError('Method not supported')
 
     def add_resources(self, config):
-        raise NotImplementedError() # wrap PUT after server supports this
+        return requests.put(self.url, data=config)
 
     def remove_resources(self, child):
-        raise NotImplementedError() # wrap DELETE after server supports this
-
-    def cleanup(self):
-        pass # that's really all there is to it.
+        return requests.delete(self.url+'/'+child)
 
     def dispatch(self, vpath):
-        if not vpath:
-            return [self]
-        return [node for node in self.list_children(True) if GlobTools.glob_match(node.route, '/'.join(vpath))]
+        return [RemoteResourceTree(self.url+'/'+'/'.join(vpath))]

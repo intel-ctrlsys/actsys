@@ -25,7 +25,6 @@ class Application(object):
         self.logger = logger or logging.getLogger()
         self.tree = LocalResourceTree(self.logger, config)
         self.nodes = [self.tree]
-        self.gui_app = GuiWrapper(self)
         cherrypy.engine.subscribe('stop', self.tree.cleanup)
         self.json_conf = {
             '/': {
@@ -35,16 +34,9 @@ class Application(object):
                 'tools.response_headers.headers': [('Content-Type', 'application/json;charset=utf-8')]
             }
         }
-        self.gui_conf = {
-            '/': {
-                'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
-                'tools.sessions.on': True,
-                'tools.response_headers.on': True,
-                'tools.response_headers.headers': [('Content-Type', 'text/html;charset=utf-8')]
-            }
-        }
 
     def enable_auth(self, auth_file):
+        """Turn on HTTP Basic Auth capabilities, with the identities found in the auth_file"""
         auth = Authenticator()
         auth.load_or_create(auth_file)
         sec_settings = {
@@ -53,11 +45,10 @@ class Application(object):
             'tools.auth_basic.checkpassword': lambda realm, user, password: auth.authenticate(user, password)
         }
         self.json_conf['/'].update(sec_settings)
-        self.gui_conf['/'].update(sec_settings)
 
     def mount(self):
         cherrypy.tree.mount(self, '/api', self.json_conf)
-        cherrypy.tree.mount(self.gui_app, '/gui', self.gui_conf)
+        cherrypy.tree.mount(GuiWrapper(), '/gui', {'/':cherrypy.config.defaults})
 
     def _cp_dispatch(self, vpath):
         self.nodes = self.tree.dispatch(vpath)
@@ -67,6 +58,7 @@ class Application(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def GET(self, **url_params):
+        """Invoke the #getter method for some plugin-provided resources"""
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
         result = ResponseBuilder.generate_document(self.nodes, '#getter', [], method_kwargs, request_kwargs)
@@ -77,6 +69,7 @@ class Application(object):
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def POST(self, **url_params):
+        """Invoke the #setter method for some plugin-provided resources"""
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
         method_args = [cherrypy.request.json]
@@ -88,6 +81,7 @@ class Application(object):
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def PUT(self):
+        """Extend the resource tree with new configuration"""
         config = cherrypy.request.json
         for node in self.nodes:
             node.add_resources(config)
@@ -96,6 +90,7 @@ class Application(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def DELETE(self):
+        """Remove a portion of the resource tree"""
         deleted_nodes = []
         for node in self.nodes:
             parent_route = node.route.split('/')[:-1]
@@ -111,6 +106,7 @@ class Application(object):
 
     @staticmethod
     def request_kwargs_from(url_params):
+        """Find the URL parameters that affect the server's treatment of the request"""
         result = {}
         if 'sample_rate' in url_params:
             result['sample_rate'] = min(float(url_params['sample_rate']), 1000)
@@ -122,6 +118,7 @@ class Application(object):
 
     @staticmethod
     def method_kwargs_from(url_params):
+        """Find the URL parameters that propagate to the kwargs of the plugin method"""
         result = url_params.copy()
         for key in ['sample_rate', 'duration', 'leaves_only', 'timeout']:
             result.pop(key, None)

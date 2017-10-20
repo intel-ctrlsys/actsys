@@ -19,7 +19,7 @@ class BaseResourceTree(object):
         raise NotImplementedError()
 
     def cleanup(self): # pragma: no cover
-        raise NotImplementedError()
+        pass
 
     def dispatch(self, vpath): # pragma: no cover
         raise NotImplementedError()

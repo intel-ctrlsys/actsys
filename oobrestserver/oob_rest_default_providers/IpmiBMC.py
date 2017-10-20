@@ -17,13 +17,31 @@ from oob_rest_default_providers import execute_subprocess
 
 class IpmiBMC(object):
 
-    def __init__(self, hostname, port, username, password, interface='lanplus'):
+    def __init__(self, hostname=None, port=None, username=None, password=None, interface='lanplus',
+                 ssh_timeout=10, ssh_retries=10, ssh_address=None, ssh_port=22, ssh_username=None, ssh_password=None, ssh_id=None, ssh_interval=10,
+                 ping_address=None, ping_retries=10, ping_interval=10):
 
         self.sol_lock = threading.Lock()
         self.power_state_lock = threading.Lock()
         self.sdr_lock = threading.Lock()
         self.last_sdr_update_time = 0
         self.sdr_cache = {}
+
+        self.ssh_timeout = ssh_timeout
+        self.ssh_interval = ssh_interval
+        self.ssh_retries = ssh_retries
+        self.ssh_check_cmd = sum([
+            ['ssh', '-q'],
+            [] if ssh_id is None else ['-i', ssh_id],
+            ['-p', "%d" % ssh_port],
+            ['%s@%s' % (ssh_username, ssh_address)],
+            ['-o', 'ConnectTimeout={}'.format(ssh_timeout)],
+            ['echo', '-n', '""']],
+        [])
+
+        self.ping_interval = ping_interval
+        self.ping_retries = ping_retries
+        self.ping_check_cmd = ['ping', '-c', '1', '-W', '1', '-q', ping_address]
 
         self.ipmitool_opts = ['ipmitool', '-I', interface, '-H', hostname or '127.0.0.1', '-p', port or '623']
         if username:
@@ -53,7 +71,6 @@ class IpmiBMC(object):
                 '#setter': self.set_led_interval
             }
         }
-
         self.populate_sensors()
 
     def get_chassis_state(self):
@@ -70,12 +87,43 @@ class IpmiBMC(object):
 
     def set_chassis_state(self, new_state):
         with self.power_state_lock:
-            valid_states = ["on", "off", "soft", "cycle"]
-            if not new_state in valid_states:
+            states = ["on", "off", "soft", "cycle"]
+            if new_state in states:
+                self.__blind_ipmitool_invoke(['power', new_state])
+            elif new_state == "block_on":
+                self.__blind_ipmitool_invoke(['power', 'on'])
+                self.block_to_ssh()
+            elif new_state == "block_cycle":
+                self.__blind_ipmitool_invoke(['power', 'cycle'])
+                self.block_to_ssh()
+            elif new_state == "block_soft_reboot":
+                self.__blind_ipmitool_invoke(['power', 'soft'])
+                self.block_to_off()
+                self.__blind_ipmitool_invoke(['power', 'on'])
+                self.block_to_ssh()
+            else:
+                valid_states = states + ["block_on", "block_cycle", "block_soft_reboot"]
                 raise RuntimeError("Invalid power state: {}. Choose from {}".format(new_state, valid_states))
-            cmd = self.ipmitool_opts + ['power', new_state]
-            if not execute_subprocess.without_capture(cmd):
-                raise RuntimeError('Failed to execute ipmitool!')
+
+    def __blind_ipmitool_invoke(self, cmd):
+        if not execute_subprocess.without_capture(self.ipmitool_opts+cmd):
+            raise RuntimeError('Failed to execute ipmitool!')
+
+    def block_to_ssh(self):
+        retry_counter = 0
+        while execute_subprocess.without_capture(self.ssh_check_cmd).return_code and retry_counter < self.ssh_retries:
+            retry_counter += 1
+            time.sleep(self.ssh_retries)
+        if retry_counter == self.ssh_retries:
+            raise RuntimeError('Timeout waiting for node to come up for SSH!')
+
+    def block_to_off(self):
+        retry_counter = 0
+        while not execute_subprocess.without_capture(self.ping_check_cmd).return_code and retry_counter < self.ping_retries:
+            retry_counter += 1
+            time.sleep(self.ping_interval)
+        if retry_counter == self.ssh_retries:
+            raise RuntimeError('Timeout waiting for node to shut down (stop pinging)!')
 
     def set_led_interval(self, interval):
         try:
@@ -187,5 +235,7 @@ class IpmiBMC(object):
             consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                           stdin=subprocess.PIPE)
             consolelog.wait()
-        except Exception as ex:
+        except Exception:
             pass
+
+
