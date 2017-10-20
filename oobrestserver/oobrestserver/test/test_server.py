@@ -158,12 +158,32 @@ class TestServer(helper.CPWebCase):
                         "module": "oob_rest_default_providers.EchoKwargs"
                     }
                 ]
-            }
+            },
+            "_define_plugins": {
+                "my_prefab": {
+                    "module": "oob_rest_default_providers.StringDevice",
+                    "args": ["Predefined!"]
+                },
+                "non_buildable": {
+                    "module": "BadPlugins.NotCallableGetter"
+                }
+            },
+            "pre": {"de": {"fined": {"_attach_plugins": ["my_prefab"]}}},
+            "not_predefined": {"_attach_plugins": ["no_such_plugin"]},
+            "unbuildable": {"_attach_plugins": ["non_buildable"]}
+
         }
         json_config = json.dumps(config)
         headers = [('Content-Type', 'application/json'),
                    ('Content-Length', str(len(json_config)))]
         self.getPage('/api', headers=headers, method='PUT', body=json_config)
+
+    def test_prefabs(self):
+        self.check_in_all_samples('/api/pre/de/fined/string', 'Predefined!')
+        self.getPage('/api/not_predefined/*')
+        self.assertBody('{}')
+        self.getPage('/api/unbuildable/*')
+        self.assertBody('{}')
 
     def test_moved_resources(self):
         self.getPage('/api/node1/BarString')

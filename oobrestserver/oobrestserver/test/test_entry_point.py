@@ -24,6 +24,17 @@ class FakeOptions(object):
         self.log_file_size = log_file_size
         self.log_file_count = log_file_count
 
+
+class FakeRotatingFileHandler(object):
+
+    def __init__(self, file=None, count=None, size=None):
+        self.formatter = None
+        pass
+
+    def setLevel(self, level):
+        pass
+
+
 class TestEntryPoint(TestCase):
 
     def setUp(self):
@@ -35,6 +46,8 @@ class TestEntryPoint(TestCase):
         mock.patch('cherrypy.engine.start', return_value=None).start()
         mock.patch('cherrypy.engine.block', return_value=None).start()
         mock.patch('cherrypy.config.update', return_value=None).start()
+        mock.patch('logging.handlers.RotatingFileHandler', return_value=FakeRotatingFileHandler()).start()
+        mock.patch('logging.Logger.addHandler', return_value=None).start()
 
     def tearDown(self):
         cherrypy.server.ssl_certificate = None
@@ -80,4 +93,8 @@ class TestEntryPoint(TestCase):
 
     def test_auth_with_ssl(self):
         mock.patch('argparse.ArgumentParser.parse_args', return_value=FakeOptions(auth_file='foobar', key='foobar', cert='barfoo')).start()
+        self.assertEqual(main(), 0)
+
+    def test_log_file(self):
+        mock.patch('argparse.ArgumentParser.parse_args', return_value=FakeOptions(log_file='foobar')).start()
         self.assertEqual(main(), 0)

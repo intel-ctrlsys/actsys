@@ -87,7 +87,7 @@ class Application(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    def PUT(self, **url_params):
+    def PUT(self):
         config = cherrypy.request.json
         for node in self.nodes:
             node.add_resources(config)
@@ -95,13 +95,13 @@ class Application(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def DELETE(self, **url_params):
+    def DELETE(self):
         deleted_nodes = []
         for node in self.nodes:
             parent_route = node.route.split('/')[:-1]
             parents = self.tree.dispatch(parent_route)
             leaf_obj_name = node.route.split('/')[-1]
-            assert (len(parents) == 1)
+            assert len(parents) == 1
             deleted_nodes.append(node.route)
             parent = parents[0]
             parent.remove_resources(leaf_obj_name)

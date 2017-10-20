@@ -104,7 +104,7 @@ class RDict(object):
             else:
                 obj_children[key] = child
         results = sum([child.keys(path_here + [key]) for key, child in rdict_children.items()], [])
-        results += [path_here + [key] for key in obj_children.keys()]
+        results += [path_here + [key] for key in obj_children]
         if not results:
             if not path_here:
                 return []
@@ -120,10 +120,10 @@ class RDict(object):
         return {k: v for k, v in self.data_object.items() if GlobTools.glob_match(k, glob) and not k.startswith('#')}
 
     @staticmethod
-    def __real_dict(map):
-        if not isinstance(map, dict):
-            return map
-        return {k: RDict.__real_dict(v.data_object) if isinstance(v, RDict) else v for k, v in map.items()}
+    def __real_dict(recursive_dict):
+        if not isinstance(recursive_dict, dict):
+            return recursive_dict
+        return {k: RDict.__real_dict(v.data_object) if isinstance(v, RDict) else v for k, v in recursive_dict.items()}
 
     @staticmethod
     def __recursive_dict(obj):
