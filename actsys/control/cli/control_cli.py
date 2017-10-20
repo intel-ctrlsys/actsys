@@ -154,7 +154,7 @@ class ControlArgParser(object):
                                    'name': 'sensor_name',
                                    'nargs': '?',
                                    'help': 'Provide a specific sensor, a comma seperated list of multiple sensors '
-                                           'or .*/all for all sensors'
+                                           'or "*" for all sensors'
                                },
                                {
                                    'name': '--get-overtime',

@@ -49,7 +49,7 @@ class OobSensorCommand(Command):
         sensor_name_length = len(sensor_name)
         if sensor_name == ' ' or sensor_name_length == 0:
             raise RuntimeError("Empty string given to sensor_name")
-        elif sensor_name.strip().lower() in ['all', '.*', '*']:
+        elif sensor_name.strip().lower() in ['all', '.*']:
             return ''
         else:
             return sensor_name
