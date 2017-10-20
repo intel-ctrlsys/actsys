@@ -219,11 +219,14 @@ class TestServer(helper.CPWebCase):
     def test_delete(self):
         self.getPage('/api/node1/folder/')
         self.assertStatus('200 OK')
+        self.assertNotEqual(self.body, '{}')
         self.getPage('/api/node1', method='DELETE')
         self.assertStatus('200 OK')
         self.getPage('/api/node1/folder/')
         self.assertStatus('200 OK')
         self.assertBody('{}')
+        self.getPage('/api', method='DELETE')
+        self.assertStatus('200 OK')
 
     def test_leaves_only(self):
         self.getPage('/api/**')

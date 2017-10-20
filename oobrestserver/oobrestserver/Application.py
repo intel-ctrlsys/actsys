@@ -96,14 +96,18 @@ class Application(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def DELETE(self, **url_params):
+        deleted_nodes = []
         for node in self.nodes:
             parent_route = node.route.split('/')[:-1]
             parents = self.tree.dispatch(parent_route)
             leaf_obj_name = node.route.split('/')[-1]
-            if len(parents) == 1:
-                parent = parents[0]
-                parent.remove_resources(leaf_obj_name)
+            assert (len(parents) == 1)
+            deleted_nodes.append(node.route)
+            parent = parents[0]
+            parent.remove_resources(leaf_obj_name)
+        result = {'deleted': deleted_nodes}
         self.nodes = [self.tree]
+        return result
 
     @staticmethod
     def request_kwargs_from(url_params):
@@ -114,8 +118,6 @@ class Application(object):
             result['duration'] = float(url_params['duration'])
         if 'leaves_only' in url_params:
             result['leaves_only'] = bool(url_params['leaves_only'])
-        if 'timeout' in url_params:
-            result['timeout'] = float(url_params['timeout'])
         return result
 
     @staticmethod
