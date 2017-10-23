@@ -9,7 +9,7 @@ import logging
 
 import cherrypy
 
-from oobrestserver.LocalResourceTree import LocalResourceTree
+from oobrestserver.ResourceTree import ResourceTree
 from oobrestserver.GuiWrapper import GuiWrapper
 from oobrestserver.Authenticator import Authenticator
 from oobrestserver import ResponseBuilder
@@ -22,8 +22,8 @@ class Application(object):
 
     def __init__(self, config, logger=None):
         """Start the server with default settings and the specified config."""
-        self.logger = logger or logging.getLogger()
-        self.tree = LocalResourceTree(self.logger, config)
+        self.__logger = logger or logging.getLogger()
+        self.tree = ResourceTree(self.__logger, config)
         self.nodes = [self.tree]
         cherrypy.engine.subscribe('stop', self.tree.cleanup)
         self.json_conf = {
@@ -61,6 +61,9 @@ class Application(object):
         """Invoke the #getter method for some plugin-provided resources"""
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
+        self.__logger.info('Incoming GET request\n\tNodes: {}\n\tRequest params: {}\n\tGetter method kwargs: {}'.format(
+            [node.route for node in self.nodes], request_kwargs, method_kwargs
+        ))
         result = ResponseBuilder.generate_document(self.nodes, '#getter', [], method_kwargs, request_kwargs)
         self.nodes = [self.tree]
         return result
@@ -73,6 +76,9 @@ class Application(object):
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
         method_args = [cherrypy.request.json]
+        self.__logger.info('Incoming POST request\n\tNodes: {}\n\tRequest params: {}\n\tSetter method kwargs: {}\n\tPOSTed value: {}'.format(
+            [node.route for node in self.nodes], request_kwargs, method_kwargs, cherrypy.request.json
+        ))
         result = ResponseBuilder.generate_document(self.nodes, '#setter', method_args, method_kwargs, request_kwargs)
         self.nodes = [self.tree]
         return result

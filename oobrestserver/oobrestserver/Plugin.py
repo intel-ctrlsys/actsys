@@ -23,12 +23,14 @@ def plugin(description):
     class_name = name_pieces[-1]
     return create_plugin(module_name, class_name, args, kwargs, url_mods)
 
+
 def create_plugin(module_name, class_name, args, kwargs, url_mods):
     try:
         return transform(get_config(instantiate(get_class(get_module(
             module_name), class_name), args, kwargs)), url_mods)
     except RuntimeError as ex:
         raise RuntimeError(str(ex)+"\n\tclass: {}\n\tin module: {}".format(class_name, module_name))
+
 
 def get_module(module_name):
     try:
@@ -38,11 +40,13 @@ def get_module(module_name):
     except ValueError as ex:
         raise RuntimeError("Error importing module: {}".format(str(ex)))
 
+
 def get_class(module, class_name):
     try:
         return getattr(module, class_name)
     except AttributeError as ex:
         raise RuntimeError("Error loading class: {}".format(str(ex)))
+
 
 def instantiate(plugin_class, args, kwargs):
     try:
@@ -51,10 +55,12 @@ def instantiate(plugin_class, args, kwargs):
         template = "Error creating instance: {}\n\targs: {}\n\tkwargs: {}"
         raise RuntimeError(template.format(str(ex), str(args), str(kwargs)))
 
+
 def get_config(obj):
     if not hasattr(obj, 'config') or not isinstance(obj.config, dict):
         raise RuntimeError("Error in plugin: no config dict")
     return obj.config
+
 
 def transform(config, url_mods):
     recursive_dict = RDict(config.copy())
@@ -65,6 +71,7 @@ def transform(config, url_mods):
         for resolved_source_path in matches:
             recursive_dict.move(resolved_source_path, dest_path)
     return recursive_dict.raw()
+
 
 def keys(string_path):
     return [key for key in string_path.lstrip('/').split('/') if key != '']
