@@ -26,7 +26,7 @@ def document_from_results(results, start_time):
         for node, sample, exception in routes:
             if node.route not in response:
                 response[node.route] = {
-                    'units': node.config.get('#units', None),
+                    'units': node.get_property('#units'),
                     'start-time': start_time,
                     'samples': [],
                     'exceptions': []
@@ -41,7 +41,10 @@ def document_from_results(results, start_time):
 def wrap_method(method_label, args, kwargs):
     def wrapped_plugin_method(node):
         try:
-            return node, node.get_method(method_label)(*args, **kwargs), None
+            method = node.get_property(method_label)
+            if method is None:
+                raise RuntimeError("Method not supported")
+            return node, method(*args, **kwargs), None
         except Exception as ex:
             return node, None, str(ex)
     return wrapped_plugin_method
@@ -54,7 +57,7 @@ def parallel_apply_method(method, nodes, sample_rate=1, duration=1, leaves_only=
     (node, return value, string-casted exception) showing that time slice's results.
     """
     if leaves_only:
-        nodes = [x for x in nodes if x.config.get('#units', None) != "PathNode"]
+        nodes = [x for x in nodes if x.get_property('#units') != "PathNode"]
     if not nodes:
         return {}
     with ThreadPool(len(nodes)) as pool:

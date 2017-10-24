@@ -12,6 +12,7 @@ services, and starts the API server.
 import argparse
 import logging
 import logging.handlers
+import logging.config
 import sys
 
 import cherrypy
@@ -50,28 +51,63 @@ def main():
     try:
         log_file_count = int(options.log_file_count)
     except (ValueError, TypeError):
-        log_file_count = 3
+        log_file_count = 20
 
     try:
         log_file_size = int(options.log_file_size)
     except (ValueError, TypeError):
-        log_file_size = 10*1024*1024
+        log_file_size = 10485760
 
-    logger = logging.getLogger()
-    formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(message)s')
+    log_file = options.log_file or 'server.log'
 
-    stdout_log_handler = logging.StreamHandler(sys.stdout)
-    stdout_log_handler.setLevel(log_level)
-    stdout_log_handler.formatter = formatter
-    logger.addHandler(stdout_log_handler)
+    logging.config.dictConfig({
+        'version': 1,
+        'formatters': {
+            'standard': {
+                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': log_level,
+                'class': 'logging.StreamHandler',
+                'formatter': 'standard',
+                'stream': 'ext://sys.stdout'
+            },
+            'file': {
+                'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'formatter': 'standard',
+                'filename': log_file,
+                'maxBytes': log_file_size,
+                'backupCount': log_file_count,
+                'encoding': 'utf8'
+            }
+        },
+        'loggers': {
+            '': {
+                'handlers': ['console', 'file'],
+                'level': 'INFO'
+            },
+            'oob': {
+                'handlers': ['console', 'file'],
+                'level': 'INFO',
+                'propagate': False
+            },
+            'cherrypy.access': {
+                'handlers': ['console', 'file'],
+                'level': 'INFO',
+                'propagate': False
+            },
+            'cherrypy.error': {
+                'handlers': ['console', 'file'],
+                'level': 'INFO',
+                'propagate': False
+            },
+        }
+    })
 
-    if options.log_file:
-        rotating_log_handler = logging.handlers.RotatingFileHandler(options.log_file,
-                                                                    backupCount=log_file_count,
-                                                                    maxBytes=log_file_size)
-        rotating_log_handler.setLevel(logging.INFO)
-        rotating_log_handler.formatter = formatter
-        logger.addHandler(rotating_log_handler)
+    logger = logging.getLogger('oob')
 
     config = {}
 

@@ -1,4 +1,5 @@
 from oobrestserver import GlobTools
+from collections import Hashable
 
 
 class RDict(object):
@@ -16,49 +17,35 @@ class RDict(object):
         return len(self.keys())
 
     def __setitem__(self, keys, value):
-
-        if not isinstance(keys, list):
-            raise TypeError('RDict keys must be lists of hashable types.')
-
+        RDict.__check_key_type(keys)
         if not keys:
             self.data_object = RDict.__recursive_dict(value)
             return
-
         if not isinstance(self.data_object, dict):
             self.data_object = {}
-
         if len(keys) == 1:
             self.data_object[keys[0]] = RDict(value)
             return
-
         if keys[0] not in self.data_object or not isinstance(self.data_object[keys[0]], RDict):
             self.data_object[keys[0]] = RDict()
-
         self.data_object[keys[0]][keys[1:]] = value
 
     def pop(self, keys, remove=True):
-
-        if not isinstance(keys, list):
-            raise TypeError('RDict keys must be lists of hashable types.')
-
+        RDict.__check_key_type(keys)
         if not keys:
             if not remove:
                 return self
             copy = self.data_object
             self.data_object = {}
             return RDict(copy)
-
         if not isinstance(self.data_object, dict):
             raise KeyError(keys)
-
         try:
-
             if len(keys) == 1:
                 result = self.data_object[keys[0]]
                 if remove:
                     del self.data_object[keys[0]]
                 return RDict(result)
-
             child = self.data_object[keys[0]]
             if not isinstance(child, RDict):
                 raise KeyError(keys)
@@ -66,20 +53,27 @@ class RDict(object):
             if remove and len(self.data_object[keys[0]]) == 0:
                 del self.data_object[keys[0]]
             return RDict(result)
-
         except KeyError:
             raise KeyError(keys)
 
     def move(self, source_path, dest_path):
+        RDict.__check_key_type(source_path)
+        RDict.__check_key_type(dest_path)
         if len(source_path) > 0:
             self[dest_path + [source_path[-1]]] = self.pop(source_path)
         else:
             self[dest_path] = self.pop(source_path)
 
     def rename(self, source_path, dest_path):
+        RDict.__check_key_type(source_path)
+        RDict.__check_key_type(dest_path)
         self[dest_path] = self.pop(source_path)
 
-    def search(self, search_path, path_here=None):
+    def search(self, search_path):
+        RDict.__check_key_type(search_path)
+        return self.__search(search_path)
+
+    def __search(self, search_path, path_here=None):
         if path_here is None:
             path_here = []
         if search_path == []:
@@ -88,10 +82,13 @@ class RDict(object):
             return [path_here]
         matches = self.__matching_children(search_path[0])
         child_search = search_path[1:]
-        results = [child.search(child_search, path_here + [key]) for key, child in matches.items()]
+        results = [child.__search(child_search, path_here + [key]) for key, child in matches.items()]
         return sum(results, [])
 
-    def keys(self, path_here=None):
+    def keys(self):
+        return self.__keys()
+
+    def __keys(self, path_here=None):
         if path_here is None:
             path_here = []
         if not isinstance(self.data_object, dict):
@@ -103,7 +100,7 @@ class RDict(object):
                 rdict_children[key] = child
             else:
                 obj_children[key] = child
-        results = sum([child.keys(path_here + [key]) for key, child in rdict_children.items()], [])
+        results = sum([child.__keys(path_here + [key]) for key, child in rdict_children.items()], [])
         results += [path_here + [key] for key in obj_children]
         if not results:
             if not path_here:
@@ -113,6 +110,11 @@ class RDict(object):
 
     def raw(self):
         return RDict.__real_dict(self.data_object)
+
+    @staticmethod
+    def __check_key_type(key):
+        if not isinstance(key, list) or any([not isinstance(elt, Hashable) or elt is None for elt in key]):
+            raise TypeError('RDict keys must be lists of hashable, non-None objects.')
 
     def __matching_children(self, glob):
         if not isinstance(self.data_object, dict):

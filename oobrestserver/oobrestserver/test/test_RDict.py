@@ -158,9 +158,13 @@ class TestRDict(TestCase):
     def test_edge_search(self):
         rd = RDict('hello')
         self.assertEqual(rd.search([]), [])
-        self.assertEqual(rd.search([None]), [])
         self.assertEqual(rd.search(['hello']), [])
         self.assertEqual(rd.search(['']), [])
+        try:
+            print(rd.search([None]))
+            self.fail()
+        except TypeError:
+            pass
 
     def test_del(self):
         example = {'a': {'a': 'aa', 'b': 'ab', 'c': 'ac'}}

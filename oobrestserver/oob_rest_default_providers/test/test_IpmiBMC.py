@@ -77,6 +77,29 @@ class TestIpmiBMC(TestCase):
                    side_effect=fake_without_capture).start()
         self.bmc.set_chassis_state('on')
 
+    def test_set_chassis_state_blocking(self):
+
+        def fake_without_capture_on(cmd):
+            self.assertEqual(cmd[-2:], ['power', 'on'])
+            return True
+        def fake_without_capture_cycle(cmd):
+            self.assertEqual(cmd[-2:], ['power', 'cycle'])
+            return True
+        mock.patch('oob_rest_default_providers.IpmiBMC.block_to_ssh').start()
+        mock.patch('oob_rest_default_providers.IpmiBMC.block_to_off').start()
+
+        without_capture_patch = mock.patch('oob_rest_default_providers.execute_subprocess.without_capture',
+                                           return_value=True,
+                                           side_effect=fake_without_capture_on).start()
+        self.bmc.set_chassis_state('block_on')
+        without_capture_patch.stop()
+
+        without_capture_patch = mock.patch('oob_rest_default_providers.execute_subprocess.without_capture',
+                                           return_value=True,
+                                           side_effect=fake_without_capture_cycle).start()
+        self.bmc.set_chassis_state('block_cycle')
+        without_capture_patch.stop()
+
     def test_set_chassis_bad_process(self):
         mock.patch('oob_rest_default_providers.execute_subprocess.without_capture',
                    return_value=None).start()
@@ -122,7 +145,6 @@ class TestIpmiBMC(TestCase):
             self.fail()
         except RuntimeError:
             pass
-
 
     def test_get_sensor_by_name(self):
         mock.patch(

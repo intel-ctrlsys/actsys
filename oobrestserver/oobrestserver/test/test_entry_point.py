@@ -46,8 +46,7 @@ class TestEntryPoint(TestCase):
         mock.patch('cherrypy.engine.start', return_value=None).start()
         mock.patch('cherrypy.engine.block', return_value=None).start()
         mock.patch('cherrypy.config.update', return_value=None).start()
-        mock.patch('logging.handlers.RotatingFileHandler', return_value=FakeRotatingFileHandler()).start()
-        mock.patch('logging.Logger.addHandler', return_value=None).start()
+        mock.patch('logging.config.dictConfig', return_value=None).start()
 
     def tearDown(self):
         cherrypy.server.ssl_certificate = None

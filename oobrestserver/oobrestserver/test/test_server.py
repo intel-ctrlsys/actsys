@@ -166,12 +166,12 @@ class TestServer(helper.CPWebCase):
                 },
                 "non_buildable": {
                     "module": "BadPlugins.NotCallableGetter"
-                }
+                },
+                "bad_desc_type": None
             },
             "pre": {"de": {"fined": {"_attach_plugins": ["my_prefab"]}}},
             "not_predefined": {"_attach_plugins": ["no_such_plugin"]},
             "unbuildable": {"_attach_plugins": ["non_buildable"]}
-
         }
         json_config = json.dumps(config)
         headers = [('Content-Type', 'application/json'),
@@ -183,6 +183,8 @@ class TestServer(helper.CPWebCase):
         self.getPage('/api/not_predefined/*')
         self.assertBody('{}')
         self.getPage('/api/unbuildable/*')
+        self.assertBody('{}')
+        self.getPage('/api/bad_desc_type/*')
         self.assertBody('{}')
 
     def test_moved_resources(self):
