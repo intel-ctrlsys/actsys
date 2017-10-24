@@ -204,11 +204,10 @@ class ControlArgParser(object):
                                       help="Provides a timeout for the command")
 
     def get_all_args(self, args=None):
-        if args is not None:
-            return self.ctrl_parser.parse_args(args)
-        else:
-            return self.ctrl_parser.parse_args()
-
+        if len(sys.argv) == 1:
+            self.ctrl_parser.print_help()
+            sys.exit(1)
+        return self.ctrl_parser.parse_args(args)
 
 
 class ControlCommandLineInterface(object):
