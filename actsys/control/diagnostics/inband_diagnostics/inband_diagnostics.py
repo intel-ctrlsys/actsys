@@ -101,7 +101,7 @@ class InBandDiagnostics(Diagnostics):
             raise Exception("Failed to power {0} node during provisioning diagnostic image. No tests will "
                             "be run.".format(state))
 
-    def _console_log_calling(self, bmc_ip_address, bmc_user, bmc_password, queue_var):
+    def _console_log_calling(self, queue_var):
         try:
             consolelines, result_line = self.console_log.start_log_capture('End of Diagnostics',
                                                                            'Final Diagnostic Results')
@@ -115,9 +115,6 @@ class InBandDiagnostics(Diagnostics):
         """launches the diagnostic tests"""
         self.device = device
         self.bmc = bmc
-        bmc_ip_address = self.bmc.get("ip_address")
-        bmc_user = self.bmc.get("user")
-        bmc_password = self.bmc.get("password")
         self.device_name = self.device.get("hostname")
         result_list = dict()
         result_queue = queue.Queue()
@@ -130,9 +127,9 @@ class InBandDiagnostics(Diagnostics):
         self.provisioner = self.plugin_manager.create_instance('provisioner', self.device.get("provisioner"))
         self.resource_manager = self.plugin_manager.create_instance('resource_control',
                                                                     self.device.get("resource_controller"))
+        console_options = self._pack_console_log_options(device, bmc)
         self.console_log = self.plugin_manager.create_instance('console_log',
-                                                               self.device.get("console_log"), bmc_ip_address,
-                                                               bmc_user, bmc_password)
+                                                               self.device.get("console_log"), **console_options)
         power_options = self._pack_options()
         self.power_manager = self.plugin_manager.create_instance('power_control', self.device.get(
             "device_power_control"), **power_options)
@@ -153,7 +150,7 @@ class InBandDiagnostics(Diagnostics):
                     "Cannot remove node from resource pool for running diagnostics since {0}".format(result[1]))
         else:
             raise Exception("Cannot remove node from resource pool. {}".format(current_state))
-        console_log_thread = Thread(target=self._console_log_calling, args=[bmc_ip_address, bmc_user, bmc_password, result_queue])
+        console_log_thread = Thread(target=self._console_log_calling, args=[result_queue])
         console_log_thread.start()
         # Step 2: Provision diagnostic image
         self._provision_image(self.img, self.kargs)
@@ -187,4 +184,13 @@ class InBandDiagnostics(Diagnostics):
         options['device_list'] = dev_l
         options['bmc_list'] = [self.bmc]
         options['plugin_manager'] = self.plugin_manager
+        return options
+
+    def _pack_console_log_options(self, device, bmc):
+        """Return the console log options based on the node name"""
+        options = {}
+        options['node_name'] = device.get("hostname")
+        options['bmc_ip_address'] = bmc.get("ip_address")
+        options['bmc_user'] = bmc.get("user")
+        options['bmc_password'] = bmc.get("password")
         return options

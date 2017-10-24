@@ -9,7 +9,7 @@ from control.plugin import DeclareFramework
 @DeclareFramework('console_log')
 class ConsoleLog(object):
     """interface for console log classes"""
-    def __init__(self, **options):
+    def __init__(self, options=None):
         pass
 
     def start_log_capture(self, stop_line, result_line):

@@ -19,7 +19,7 @@ from control.console_log.console_log import ConsoleLog
 
 
 def mock_init(s, target, args):
-    args[3].put(3)
+    args[0].put(0)
     return None
 
 
@@ -105,7 +105,7 @@ class TestsInbandDiagnostics(unittest.TestCase):
         diags_mock_plugin.console_log = Mock(spec=ConsoleLog)
         diags_mock_plugin.console_log.side_effect = Exception('Error')
         with self.assertRaises(Exception):
-            diags_mock_plugin._console_log_calling('127.0.0.1', 'user', 'password', queue_var)
+            diags_mock_plugin._console_log_calling(queue_var)
 
         self.reset_for_test()
         queue_var = queue.Queue()
@@ -117,7 +117,7 @@ class TestsInbandDiagnostics(unittest.TestCase):
         diags_mock_plugin.console_log = Mock(spec=ConsoleLog)
         diags_mock_plugin.console_log.side_effect = None
         diags_mock_plugin.console_log.start_log_capture.return_value = 'start', 'stop'
-        diags_mock_plugin._console_log_calling('127.0.0.1', 'user', 'password', queue_var)
+        diags_mock_plugin._console_log_calling(queue_var)
         self.assertEqual(4, queue_var.get())
 
     @patch('control.console_log.ipmi_console_log.ipmi_console_log.IpmiConsoleLog')

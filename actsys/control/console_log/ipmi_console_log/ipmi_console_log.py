@@ -14,12 +14,12 @@ from ..console_log import ConsoleLog
 @DeclarePlugin('ipmi_console_log', 100)
 class IpmiConsoleLog(ConsoleLog):
     """This class implements the console log plugin via IPMI"""
-    def __init__(self, node_name, bmc_address, user_name, password):
-        ConsoleLog.__init__(self)
-        self.node_name = node_name
-        self.bmc_address = bmc_address
-        self.user_name = user_name
-        self.password = password
+    def __init__(self, **kwargs):
+        ConsoleLog.__init__(self, kwargs)
+        self.node_name = kwargs['node_name']
+        self.bmc_address = kwargs['bmc_ip_address']
+        self.user_name = kwargs['bmc_user']
+        self.password = kwargs['bmc_password']
         self.utilities = Utilities()
         self.logger = get_logger()
         self.cmd = 'IPMI_console_log'

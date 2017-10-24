@@ -17,22 +17,36 @@ class TestIpmiConsoleLog(unittest.TestCase):
     def setUp(self):
         IpmiConsoleLog.SLEEP_TIME = 0.1
         datastore.get_logger = MagicMock()
-        self.mock_subprocess_popen_patcher = patch.object(subprocess, "Popen")
-        self.mock_subprocess_popen = self.mock_subprocess_popen_patcher.start()
+        self.options = {}
+        self.options['node_name'] = 'node'
+        self.options['bmc_ip_address'] = 'bmc'
+        self.options['bmc_user'] = 'user'
+        self.options['bmc_password'] = None
 
     def tearDown(self):
         patch.stopall()
 
     def test_stop_capture(self):
         """Test start capture"""
-        self.mock_subprocess_popen.return_value = subprocess.Popen('echo hello')
-        self.mock_subprocess_popen.return_value.poll.return_code = None
-        self.mock_subprocess_popen.return_value.stdout.readline.return_value = 'hello\nresult\nEnd'
-        self.mock_subprocess_popen.return_value.wait.return_value = None
-        self.mock_subprocess_popen.return_value.terminate.return_value = None
-        ipmi = IpmiConsoleLog('a', 'b', 'c', 'None')
+        ipmi = IpmiConsoleLog(**self.options)
         result = ipmi.start_log_capture('End', 'result')
         self.assertGreater(len(result), 0)
+
+    @patch("control.console_log.ipmi_console_log.ipmi_console_log.Popen", Autospec=True)
+    def test_stop_capture(self, mock_subprocess_popen):
+        """Test start capture"""
+        mock_subprocess_popen.return_value.return_code = 0
+        mock_subprocess_popen.return_value.communicate.return_value = ('hello\nresult\nEnd' , "")
+        dai = IpmiConsoleLog(**self.options)
+        result = dai.start_log_capture('End', 'result')
+        self.assertGreater(len(result), 0)
+
+    @patch("control.console_log.ipmi_console_log.ipmi_console_log.Popen", Autospec=True)
+    def test_popen_exception(self, mock_subprocess_popen):
+        mock_subprocess_popen.side_effect = Exception("error")
+        dai = IpmiConsoleLog(**self.options)
+        with self.assertRaises(Exception):
+            dai.start_log_capture('End', 'result')
 
 
 if __name__ == '__main__':

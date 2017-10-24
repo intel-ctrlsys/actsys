@@ -13,9 +13,9 @@ from ..console_log import ConsoleLog
 @DeclarePlugin('dai_console_log', 100)
 class DaiConsoleLog(ConsoleLog):
     """This class implements the console log plugin that works for DAI"""
-    def __init__(self, node_name, bmc_address, user_name, password):
-        ConsoleLog.__init__(self)
-        self.node_name = node_name
+    def __init__(self, **kwargs):
+        ConsoleLog.__init__(self, kwargs)
+        self.node_name = kwargs['node_name']
         self.logger = get_logger()
         self.cmd = 'DAI_Console_log'
         self.consolelog = None
