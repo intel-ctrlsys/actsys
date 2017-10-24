@@ -9,7 +9,6 @@ import queue
 import re
 import os
 from threading import Thread
-from control.console_log.ipmi_console_log.ipmi_console_log import IpmiConsoleLog
 from control.diagnostics.diagnostics import Diagnostics
 from control.plugin import DeclarePlugin
 
@@ -104,7 +103,6 @@ class InBandDiagnostics(Diagnostics):
 
     def _console_log_calling(self, bmc_ip_address, bmc_user, bmc_password, queue_var):
         try:
-            self.console_log = IpmiConsoleLog(self.device_name, bmc_ip_address, bmc_user, bmc_password)
             consolelines, result_line = self.console_log.start_log_capture('End of Diagnostics',
                                                                            'Final Diagnostic Results')
             queue_var.put(result_line)
@@ -132,6 +130,9 @@ class InBandDiagnostics(Diagnostics):
         self.provisioner = self.plugin_manager.create_instance('provisioner', self.device.get("provisioner"))
         self.resource_manager = self.plugin_manager.create_instance('resource_control',
                                                                     self.device.get("resource_controller"))
+        self.console_log = self.plugin_manager.create_instance('console_log',
+                                                               self.device.get("console_log"), bmc_ip_address,
+                                                               bmc_user, bmc_password)
         power_options = self._pack_options()
         self.power_manager = self.plugin_manager.create_instance('power_control', self.device.get(
             "device_power_control"), **power_options)
