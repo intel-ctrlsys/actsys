@@ -2,27 +2,22 @@
 #
 # Copyright (c) 2017 Intel Corp.
 #
-"""Ipmi Console log redirection plugin"""
+"""DAI Console log redirection plugin"""
 from threading import Thread
 from subprocess import Popen, PIPE, STDOUT
 from datastore import get_logger
 from control.plugin import DeclarePlugin
-from control.utilities import Utilities
 from ..console_log import ConsoleLog
 
 
-@DeclarePlugin('ipmi_console_log', 100)
-class IpmiConsoleLog(ConsoleLog):
-    """This class implements the console log plugin via IPMI"""
+@DeclarePlugin('dai_console_log', 100)
+class DaiConsoleLog(ConsoleLog):
+    """This class implements the console log plugin that works for DAI"""
     def __init__(self, node_name, bmc_address, user_name, password):
         ConsoleLog.__init__(self)
         self.node_name = node_name
-        self.bmc_address = bmc_address
-        self.user_name = user_name
-        self.password = password
-        self.utilities = Utilities()
         self.logger = get_logger()
-        self.cmd = 'IPMI_console_log'
+        self.cmd = 'DAI_Console_log'
         self.consolelog = None
         self.stop_line = None
         self.result_line = None
@@ -34,9 +29,10 @@ class IpmiConsoleLog(ConsoleLog):
         self.result_line = result_line
         result = []
         try:
-            self.consolelog = Popen(['tail', '-f', '/tmp/InputForAdapterProvisioner1.log'], stdout=PIPE, stderr=STDOUT, stdin=PIPE)
+            self.consolelog = Popen(['tail', '-f', '/tmp/InputForAdapterProvisioner1.log'], stdout=PIPE, stderr=STDOUT,
+                                    stdin=PIPE)
         except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknow exceptions
-            self.logger.debug("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
+            self.logger.debug("Could not activate Conman on BMC. Console logs will not be collected\n Received Error:"
                               + str(ex), self.node_name)
 
         result_found = False
@@ -62,7 +58,6 @@ class IpmiConsoleLog(ConsoleLog):
             self.logger.debug("Unable to create new thread. Console logs "
                               "will not be collected\n Received Error:"
                               + str(ex), self.node_name)
-
         return console_lines, result
 
     def stop_log_capture(self):

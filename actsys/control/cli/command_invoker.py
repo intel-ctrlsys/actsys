@@ -127,6 +127,11 @@ class CommandInvoker(object):
         self.manager.register_plugin_class(OobSensorGetCommand)
         self.manager.register_plugin_class(OobSensorGetTimeCommand)
 
+        #Console log plugins
+        from ..console_log import IpmiConsoleLog, DaiConsoleLog
+        self.manager.register_plugin_class(IpmiConsoleLog)
+        self.manager.register_plugin_class(DaiConsoleLog)
+
         # Diagnostics plugin
         from ..commands.diagnostics import DiagnosticsInBandCommand, DiagnosticsOOBCommand
         self.manager.register_plugin_class(DiagnosticsInBandCommand)

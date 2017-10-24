@@ -12,7 +12,7 @@ class ConsoleLog(object):
     def __init__(self, **options):
         pass
 
-    def start_log_capture(self, stop_str):
+    def start_log_capture(self, stop_line, result_line):
         """Start capturing console"""
         pass
 

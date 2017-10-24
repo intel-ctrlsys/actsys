@@ -17,5 +17,5 @@ class TestInterfaceConsoleLog(unittest.TestCase):
 
     def test_interface(self):
         """Test the call of functions"""
-        self.interface.start_log_capture('End')
+        self.interface.start_log_capture('End', 'End')
         self.interface.stop_log_capture()
