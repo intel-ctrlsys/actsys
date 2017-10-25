@@ -32,6 +32,24 @@ class CtrlPrompt(Prompts):
                (Token.PromptNum, str(line_number)),
                (Token.Prompt, ']: ')]
 
+Command_menu = '\nActSys specific commands you can use are:\n' \
+               '\tpower     Power on/off/cycle\n' \
+               '\tresource  Add or remove resource from resource pool\n' \
+               '\tprocess   Process list/kill on a node in a cluster\n' \
+               '\tget       Get powercap/freq value of a node\n' \
+               '\tset       Set powercap/freq value of a node\n' \
+               '\tservice   Check, start or stop services specified in the configuration file\n' \
+               '\tprovision Adding, setting and removing provisioning options for devices\n' \
+               '\tdiag      Launching diagnostic tests on devices\n' \
+               '\tbios      Update or get version of bios on specified nodes/group\n' \
+               '\tsensor    Get specifiged sensor value on specified nodes/group\n' \
+               '\tjob       Launch, check, retrive or cancel job\n' \
+               '\nInteractive cli commands to select/clear nodes are:\n' \
+               '\tselect          Select node or group\n' \
+               '\tclear_select    Clear selection. Provide device name for each command\n' \
+               'For help on these commands type <command_name>?. For example to get\n' \
+               'help on power type "power?" and enter it.\n'
+
 @magics_class
 class CtrlCommands(Magics):
     """All the Ctrl Commands"""
@@ -184,21 +202,29 @@ class CtrlCommands(Magics):
     def bios(self, args):
         """Bios management commands """
         parse_args = parse_argstring(CtrlCommands.bios, args)
-        command_result = self.ctrl_command_invoker.common_cmd_invoker(
-            self.get_device(parse_args), parse_args.subcommand)
+        if parse_args.subcommand == 'update':
+            command_result = self.ctrl_command_invoker.bios_update(self.get_device(parse_args), parse_args.image)
+        elif parse_args.subcommand == 'get-version':
+            command_result = self.ctrl_command_invoker.bios_version(self.get_device(parse_args))
         self.handle_command_result(self, command_result)
 
 
     @line_magic
     @magic_arguments()
     @argument('subcommand', help='get or get over time', choices=('get', 'get_over_time'))
-    @argument('-s', '--sensor-name', help='Sensor name required')
+    @argument('sensor', help='Sensor name required')
     @argument('-d', '--device', help='Device name. Required if nodename is not set')
+    @argument('-r', '--sample_rate', help='Samples per second')
+    @argument('-t', '--time', help='Sampling Duration (seconds)')
     def sensor(self, args):
         """Sensor management commands """
         parse_args = parse_argstring(CtrlCommands.sensor, args)
-        command_result = self.ctrl_command_invoker.common_cmd_invoker(
-            self.get_device(parse_args), parse_args.subcommand)
+        s_name = parse_args.sensor
+        d_name = self.get_device(parse_args)
+        if parse_args.subcommand == 'get':
+            command_result = self.ctrl_command_invoker.oob_sensor_get(d_name, s_name)
+        elif parse_args.subcommand == 'get_over_time':
+            command_result = self.ctrl_command_invoker.oob_sensor_get_over_time(d_name, s_name, parse_args.sample_rate, parse_args.time)
         self.handle_command_result(self, command_result)
 
 
@@ -216,6 +242,49 @@ class CtrlCommands(Magics):
         command_result = self.ctrl_command_invoker.common_cmd_invoker(
             parse_args, parse_args.subcommand)
         self.handle_command_result(self, command_result)
+
+    @line_magic
+    @magic_arguments()
+    @argument('option', help='Get powercap/freq value of node', choices=('powercap', 'freq'))
+    @argument('-d', '--device', help='Device name. Required if nodename is not set')
+    def get(self, args):
+        """Function to call appropriate get sub-command"""
+        parse_args = parse_argstring(CtrlCommands.get, args)
+        if parse_args.option == 'powercap':
+            print("Command not implemented: Get Powercap Command Called")
+        else:
+            print("Command not implemented: Get Freq Command Called")
+
+    @line_magic
+    @magic_arguments()
+    @argument('option', help='Set powercap/freq value of node', choices=('powercap', 'freq'))
+    @argument('-d', '--device', help='Device name. Required if nodename is not set')
+    def set(self, args):
+        """Function to call appropriate set sub-command"""
+        parse_args = parse_argstring(CtrlCommands.set, args)
+        if parse_args.option == 'powercap':
+            print("Command not implemented: Set Powercap Command Called")
+        else:
+            print("Command not implemented: Set Freq Command Called")
+
+    @line_magic
+    @magic_arguments()
+    @argument('subcommand', help='Process list/kill in a node', choices=('list', 'kill'))
+    @argument('-d', '--device', help='Device name. Required if nodename is not set')
+    def process(self, args):
+        """Function to call appropriate process sub-command"""
+        parse_args = parse_argstring(CtrlCommands.process, args)
+        if parse_args.subcommand == 'list':
+            print("Command not implemented: Process List Command called")
+        else:
+            print("Command not implemented: Process Kill Command Called")
+
+    @line_magic
+    def menu(self, args):
+        print('\x1b[2J\x1b[H\n' \
+              '*************************************************************\n' \
+              'ActSys via IPython Shell')
+        print(Command_menu)
 
 
     @staticmethod
@@ -276,6 +345,9 @@ class CtrlCommands(Magics):
         self.complete_command_option('bios', ['update', 'get-version'])
         self.complete_command_option('sensor', ['get', 'get_over_time'])
         self.complete_command_option('job', ['launch', 'check', 'retrieve', 'cancel'])
+        self.complete_command_option('get', ['powercap', 'freq'])
+        self.complete_command_option('set', ['powercap', 'freq'])
+        self.complete_command_option('process', ['list', 'kill'])
 
     @staticmethod
     def complete_command_option(command, options):

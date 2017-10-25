@@ -54,8 +54,14 @@ class InteractiveCli(argparse.Action):
                            '\tget       Get powercap/freq value of a node\n' \
                            '\tset       Set powercap/freq value of a node\n' \
                            '\tservice   Check, start or stop services specified in the configuration file\n' \
+                           '\tprovision Adding, setting and removing provisioning options for devices\n' \
+                           '\tdiag      Launching diagnostic tests on devices\n' \
                            '\tbios      Update or get version of bios on specified nodes/group\n' \
                            '\tsensor    Get specifiged sensor value on specified nodes/group\n' \
+                           '\tjob       Launch, check, retrive or cancel job\n' \
+                           '\nInteractive cli commands to select/clear nodes are:\n' \
+                           '\tselect          Select node or group\n' \
+                           '\tclear_select    Clear selection. Provide device name for each command\n' \
                                                'For help on these commands type <command_name>?. For example to get\n' \
                                                'help on power type "power?" and enter it.\n'
         start_ipython(argv=argv[1:], config=cfg)

@@ -39,6 +39,12 @@ class InteractiveCliTest(TestCase):
         #Diag
         mock_command_invoker.diagnostics_inband.return_value = CommandResult(0, "Success")
         mock_command_invoker.diagnostics_oob.return_value = CommandResult(0, "Success")
+
+        mock_command_invoker.bios_update.return_value = CommandResult(0, "Success")
+        mock_command_invoker.bios_version.return_value = CommandResult(0, "Success")
+
+        mock_command_invoker.oob_sensor_get.return_value = CommandResult(0, "Success")
+        mock_command_invoker.oob_sensor_get_over_time.return_value = CommandResult(0, "Success")
         self.control_cli_executor.ctrl_command_invoker = mock_command_invoker
 
     def test_power_cmd_execute(self):
@@ -99,7 +105,7 @@ class InteractiveCliTest(TestCase):
         """Testing Sensor Commands"""
         sensor_name = 'sensor'
         for action in ['get', 'get_over_time']:
-            cmd = action + ' -d' + self.node_name + ' -s' + sensor_name
+            cmd = action + ' ' + sensor_name + ' -d' + self.node_name
             self.control_cli_executor.sensor(cmd)
             out, err = self.capsys.readouterr()
             assert "Success" in out
@@ -114,6 +120,30 @@ class InteractiveCliTest(TestCase):
             out, err = self.capsys.readouterr()
             assert "Success" in out
             assert err == ""
+
+    def test_get_cmd_execute(self):
+        for option in ['freq', 'powercap']:
+            self.control_cli_executor.get(option)
+            out, err = self.capsys.readouterr()
+            assert "Command not implemented" in out
+            assert err == ""
+
+    def test_set_cmd_execute(self):
+        for option in ['freq', 'powercap']:
+            self.control_cli_executor.set(option)
+            out, err = self.capsys.readouterr()
+            assert "Command not implemented" in out
+            assert err == ""
+
+    def test_process_cmd_execute(self):
+        for option in ['list', 'kill']:
+            self.control_cli_executor.process(option)
+            out, err = self.capsys.readouterr()
+            assert "Command not implemented" in out
+            assert err == ""
+
+    def test_menu(self):
+        self.control_cli_executor.menu(None)
 
     @pytest.fixture(autouse=True)
     def set_capsys(self, capsys):
