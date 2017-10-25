@@ -5,18 +5,17 @@
 """Unit tests"""
 import unittest
 import subprocess
-import io
-from threading import Thread
-from mock import MagicMock, patch
-import datastore
-from ..ipmi_console_log import IpmiConsoleLog
+import shutil, tempfile
+from os import path
+from mock import patch
+from ..ipmi_console_log import *
 
 
 class TestIpmiConsoleLog(unittest.TestCase):
     """Unit Tests for the IPMI Console Log Class"""
     def setUp(self):
         IpmiConsoleLog.SLEEP_TIME = 0.1
-        datastore.get_logger = MagicMock()
+        self.test_dir = tempfile.mkdtemp()
         self.options = {}
         self.options['node_name'] = 'node'
         self.options['bmc_ip_address'] = 'bmc'
@@ -24,25 +23,28 @@ class TestIpmiConsoleLog(unittest.TestCase):
         self.options['bmc_password'] = None
 
     def tearDown(self):
-        patch.stopall()
+        shutil.rmtree(self.test_dir)
 
-    def test_stop_capture(self):
+    @patch("control.console_log.ipmi_console_log.ipmi_console_log.Thread")
+    def test_ipmi_thread_exception(self, thread_mock):
         """Test start capture"""
+        thread_mock.side_effect = Exception("error")
         ipmi = IpmiConsoleLog(**self.options)
-        result = ipmi.start_log_capture('End', 'result')
-        self.assertGreater(len(result), 0)
+        ipmi.start_log_capture('End', 'result')
 
     @patch("control.console_log.ipmi_console_log.ipmi_console_log.Popen", Autospec=True)
-    def test_stop_capture(self, mock_subprocess_popen):
+    def test_ipmi_stop_capture(self, mock_subprocess_popen):
         """Test start capture"""
-        mock_subprocess_popen.return_value.return_code = 0
-        mock_subprocess_popen.return_value.communicate.return_value = ('hello\nresult\nEnd' , "")
+        with open(path.join(self.test_dir, 'test.txt'), 'w') as f:
+            f.write('Test.\nresult is here.\nEnd\n')
+        mock_subprocess_popen.return_value = subprocess.Popen(['tail', '-f', path.join(self.test_dir, 'test.txt')],
+                                                              stdout=PIPE, stderr=STDOUT, stdin=PIPE)
         dai = IpmiConsoleLog(**self.options)
         result = dai.start_log_capture('End', 'result')
         self.assertGreater(len(result), 0)
 
     @patch("control.console_log.ipmi_console_log.ipmi_console_log.Popen", Autospec=True)
-    def test_popen_exception(self, mock_subprocess_popen):
+    def test_ipmi_popen_exception(self, mock_subprocess_popen):
         mock_subprocess_popen.side_effect = Exception("error")
         dai = IpmiConsoleLog(**self.options)
         with self.assertRaises(Exception):
