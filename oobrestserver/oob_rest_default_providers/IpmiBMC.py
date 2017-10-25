@@ -22,6 +22,7 @@ class IpmiBMC(object):
                  ping_address=None, ping_retries=10, ping_interval=10):
 
         self.sol_lock = threading.Lock()
+        self.sol_process = None
         self.power_state_lock = threading.Lock()
         self.sdr_lock = threading.Lock()
         self.last_sdr_update_time = 0
@@ -55,9 +56,9 @@ class IpmiBMC(object):
                 '#setter': self.set_chassis_state,
                 '#units': 'ChassisState'
             },
-            'console': {
-                '#setter': self.capture_to_line,
-                '#cleanup': self.deactivate_sol
+            'sol_stream': {
+                '#setter': self.set_sol_stream,
+                '#cleanup': self.end_sol
             },
             'sel': {
                 '#getter': self.get_sels
@@ -186,56 +187,35 @@ class IpmiBMC(object):
         output_lines = output_string.splitlines()
         return output_lines
 
-    def capture_to_line(self, stop_line, timeout=None):
-
-        if timeout is None:
-            timeout = 20
+    def set_sol_stream(self, file_name):
+        if file_name is None:
+            self.end_sol()
         else:
-            timeout = float(timeout)
+            self.start_sol(file_name)
 
-        """Start capturing console"""
-        with self.sol_lock:
-            console_lines = []
+    def start_sol(self, cap_file_name):
+        with self.sol_lock, open(cap_file_name) as cap_file:
             try:
-                command = self.ipmitool_opts + ['sol', 'activate']
-                consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
-            except Exception as ex:  # Catching all Exceptions as Popen or IPMI could fail with some unknown exceptions
-                raise RuntimeError("Could not activate IPMI sol on BMC. Console logs will not be collected\n Received Error:"
-                                  + str(ex))
+                cmd = self.ipmitool_opts + ['sol', 'activate']
+                self.sol_process = subprocess.Popen(cmd, stdout=cap_file, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+            except Exception as ex:
+                raise RuntimeError("Could not activate  IPMI SOL capture: {}".format(str(ex)))
 
-            deathclock = threading.Timer(timeout, consolelog.terminate)
-            deathclock.start()
-            success = False
-
-            while not consolelog.poll():
-                consolelog.stdout.flush()
-                buffer_v = consolelog.stdout.readline()
-                if consolelog.poll():
-                    break
-                deathclock.cancel()
-                deathclock = threading.Timer(timeout, consolelog.terminate)
-                deathclock.start()
-                length_buff = len(buffer_v)
-                if length_buff > 0:
-                    line = buffer_v.decode('utf-8').strip('\n')
-                    console_lines.append(line)
-                    if stop_line in line:
-                        consolelog.terminate()
-                        success = True
-            consolelog.terminate()
-            deathclock.cancel()
-            self.deactivate_sol()
-            if success:
-                return console_lines
-            raise RuntimeError('Timed out when gathering console lines:\n'+'\n'.join(console_lines))
-
-    def deactivate_sol(self):
-        try:
-            command = self.ipmitool_opts + ['sol', 'deactivate']
-            consolelog = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                          stdin=subprocess.PIPE)
-            consolelog.wait()
-        except Exception:
-            pass
+    def end_sol(self):
+        with self.sol_lock:
+            if self.sol_process is not None:
+                self.sol_process.terminate()
+                try:
+                    self.sol_process.wait(1.0)
+                except subprocess.TimeoutExpired:
+                    if not self.sol_process.poll():
+                        self.sol_process.kill()
+                self.sol_process = None
+            try:
+                cmd = self.ipmitool_opts + ['sol', 'deactivate']
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+                return proc.communicate(timeout=1.0)[0]
+            except Exception as ex:
+                raise RuntimeError("Could not deactivate IPMI SOL capture: {}".format(str(ex)))
 
 

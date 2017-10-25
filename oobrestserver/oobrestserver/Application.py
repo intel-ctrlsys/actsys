@@ -88,6 +88,9 @@ class Application(object):
     @cherrypy.tools.json_out()
     def PUT(self):
         """Extend the resource tree with new configuration"""
+        self.__logger.info('Incoming PUT request\n\tNodes: {}\n\tPUT value: {}'.format(
+            [node.route for node in self.nodes], cherrypy.request.json
+        ))
         config = cherrypy.request.json
         for node in self.nodes:
             node.add_resources(config)
@@ -97,6 +100,9 @@ class Application(object):
     @cherrypy.tools.json_out()
     def DELETE(self):
         """Remove a portion of the resource tree"""
+        self.__logger.info('Incoming DELETE request\n\tNodes: {}'.format(
+            [node.route for node in self.nodes]
+        ))
         deleted_nodes = []
         for node in self.nodes:
             parent_route = node.route.split('/')[:-1]

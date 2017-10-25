@@ -1,4 +1,5 @@
 
+import tempfile
 
 from unittest import TestCase
 from unittest import mock
@@ -164,40 +165,6 @@ class TestIpmiBMC(TestCase):
         self.assertEqual(result, '0x00')
         self.assertEqual(self.bmc.config['sensors']['IPMI Watchdog']['#units'], None)
 
-    def test_capture_to_line(self):
-
-        lines = [x.decode('ascii') for x in samples.theoretical_sol_activate_output.splitlines()]
-        expectations = {
-            'SIGIL0': lines[:1],
-            'SIGIL1': lines[:4],
-            'SIGIL2': lines[:5],
-            'SIGIL3': lines[:6],
-            'SIGIL4': lines[:6],
-            'SIGIL5': lines[:7],
-            'SIGIL6': lines[:9],
-            'SIGIL7': lines
-        }
-
-        for sigil in expectations:
-            popen_patch = mock.patch(
-                "subprocess.Popen",
-                return_value=FakeSubProcess(samples.theoretical_sol_activate_output, b'', 0)
-            )
-            popen_patch.start()
-            result = self.bmc.capture_to_line(sigil)
-            self.assertEqual(result, expectations[sigil])
-            popen_patch.stop()
-
-    def test_exception_capture_to_line(self):
-        def thrower():
-            raise RuntimeError('Exception for test!')
-        mock.patch("subprocess.Popen", side_effect=thrower).start()
-        try:
-            self.bmc.capture_to_line('anything, really')
-            self.fail()
-        except RuntimeError as ex:
-            pass
-
     def test_parse_exception(self):
         try:
             IpmiBMC.parse_raw_sensor_table(b"a | b | c\nd | e\nf | g | h\n")
@@ -211,3 +178,18 @@ class TestIpmiBMC(TestCase):
         expected = samples.healthy_sel_elist_output.decode('ascii').splitlines()
         self.assertEqual(expected[:10], actual[:10])
         self.assertEqual(expected[:-10], actual[:-10])
+
+    def test_sol_end_before_start(self):
+        mock.patch("subprocess.Popen", return_value=FakeSubProcess(b'hello there, tester!', b'', 0)).start()
+        self.assertEqual(self.bmc.end_sol(), b'hello there, tester!')
+
+    def test_sol_capture(self):
+        tf = tempfile.NamedTemporaryFile()
+        mock.patch("subprocess.Popen", return_value=FakeSubProcess(tf, b'', 0)).start()
+        self.bmc.set_sol_stream(tf.name)
+        self.bmc.sol_process.stdout.write(b'one test string')
+        self.bmc.set_sol_stream(None)
+        with open(tf.name) as stream:
+            self.assertEqual(stream.read(), 'one test string')
+
+
