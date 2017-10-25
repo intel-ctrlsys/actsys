@@ -48,7 +48,7 @@ Command_menu = '\nActSys specific commands you can use are:\n' \
                '\tselect          Select node or group\n' \
                '\tclear_select    Clear selection. Provide device name for each command\n' \
                'For help on these commands type <command_name>?. For example to get\n' \
-               'help on power type "power?" and enter it.\n'
+               'help on power type "power?" and enter it.Type menu to see command list\n'
 
 @magics_class
 class CtrlCommands(Magics):

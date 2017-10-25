@@ -63,7 +63,7 @@ class InteractiveCli(argparse.Action):
                            '\tselect          Select node or group\n' \
                            '\tclear_select    Clear selection. Provide device name for each command\n' \
                                                'For help on these commands type <command_name>?. For example to get\n' \
-                                               'help on power type "power?" and enter it.\n'
+                                               'help on power type "power?" and enter it.Type menu to see command list\n'
         start_ipython(argv=argv[1:], config=cfg)
         exit(0)
 
