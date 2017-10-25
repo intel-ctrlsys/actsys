@@ -1,8 +1,12 @@
 from io import BytesIO
+from subprocess import TimeoutExpired
 
 class FakeSubProcess(object):
     def __init__(self, stdout, stderr, ret_code):
-        self.stdout = BytesIO(stdout)
+        if isinstance(stdout, bytes):
+            self.stdout = BytesIO(stdout)
+        else:
+            self.stdout = stdout
         self.stderr = BytesIO(stderr)
         self.ret_code = ret_code
         self.term = False
@@ -22,5 +26,7 @@ class FakeSubProcess(object):
     def kill(self):
         self.term = True
 
-    def wait(self):
+    def wait(self, timeout=None):
+        if timeout == 0:
+            raise TimeoutExpired()
         self.term = True

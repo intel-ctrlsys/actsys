@@ -60,11 +60,12 @@ def main():
 
     log_file = options.log_file or 'server.log'
 
-    logging.config.dictConfig({
+    propagation_logger = {'level': 'INFO', 'propagate': True}
+    logging_config = {
         'version': 1,
         'formatters': {
             'standard': {
-                'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+                'format': '%(asctime)s [%(levelname)s]: %(message)s'
             },
         },
         'handlers': {
@@ -89,23 +90,13 @@ def main():
                 'handlers': ['console', 'file'],
                 'level': 'INFO'
             },
-            'oob': {
-                'handlers': ['console', 'file'],
-                'level': 'INFO',
-                'propagate': False
-            },
-            'cherrypy.access': {
-                'handlers': ['console', 'file'],
-                'level': 'INFO',
-                'propagate': False
-            },
-            'cherrypy.error': {
-                'handlers': ['console', 'file'],
-                'level': 'INFO',
-                'propagate': False
-            },
+            'oob': propagation_logger,
+            'cherrypy.access': propagation_logger,
+            'cherrypy.error': propagation_logger
         }
-    })
+    }
+
+    logging.config.dictConfig(logging_config)
 
     logger = logging.getLogger('oob')
 

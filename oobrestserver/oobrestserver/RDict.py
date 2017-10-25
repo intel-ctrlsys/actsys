@@ -5,7 +5,8 @@ from collections import Hashable
 class RDict(object):
 
     def __init__(self, obj=None):
-        self.data_object = RDict.__recursive_dict(obj)
+        self.data_object = {}
+        self[[]] = obj
 
     def __getitem__(self, keys):
         return self.pop(keys, remove=False)
@@ -19,7 +20,14 @@ class RDict(object):
     def __setitem__(self, keys, value):
         RDict.__check_key_type(keys)
         if not keys:
-            self.data_object = RDict.__recursive_dict(value)
+            if value is None:
+                self.data_object = {}
+            elif isinstance(value, RDict):
+                self.data_object = value.data_object
+            elif not isinstance(value, dict):
+                self.data_object = value
+            else:
+                self.data_object = {k: RDict(v) if isinstance(v, dict) else v for k, v in value.items()}
             return
         if not isinstance(self.data_object, dict):
             self.data_object = {}
@@ -73,6 +81,14 @@ class RDict(object):
         RDict.__check_key_type(search_path)
         return self.__search(search_path)
 
+    def keys(self):
+        return self.__keys()
+
+    def raw(self):
+        if not isinstance(self.data_object, dict):
+            return self.data_object
+        return {k: RDict.raw(v) if isinstance(v, RDict) else v for k, v in self.data_object.items()}
+
     def __search(self, search_path, path_here=None):
         if path_here is None:
             path_here = []
@@ -84,9 +100,6 @@ class RDict(object):
         child_search = search_path[1:]
         results = [child.__search(child_search, path_here + [key]) for key, child in matches.items()]
         return sum(results, [])
-
-    def keys(self):
-        return self.__keys()
 
     def __keys(self, path_here=None):
         if path_here is None:
@@ -108,9 +121,6 @@ class RDict(object):
             return [path_here]
         return results
 
-    def raw(self):
-        return RDict.__real_dict(self.data_object)
-
     @staticmethod
     def __check_key_type(key):
         if not isinstance(key, list) or any([not isinstance(elt, Hashable) or elt is None for elt in key]):
@@ -120,19 +130,3 @@ class RDict(object):
         if not isinstance(self.data_object, dict):
             return {}
         return {k: v for k, v in self.data_object.items() if GlobTools.glob_match(k, glob) and not k.startswith('#')}
-
-    @staticmethod
-    def __real_dict(recursive_dict):
-        if not isinstance(recursive_dict, dict):
-            return recursive_dict
-        return {k: RDict.__real_dict(v.data_object) if isinstance(v, RDict) else v for k, v in recursive_dict.items()}
-
-    @staticmethod
-    def __recursive_dict(obj):
-        if obj is None:
-            return {}
-        if isinstance(obj, RDict):
-            return obj.data_object
-        if isinstance(obj, dict):
-            return {k: RDict(v) if isinstance(v, dict) else v for k, v in obj.items()}
-        return obj
