@@ -107,7 +107,7 @@ class CtrlCommands(Magics):
         """Power management commands """
         parse_args = parse_argstring(CtrlCommands.power, args)
         command_result = self.ctrl_command_invoker.common_cmd_invoker(
-            self.get_device(parse_args), parse_args.subcommand)
+            self.get_device(parse_args), parse_args.subcommand, force=parse_args.force, outlet=parse_args.outlet)
         self.handle_command_result(self, command_result)
 
 
@@ -154,25 +154,26 @@ class CtrlCommands(Magics):
     @magic_arguments()
     @argument('action', help='add, delete, set', choices=('add', 'delete', 'set'))
     @argument('-d', '--device', help='Device name. Required if nodename is not set')
-    @argument('-ip', '--ip-address', help='IP address')
-    @argument('-hw', '--hw-address', help='hw address')
-    @argument('-n', '--net-interface', help='net interface')
+    @argument('-ip', '--ip_address', help='IP address')
+    @argument('-hw', '--hw_address', help='hw address')
+    @argument('-n', '--net_interface', help='net interface')
     @argument('-i', '--image', help='image')
     @argument('-b', '--bootstrap', help='bootstrap')
     @argument('-f', '--file', help='file')
-    @argument('-k', '--kernel-args', help='kernel args')
+    @argument('-k', '--kernel_args', help='kernel args')
     def provision(self, args):
         """Provision management commands """
-        parse_args = parse_argstring(CtrlCommands.provision, args)
-        if parse_args.action == 'add':
+        pa = parse_argstring(CtrlCommands.provision, args)
+        if pa.action == 'add':
             command_result = self.ctrl_command_invoker.provision_add(
-                self.get_device(parse_args))
-        elif parse_args.action == 'delete':
+                self.get_device(pa))
+        elif pa.action == 'delete':
             command_result = self.ctrl_command_invoker.provision_delete(
-                self.get_device(parse_args))
-        elif parse_args.action == 'set':
+                self.get_device(pa))
+        elif pa.action == 'set':
             command_result = self.ctrl_command_invoker.provision_set(
-                self.get_device(parse_args))
+                self.get_device(pa), ip_address=pa.ip_address, hw_address=pa.hw_address, net_interface=pa.net_interface,
+                image=pa.image, bootstrap=pa.bootstrap, files=pa.file, kernel_args=pa.kernel_args)
         self.handle_command_result(self, command_result)
 
 
@@ -186,11 +187,11 @@ class CtrlCommands(Magics):
         """Diag management commands """
         parse_args = parse_argstring(CtrlCommands.diag, args)
         if parse_args.action == 'inband':
-            command_result = self.ctrl_command_invoker.diagnostics_inband(
-                self.get_device(parse_args))
+            command_result = self.ctrl_command_invoker.diagnostics_inband(self.get_device(parse_args),
+                                                                          test=parse_args.test, image=parse_args.image)
         elif parse_args.action == 'oob':
             command_result = self.ctrl_command_invoker.diagnostics_oob(
-                self.get_device(parse_args))
+                self.get_device(parse_args), test=parse_args.test)
         self.handle_command_result(self, command_result)
 
 
@@ -231,16 +232,21 @@ class CtrlCommands(Magics):
     @line_magic
     @magic_arguments()
     @argument('subcommand', help='launch, check, retrieve, cancel', choices=('launch', 'check', 'retrieve', 'cancel'))
+    @argument('-e', '--script', help='Job script')
     @argument('-j', '--job_id', help='Job ID required')
-    @argument('-nc', '--node-count', help='node count')
+    @argument('-nc', '--node_count', help='node count')
     @argument('-n', '--node', help='node')
-    @argument('-o', '--output-file', help='output file')
-    @argument('-s-', '--state', help='state')
+    @argument('-o', '--output_file', help='output file')
+    @argument('-s', '--state', help='state')
     def job(self, args):
         """Job management commands"""
-        parse_args = parse_argstring(CtrlCommands.job, args)
-        command_result = self.ctrl_command_invoker.common_cmd_invoker(
-            parse_args, parse_args.subcommand)
+        pa = parse_argstring(CtrlCommands.job, args)
+        if pa.subcommand == 'launch':
+            command_result = self.ctrl_command_invoker.job_launch(pa.script, pa.node_count, pa.node, pa.output_file)
+        elif pa.subcommand == 'check':
+            command_result = self.ctrl_command_invoker.job_check(pa.job_id, pa.state)
+        elif pa.subcommand == 'cancel':
+            command_result = self.ctrl_command_invoker.job_cancel(pa.job_id)
         self.handle_command_result(self, command_result)
 
     @line_magic

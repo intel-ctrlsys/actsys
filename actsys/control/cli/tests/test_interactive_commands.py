@@ -45,6 +45,10 @@ class InteractiveCliTest(TestCase):
 
         mock_command_invoker.oob_sensor_get.return_value = CommandResult(0, "Success")
         mock_command_invoker.oob_sensor_get_over_time.return_value = CommandResult(0, "Success")
+
+        mock_command_invoker.job_launch.return_value = CommandResult(0, "Success")
+        mock_command_invoker.job_check.return_value = CommandResult(0, "Success")
+        mock_command_invoker.job_cancel.return_value = CommandResult(0, "Success")
         self.control_cli_executor.ctrl_command_invoker = mock_command_invoker
 
     def test_power_cmd_execute(self):
@@ -114,7 +118,7 @@ class InteractiveCliTest(TestCase):
     def test_job_cmd_execute(self):
         """Testing Job Commands"""
         job_name = 'job'
-        for action in ['launch', 'check', 'retrieve', 'cancel']:
+        for action in ['launch', 'check', 'cancel']:
             cmd = action + ' -j' + job_name
             self.control_cli_executor.job(cmd)
             out, err = self.capsys.readouterr()
