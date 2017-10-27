@@ -20,10 +20,13 @@ def generate_document(nodes, method_label, method_args, method_kwargs, request_k
     return document_from_results(results, start_time)
 
 
-def document_from_results(results, start_time):
+def document_from_results(time_slices, start_time):
+    """
+    Take the time slices from a call to parallel_app_method and create a JSON document in the OOB server format.
+    """
     response = {}
-    for routes in results:
-        for node, sample, exception in routes:
+    for time_slice_results in time_slices:
+        for node, sample, exception in time_slice_results:
             if node.route not in response:
                 response[node.route] = {
                     'units': node.get_property('#units'),
@@ -39,22 +42,26 @@ def document_from_results(results, start_time):
 
 
 def wrap_method(method_label, args, kwargs):
+    """
+    Return a method that will look up the method_label property of a node and invoke it with args and kwargs.
+    The returned method will return a tuple of (node, return value, exception)
+    """
     def wrapped_plugin_method(node):
         try:
             method = node.get_property(method_label)
             if method is None:
                 raise RuntimeError("Method not supported")
             return node, method(*args, **kwargs), None
-        except Exception as ex:
+        except Exception as ex: #pylint: disable=broad-except
             return node, None, str(ex)
     return wrapped_plugin_method
 
 
 def parallel_apply_method(method, nodes, sample_rate=1, duration=1, leaves_only=False):
     """
-    Apply method to every node in nodes, sample_rate times per second, for duration seconds.
-    Returns a list of results for each time slice. Each time slice result is a list of tuples
-    (node, return value, string-casted exception) showing that time slice's results.
+    Apply wrapped-method "method" to every node in "nodes", "sample_rate" times per second, for "duration" seconds.
+    Returns a list of results for each time slice. Each time slice result is a wrapped-method result tuple
+    (node, return value, exception)
     """
     if leaves_only:
         nodes = [x for x in nodes if x.get_property('#units') != "PathNode"]

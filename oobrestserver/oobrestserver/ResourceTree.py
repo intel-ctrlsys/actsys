@@ -34,16 +34,23 @@ class ResourceTree(object):
         return self.properties.get(label, None)
 
     def add_resources(self, config):
+        self.__define_plugins(config)
+        self.__attach_plugins(config)
+        self.__attach_children(config)
+        self.__set_own_properties(config)
 
+    def __define_plugins(self, config):
         for plugin_name, plugin_description in config.get('_define_plugins', {}).items():
             plugin_object = self.__get_plugin(plugin_description)
             if plugin_object is not None:
                 self.saved_plugins[plugin_name] = plugin_object
 
+    def __attach_plugins(self, config):
         for plugin_description in config.get('_attach_plugins', []):
             plugin_object = self.__get_plugin(plugin_description)
             config.update(plugin_object or {})
 
+    def __attach_children(self, config):
         for child in [x for x in config if not x.startswith('_') and not x.startswith('#')]:
             child_route = '/'.join([self.route, child])
             if self.route == '':
@@ -51,8 +58,9 @@ class ResourceTree(object):
             self.children[child] = ResourceTree(self.logger, config[child], base_route=child_route,
                                                 saved_plugins=self.saved_plugins)
 
-        for property in [key for key in config if key.startswith('#')]:
-            self.properties[property] = config[property]
+    def __set_own_properties(self, config):
+        for node_property in [key for key in config if key.startswith('#')]:
+            self.properties[node_property] = config[node_property]
         if '#getter' not in config:
             self.properties['#getter'] = self.__get
             self.properties['#units'] = 'PathNode'
@@ -80,6 +88,7 @@ class ResourceTree(object):
             child.cleanup()
 
     def dispatch(self, vpath):
+        """Return list of all nodes matching the vpath according to glob semantics."""
         if not vpath:
             return [self]
         if '**' in vpath[0]:

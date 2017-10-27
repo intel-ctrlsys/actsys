@@ -57,13 +57,13 @@ class Application(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def GET(self, **url_params):
+    def GET(self, **url_params): #pylint: disable=invalid-name
         """Invoke the #getter method for some plugin-provided resources"""
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
-        self.__logger.info('Incoming GET request\n\tNodes: {}\n\tRequest params: {}\n\tGetter method kwargs: {}'.format(
-            [node.route for node in self.nodes], request_kwargs, method_kwargs
-        ))
+        self.__logger.info(
+            'Incoming GET request\n\tNodes: {}\n\tRequest params: {}\n\tGetter method kwargs: {}'.format(
+                [node.route for node in self.nodes], request_kwargs, method_kwargs))
         result = ResponseBuilder.generate_document(self.nodes, '#getter', [], method_kwargs, request_kwargs)
         self.nodes = [self.tree]
         return result
@@ -71,14 +71,15 @@ class Application(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    def POST(self, **url_params):
+    def POST(self, **url_params): #pylint: disable=invalid-name
         """Invoke the #setter method for some plugin-provided resources"""
         method_kwargs = self.method_kwargs_from(url_params)
         request_kwargs = self.request_kwargs_from(url_params)
         method_args = [cherrypy.request.json]
-        self.__logger.info('Incoming POST request\n\tNodes: {}\n\tRequest params: {}\n\tSetter method kwargs: {}\n\tPOSTed value: {}'.format(
-            [node.route for node in self.nodes], request_kwargs, method_kwargs, cherrypy.request.json
-        ))
+        self.__logger.info(
+            'Incoming POST request\n\tNodes: {}\n\tRequest params: {}\n\t'
+            'Setter method kwargs: {}\n\tPOSTed value: {}'.format(
+                [node.route for node in self.nodes], request_kwargs, method_kwargs, cherrypy.request.json))
         result = ResponseBuilder.generate_document(self.nodes, '#setter', method_args, method_kwargs, request_kwargs)
         self.nodes = [self.tree]
         return result
@@ -86,11 +87,11 @@ class Application(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    def PUT(self):
+    def PUT(self): #pylint: disable=invalid-name
         """Extend the resource tree with new configuration"""
-        self.__logger.info('Incoming PUT request\n\tNodes: {}\n\tPUT value: {}'.format(
-            [node.route for node in self.nodes], cherrypy.request.json
-        ))
+        self.__logger.info(
+            'Incoming PUT request\n\tNodes: {}\n\tPUT value: {}'.format(
+                [node.route for node in self.nodes], cherrypy.request.json))
         config = cherrypy.request.json
         for node in self.nodes:
             node.add_resources(config)
@@ -98,11 +99,10 @@ class Application(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def DELETE(self):
+    def DELETE(self): #pylint: disable=invalid-name
         """Remove a portion of the resource tree"""
-        self.__logger.info('Incoming DELETE request\n\tNodes: {}'.format(
-            [node.route for node in self.nodes]
-        ))
+        self.__logger.info(
+            'Incoming DELETE request\n\tNodes: {}'.format([node.route for node in self.nodes]))
         deleted_nodes = []
         for node in self.nodes:
             parent_route = node.route.split('/')[:-1]

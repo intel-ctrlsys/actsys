@@ -1,8 +1,31 @@
-from oobrestserver import GlobTools
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016-2017 Intel Corp.
+#
+
+"""
+Defines the RDict class, which is a tree data structure accessed like a Python dictionary.
+Instead of single keys, RDict users provide a list of keys that describe a path through layered dictionaries.
+The raw() method returns a traditional, pure-python object, usually a dictionary.
+"""
+
+
 from collections import Hashable
+from oobrestserver import GlobTools
 
 
 class RDict(object):
+
+    """
+    Recursively-defined, filesystem-like dictionary data type. Keys are "paths" through a hierarchy of dicts
+    containing other dicts, and so on, down to leaf objects.
+
+    Initialize with any python object. Input dictionaries will be traversed and rebuilt as RDicts recursively.
+    Item access with [] returns either an RDict or an object, but never a Python dict.
+    Setting items with [] creates RDicts recursively.
+    Supports move and rename operations.
+    Use raw() to recover a primitive Python dictionary. This will traverse and replace RDicts with dicts.
+    """
 
     def __init__(self, obj=None):
         self.data_object = {}
@@ -18,6 +41,7 @@ class RDict(object):
         return len(self.keys())
 
     def __setitem__(self, keys, value):
+        """Set the value at a key recursively. Will create RDicts recursively to the identified key."""
         RDict.__check_key_type(keys)
         if not keys:
             if value is None:
@@ -39,6 +63,7 @@ class RDict(object):
         self.data_object[keys[0]][keys[1:]] = value
 
     def pop(self, keys, remove=True):
+        """Return the value at at the key list. Optionally delete the value from this RDict."""
         RDict.__check_key_type(keys)
         if not keys:
             if not remove:
@@ -58,7 +83,7 @@ class RDict(object):
             if not isinstance(child, RDict):
                 raise KeyError(keys)
             result = child.pop(keys[1:], remove=remove)
-            if remove and len(self.data_object[keys[0]]) == 0:
+            if remove and not child.data_object:
                 del self.data_object[keys[0]]
             return RDict(result)
         except KeyError:
@@ -67,7 +92,7 @@ class RDict(object):
     def move(self, source_path, dest_path):
         RDict.__check_key_type(source_path)
         RDict.__check_key_type(dest_path)
-        if len(source_path) > 0:
+        if source_path:
             self[dest_path + [source_path[-1]]] = self.pop(source_path)
         else:
             self[dest_path] = self.pop(source_path)
@@ -79,17 +104,18 @@ class RDict(object):
 
     def search(self, search_path):
         RDict.__check_key_type(search_path)
-        return self.__search(search_path)
+        return self.recursive_search(search_path)
 
     def keys(self):
-        return self.__keys()
+        return self.recursive_keys()
 
     def raw(self):
         if not isinstance(self.data_object, dict):
             return self.data_object
         return {k: RDict.raw(v) if isinstance(v, RDict) else v for k, v in self.data_object.items()}
 
-    def __search(self, search_path, path_here=None):
+    def recursive_search(self, search_path, path_here=None):
+        """Recursively search for all valid (filled) key paths identified by a search path using glob semantics."""
         if path_here is None:
             path_here = []
         if search_path == []:
@@ -98,10 +124,11 @@ class RDict(object):
             return [path_here]
         matches = self.__matching_children(search_path[0])
         child_search = search_path[1:]
-        results = [child.__search(child_search, path_here + [key]) for key, child in matches.items()]
+        results = [child.recursive_search(child_search, path_here + [key]) for key, child in matches.items()]
         return sum(results, [])
 
-    def __keys(self, path_here=None):
+    def recursive_keys(self, path_here=None):
+        """recursively list out every valid (filled) key path in this RDict."""
         if path_here is None:
             path_here = []
         if not isinstance(self.data_object, dict):
@@ -113,7 +140,7 @@ class RDict(object):
                 rdict_children[key] = child
             else:
                 obj_children[key] = child
-        results = sum([child.__keys(path_here + [key]) for key, child in rdict_children.items()], [])
+        results = sum([child.recursive_keys(path_here + [key]) for key, child in rdict_children.items()], [])
         results += [path_here + [key] for key in obj_children]
         if not results:
             if not path_here:

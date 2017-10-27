@@ -4,7 +4,7 @@
 #
 
 """
-OOBREST Plugin for atomic OOB Management through IPMI.
+OOB REST Plugin for atomic OOB Management through IPMI.
 """
 
 import functools
@@ -203,19 +203,26 @@ class IpmiBMC(object):
 
     def end_sol(self):
         with self.sol_lock:
-            if self.sol_process is not None:
-                self.sol_process.terminate()
-                try:
-                    self.sol_process.wait(1.0)
-                except subprocess.TimeoutExpired:
-                    if not self.sol_process.poll():
-                        self.sol_process.kill()
-                self.sol_process = None
+            self.term_or_kill_sol()
+            return self.capture_deactivate_sol()
+
+    def term_or_kill_sol(self):
+        if self.sol_process is not None:
+            self.sol_process.terminate()
             try:
-                cmd = self.ipmitool_opts + ['sol', 'deactivate']
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
-                return proc.communicate(timeout=1.0)[0]
-            except Exception as ex:
-                raise RuntimeError("Could not deactivate IPMI SOL capture: {}".format(str(ex)))
+                self.sol_process.wait(1.0)
+            except subprocess.TimeoutExpired:
+                if not self.sol_process.poll():
+                    self.sol_process.kill()
+            self.sol_process = None
 
-
+    def capture_deactivate_sol(self):
+        try:
+            cmd = self.ipmitool_opts + ['sol', 'deactivate']
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+            (stdout, stderr) = proc.communicate(timeout=1.0)
+            if stderr:
+                raise RuntimeError(stderr)
+            return stdout
+        except Exception as ex:
+            raise RuntimeError("Could not deactivate IPMI SOL capture: {}".format(str(ex)))
