@@ -58,7 +58,7 @@ class IpmiBMC(object):
             },
             'sol_stream': {
                 '#setter': self.set_sol_stream,
-                '#cleanup': self.end_sol
+                '#cleanup': self.cleanup_SOL
             },
             'sel': {
                 '#getter': self.get_sels
@@ -94,6 +94,12 @@ class IpmiBMC(object):
             elif new_state == "block_on":
                 self.__blind_ipmitool_invoke(['power', 'on'])
                 self.block_to_ssh()
+            elif new_state == "block_soft_off":
+                self.__blind_ipmitool_invoke(['power', 'soft'])
+                self.block_to_off()
+            elif new_state == "block_off":
+                self.__blind_ipmitool_invoke(['power', 'off'])
+                self.block_to_off()
             elif new_state == "block_cycle":
                 self.__blind_ipmitool_invoke(['power', 'cycle'])
                 self.block_to_ssh()
@@ -103,7 +109,7 @@ class IpmiBMC(object):
                 self.__blind_ipmitool_invoke(['power', 'on'])
                 self.block_to_ssh()
             else:
-                valid_states = states + ["block_on", "block_cycle", "block_soft_reboot"]
+                valid_states = states + ["block_on", "block_cycle", "block_soft_reboot", "block_off", "block_soft_off"]
                 raise RuntimeError("Invalid power state: {}. Choose from {}".format(new_state, valid_states))
 
     def __blind_ipmitool_invoke(self, cmd):
@@ -205,6 +211,12 @@ class IpmiBMC(object):
         with self.sol_lock:
             self.term_or_kill_sol()
             return self.capture_deactivate_sol()
+
+    def cleanup_SOL(self):
+        try:
+            self.end_sol()
+        except RuntimeError:
+            pass
 
     def term_or_kill_sol(self):
         if self.sol_process is not None:
