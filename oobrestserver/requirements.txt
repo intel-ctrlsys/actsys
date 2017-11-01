@@ -3,5 +3,5 @@ pytest
 pylint
 mock
 requests
-cherrypy
+cherrypy==11.0.0
 PyYAML
