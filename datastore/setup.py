@@ -15,7 +15,8 @@ tests_require = ['python-dateutil>=2.6.0',
                  'pytest',
                  'pytest-cov',
                  'pylint',
-                 'mock']
+                 'mock',
+                 'clustershell']
 
 setup(name='ctrlsys-datastore',
       version='0.2.1',
