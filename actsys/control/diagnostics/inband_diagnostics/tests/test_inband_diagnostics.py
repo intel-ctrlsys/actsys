@@ -126,7 +126,7 @@ class TestsInbandDiagnostics(unittest.TestCase):
     @patch.object(Thread, 'start')
     @patch.object(Thread, 'join')
     @patch.object(InBandDiagnostics, '_edit_boot_parameters')
-    def test_launch_diags_positive(self,console_mock_class,console_mock,mock_start,mock_join, edit_patch):
+    def test_launch_diags_positive(self, console_mock_class, console_mock, mock_start, mock_join, edit_patch):
         """tests positive"""
         self.reset_for_test()
         console_mock = Mock(spec=ConsoleLog)
@@ -134,7 +134,7 @@ class TestsInbandDiagnostics(unittest.TestCase):
         edit_patch.return_value = 1
         self.mock_plugin_manager.create_instance.side_effect = [self.mock_provisioner, self.mock_resource_control,
                                                                 console_mock, self.mock_power_control]
-        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name,
+        diags_mock_plugin = InBandDiagnostics(diag_image=self.image_name, test_name=self.test_name1,
                                               plugin_manager=self.mock_plugin_manager)
         result = diags_mock_plugin.launch_diags(self.device, self.bmc)
         self.assertGreater(len(result), 0)

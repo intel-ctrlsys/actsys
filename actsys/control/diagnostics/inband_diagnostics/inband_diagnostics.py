@@ -138,6 +138,7 @@ class InBandDiagnostics(Diagnostics):
             InBandDiagnostics.MOCK_PROVISION = True
 
         self._verify_provisioning(self.device_name, self.img)
+        print('Removing the node {0} from resource pool'.format(self.device_name))
 
         # Step 1: Remove node from resource pool
         dev_l = list()
@@ -152,8 +153,10 @@ class InBandDiagnostics(Diagnostics):
             raise Exception("Cannot remove node from resource pool. {}".format(current_state))
         console_log_thread = Thread(target=self._console_log_calling, args=[result_queue])
         console_log_thread.start()
+        print('Provisioning the node {0} with diag image {1}'.format(self.device_name, self.img))
         # Step 2: Provision diagnostic image
         self._provision_image(self.img, self.kargs)
+        print('Powering the node {0} Off and On'.format(self.device_name))
         self._set_node_state('Off')
         self._set_node_state('On')
         console_log_thread.join()
@@ -164,10 +167,16 @@ class InBandDiagnostics(Diagnostics):
                             'bad state')
         # Step 3: Provision node back to old image
         if not self.reboot_true:
+            print('Provisioning node {0} back to production image {1}'.format(self.device_name, self.old_image))
             self._provision_image(self.old_image, self.old_kargs)
             self._set_node_state('Off')
             self._set_node_state('On')
+
+        else:
+            raise Exception('Reboot of node in Diag mode requested, node will remain in unknown state and diagnostics '
+                            'will not complete.')
         # Step 4: Add node back to resource pool
+        print('Adding the node {0} back to the resource pool'.format(self.device_name))
         result = self.resource_manager.add_nodes_to_resource_pool(dev_l)
         if result[0] != 0:
             raise Exception("Failed to add node back to resource pool")
