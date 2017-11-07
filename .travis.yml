@@ -11,7 +11,7 @@ install:
   - cd datastore
   - pip install .
   - pip install -r requirements.txt
-  - cd ../ctrl
+  - cd ../actsys
   - pip install .
   - pip install -r requirements.txt
   - cd ..
@@ -19,7 +19,7 @@ install:
 #  The first runs pylint, reads the code raiting and errors if the rating is below 8.
 #  The second runs the tests.
 script:
-  - cd ctrl
+  - cd actsys
   - pylint --ignore-patterns=test* control | tee /dev/tty | gawk 'match($0, /[0-9]\.[0-9]*\//, a) {exit a[1]}' || [[ $? == 0 || $? -ge 8 ]]
   - python -m pytest . --cov=control --cov-report term-missing --cov-report xml
   - cd ../datastore
